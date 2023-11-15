@@ -1,3 +1,5 @@
+use std::process::Command;
+
 use crate::cli::{Cli, Init};
 use clap::Parser;
 use smithay::reexports::{
@@ -9,6 +11,7 @@ use state::State;
 mod cli;
 mod state;
 mod winit;
+mod xdg;
 
 #[derive(Debug)]
 pub struct Data {
@@ -21,8 +24,6 @@ fn main() {
 
 	let init = args.init();
 	let exec = args.exec();
-
-	println!("exec {:?}", exec);
 
 	match init {
 		Init::Winit => println!("winit"),
@@ -42,8 +43,13 @@ fn main() {
 
 	winit::init(&mut event_loop, &mut data);
 
+	println!("exec {:?}", exec);
+	if let Some(cmd) = exec {
+		Command::new(cmd).spawn().unwrap();
+	}
+
 	event_loop
-		.run(None, &mut data, move |ev| {
+		.run(None, &mut data, move |_| {
 			// println!("data {:?}", ev);
 		})
 		.unwrap();

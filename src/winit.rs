@@ -47,9 +47,12 @@ pub fn init(calloop: &mut EventLoop<Data>, data: &mut Data) {
 
 	let mut damage_tracker = OutputDamageTracker::from_output(&output);
 
+	std::env::set_var("WAYLAND_DISPLAY", &state.socket_name);
+	std::env::set_var("GDK_BACKEND", "wayland");
+
 	calloop
 		.handle()
-		.insert_source(winit, move |event, _, data| {
+		.insert_source(winit, move |event, (), data| {
 			let display = &mut data.display_handle;
 			let state = &mut data.state;
 
@@ -94,7 +97,7 @@ pub fn init(calloop: &mut EventLoop<Data>, data: &mut Data) {
 							state.start_time.elapsed(),
 							Some(Duration::ZERO),
 							|_, _| Some(output.clone()),
-						)
+						);
 					});
 
 					state.space.refresh();
