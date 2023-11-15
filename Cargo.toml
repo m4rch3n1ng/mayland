@@ -5,4 +5,13 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.4.8", features = ["derive"] }
-smithay = { git = "https://github.com/Smithay/smithay", version = "0.3.0" }
+
+[dependencies.smithay]
+git = "https://github.com/Smithay/smithay"
+version = "0.3.0"
+default-features = false
+features = [
+	"backend_winit",
+	"wayland_frontend",
+	"desktop"
+]
