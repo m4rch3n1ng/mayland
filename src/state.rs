@@ -23,13 +23,11 @@ mod compositor;
 mod handlers;
 mod xdg;
 
-use crate::Data;
-
 #[derive(Debug)]
 pub struct MayState {
 	pub start_time: std::time::Instant,
-	display_handle: DisplayHandle,
-	seat_state: SeatState<Self>,
+	pub display_handle: DisplayHandle,
+	pub seat_state: SeatState<Self>,
 	pub data_device_state: DataDeviceState,
 	pub popups: PopupManager,
 	pub space: Space<Window>,
@@ -42,7 +40,7 @@ pub struct MayState {
 }
 
 impl MayState {
-	pub fn new(event_loop: &mut EventLoop<Data>, display: Display<Self>) -> Self {
+	pub fn new(event_loop: &mut EventLoop<MayState>, display: Display<Self>) -> Self {
 		let display_handle = display.handle();
 		let mut seat_state = SeatState::new();
 		let mut seat = seat_state.new_wl_seat(&display_handle, "winit");
@@ -78,7 +76,7 @@ impl MayState {
 
 	fn init_wayland_listener(
 		display: Display<MayState>,
-		event_loop: &mut EventLoop<Data>,
+		event_loop: &mut EventLoop<MayState>,
 	) -> OsString {
 		// Creates a new listening socket, automatically choosing the next available `wayland` socket name.
 		let listening_socket = ListeningSocketSource::new_auto().unwrap();
@@ -109,10 +107,7 @@ impl MayState {
 				|_, display, state| {
 					// Safety: we don't drop the display
 					unsafe {
-						display
-							.get_mut()
-							.dispatch_clients(&mut state.state)
-							.unwrap();
+						display.get_mut().dispatch_clients(state).unwrap();
 					}
 					Ok(PostAction::Continue)
 				},

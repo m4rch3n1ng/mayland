@@ -1,7 +1,6 @@
-use crate::{Data, MayState};
+use crate::MayState;
 use smithay::{
 	backend::{
-		input::InputEvent,
 		renderer::{
 			damage::OutputDamageTracker, element::surface::WaylandSurfaceRenderElement,
 			gles::GlesRenderer,
@@ -14,9 +13,8 @@ use smithay::{
 };
 use std::time::Duration;
 
-pub fn init(calloop: &mut EventLoop<Data>, data: &mut Data) {
-	let display_handle = &mut data.display_handle;
-	let state = &mut data.state;
+pub fn init(calloop: &mut EventLoop<MayState>, state: &mut MayState) {
+	let display_handle = &mut state.display_handle;
 
 	let (mut backend, winit) = winit::init().unwrap();
 
@@ -53,9 +51,8 @@ pub fn init(calloop: &mut EventLoop<Data>, data: &mut Data) {
 
 	calloop
 		.handle()
-		.insert_source(winit, move |event, (), data| {
-			let display = &mut data.display_handle;
-			let state = &mut data.state;
+		.insert_source(winit, move |event, (), state| {
+			let display = &mut state.display_handle;
 
 			match event {
 				WinitEvent::Resized { size, .. } => {
