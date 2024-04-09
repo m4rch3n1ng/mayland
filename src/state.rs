@@ -4,29 +4,29 @@ use smithay::reexports::calloop::generic::Generic;
 use smithay::reexports::calloop::{EventLoop, Interest, LoopSignal, PostAction};
 use smithay::reexports::wayland_server::backend::ClientData;
 use smithay::wayland::compositor::{CompositorClientState, CompositorState};
-use smithay::wayland::selection::data_device::{
-	ClientDndGrabHandler, DataDeviceHandler, DataDeviceState, ServerDndGrabHandler,
-};
-use smithay::wayland::selection::SelectionHandler;
+use smithay::wayland::selection::data_device::DataDeviceState;
 use smithay::wayland::shell::xdg::XdgShellState;
 use smithay::wayland::shm::ShmState;
 use smithay::wayland::socket::ListeningSocketSource;
-use smithay::{delegate_data_device, delegate_output, delegate_seat};
 use smithay::{
-	input::{Seat, SeatHandler, SeatState},
+	input::{Seat, SeatState},
 	reexports::{
 		calloop::Mode,
-		wayland_server::{protocol::wl_surface::WlSurface, Display, DisplayHandle},
+		wayland_server::{Display, DisplayHandle},
 	},
 };
 use std::ffi::OsString;
 use std::sync::Arc;
 use std::time::Instant;
 
+mod compositor;
+mod handlers;
+mod xdg;
+
 use crate::Data;
 
 #[derive(Debug)]
-pub struct State {
+pub struct MayState {
 	pub start_time: std::time::Instant,
 	display_handle: DisplayHandle,
 	seat_state: SeatState<Self>,
@@ -41,16 +41,7 @@ pub struct State {
 	pub compositor_state: CompositorState,
 }
 
-impl SeatHandler for State {
-	type KeyboardFocus = WlSurface;
-	type PointerFocus = WlSurface;
-
-	fn seat_state(&mut self) -> &mut smithay::input::SeatState<Self> {
-		&mut self.seat_state
-	}
-}
-
-impl State {
+impl MayState {
 	pub fn new(event_loop: &mut EventLoop<Data>, display: Display<Self>) -> Self {
 		let display_handle = display.handle();
 		let mut seat_state = SeatState::new();
@@ -69,7 +60,7 @@ impl State {
 
 		let socket_name = Self::init_wayland_listener(display, event_loop);
 
-		State {
+		MayState {
 			start_time: Instant::now(),
 			popups,
 			data_device_state,
@@ -86,7 +77,7 @@ impl State {
 	}
 
 	fn init_wayland_listener(
-		display: Display<State>,
+		display: Display<MayState>,
 		event_loop: &mut EventLoop<Data>,
 	) -> OsString {
 		// Creates a new listening socket, automatically choosing the next available `wayland` socket name.
@@ -138,22 +129,3 @@ pub struct ClientState {
 }
 
 impl ClientData for ClientState {}
-
-delegate_seat!(State);
-
-impl SelectionHandler for State {
-	type SelectionUserData = ();
-}
-
-impl DataDeviceHandler for State {
-	fn data_device_state(&self) -> &DataDeviceState {
-		&self.data_device_state
-	}
-}
-
-impl ClientDndGrabHandler for State {}
-impl ServerDndGrabHandler for State {}
-
-delegate_data_device!(State);
-
-delegate_output!(State);

@@ -1,6 +1,7 @@
-use crate::{Data, State};
+use crate::{Data, MayState};
 use smithay::{
 	backend::{
+		input::InputEvent,
 		renderer::{
 			damage::OutputDamageTracker, element::surface::WaylandSurfaceRenderElement,
 			gles::GlesRenderer,
@@ -36,7 +37,7 @@ pub fn init(calloop: &mut EventLoop<Data>, data: &mut Data) {
 
 	state.space.map_output(&output, (0, 0));
 
-	let _global = output.create_global::<State>(display_handle);
+	let _global = output.create_global::<MayState>(display_handle);
 	output.change_current_state(
 		Some(mode),
 		Some(Transform::Flipped180),
