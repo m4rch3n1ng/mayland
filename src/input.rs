@@ -19,7 +19,10 @@ impl MayState {
 				let serial = SERIAL_COUNTER.next_serial();
 				let time = event.time_msec();
 
-				let _ = keyboard.input(self, code, state, serial, time, |_, _, _| {
+				let _ = keyboard.input(self, code, state, serial, time, |_state, _mods, keysym| {
+					let raw_sym = keysym.raw_syms()[0];
+					println!("key {:?}", raw_sym);
+
 					FilterResult::Forward::<()>
 				});
 			}

@@ -21,6 +21,11 @@ fn main() {
 	let display = Display::<MayState>::new().unwrap();
 	let mut state = MayState::new(&mut event_loop, display);
 
+	// todo
+	let xkb = state.seat.get_keyboard().unwrap();
+	let keymap = std::fs::read_to_string("/home/may/.config/keymap/comp.xkb").unwrap();
+	xkb.set_keymap_from_string(&mut state, keymap).unwrap();
+
 	match init {
 		Init::Winit => winit::init(&mut event_loop, &mut state),
 		Init::Tty => todo!("tty"),

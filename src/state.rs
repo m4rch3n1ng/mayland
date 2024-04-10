@@ -13,105 +13,106 @@ use smithay::{
 		socket::ListeningSocketSource,
 	},
 };
-use std::{ffi::OsString, sync::Arc, time::Instant};
+use std::{sync::Arc, time::Instant};
 
 mod handlers;
 
 #[derive(Debug)]
 pub struct MayState {
-	pub start_time: std::time::Instant,
 	pub display_handle: DisplayHandle,
-	pub seat_state: SeatState<Self>,
-	pub data_device_state: DataDeviceState,
+	pub socket_name: String,
+
+	pub seat: Seat<Self>,
 	pub popups: PopupManager,
 	pub space: Space<Window>,
+
+	pub start_time: std::time::Instant,
 	pub loop_signal: LoopSignal,
-	pub seat: Seat<Self>,
-	pub xdg_shell_state: XdgShellState,
-	pub socket_name: String,
-	pub shm_state: ShmState,
+
+	// wayland state
 	pub compositor_state: CompositorState,
+	pub data_device_state: DataDeviceState,
+	pub seat_state: SeatState<Self>,
+	pub xdg_shell_state: XdgShellState,
+	pub shm_state: ShmState,
 }
 
 impl MayState {
-	pub fn new(event_loop: &mut EventLoop<MayState>, display: Display<Self>) -> Self {
+	pub fn new(event_loop: &mut EventLoop<Self>, display: Display<Self>) -> Self {
 		let display_handle = display.handle();
+		let socket_name = init_wayland_display(display, event_loop);
+
 		let mut seat_state = SeatState::new();
 		let mut seat = seat_state.new_wl_seat(&display_handle, "winit");
-		let space = Space::default();
-		let popups = PopupManager::default();
-		let loop_signal = event_loop.get_signal();
-		let data_device_state = DataDeviceState::new::<Self>(&display_handle);
-		let xdg_shell_state = XdgShellState::new::<Self>(&display_handle);
-
-		let shm_state = ShmState::new::<Self>(&display_handle, vec![]);
-		let compositor_state = CompositorState::new::<Self>(&display_handle);
 
 		seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
 		seat.add_pointer();
 
-		let socket_name = Self::init_wayland_listener(display, event_loop)
-			.into_string()
-			.unwrap();
+		let popups = PopupManager::default();
+		let space = Space::default();
+
+		let start_time = Instant::now();
+		let loop_signal = event_loop.get_signal();
+
+		let compositor_state = CompositorState::new::<Self>(&display_handle);
+		let data_device_state = DataDeviceState::new::<Self>(&display_handle);
+		let xdg_shell_state = XdgShellState::new::<Self>(&display_handle);
+		let shm_state = ShmState::new::<Self>(&display_handle, vec![]);
 
 		MayState {
-			start_time: Instant::now(),
-			popups,
-			data_device_state,
 			display_handle,
-			seat_state,
-			space,
 			socket_name,
-			loop_signal,
+
 			seat,
-			xdg_shell_state,
+			popups,
+			space,
+
+			start_time,
+			loop_signal,
+
 			compositor_state,
+			data_device_state,
+			seat_state,
+			xdg_shell_state,
 			shm_state,
 		}
 	}
+}
 
-	fn init_wayland_listener(
-		display: Display<MayState>,
-		event_loop: &mut EventLoop<MayState>,
-	) -> OsString {
-		// Creates a new listening socket, automatically choosing the next available `wayland` socket name.
-		let listening_socket = ListeningSocketSource::new_auto().unwrap();
+fn init_wayland_display(
+	display: Display<MayState>,
+	event_loop: &mut EventLoop<MayState>,
+) -> String {
+	// create socket for clients to connect to
+	let source = ListeningSocketSource::new_auto().unwrap();
+	let socket_name = source.socket_name().to_os_string().into_string().unwrap();
 
-		// Get the name of the listening socket.
-		// Clients will connect to this socket.
-		let socket_name = listening_socket.socket_name().to_os_string();
+	let handle = event_loop.handle();
 
-		let handle = event_loop.handle();
+	event_loop
+		.handle()
+		.insert_source(source, move |client_stream, (), state| {
+			// insert client into display
+			state
+				.display_handle
+				.insert_client(client_stream, Arc::new(ClientState::default()))
+				.unwrap();
+		})
+		.expect("failed to init the wayland event source.");
 
-		event_loop
-			.handle()
-			.insert_source(listening_socket, move |client_stream, (), state| {
-				// Inside the callback, you should insert the client into the display.
-				//
-				// You may also associate some data with the client when inserting the client.
-				state
-					.display_handle
-					.insert_client(client_stream, Arc::new(ClientState::default()))
-					.unwrap();
-			})
-			.expect("Failed to init the wayland event source.");
+	// add display to event loop
+	handle
+		.insert_source(
+			Generic::new(display, Interest::READ, Mode::Level),
+			|_, display, state| {
+				// SAFETY: we won't drop the display
+				unsafe { display.get_mut().dispatch_clients(state).unwrap() };
+				Ok(PostAction::Continue)
+			},
+		)
+		.unwrap();
 
-		// You also need to add the display itself to the event loop, so that client events will be processed by wayland-server.
-		handle
-			.insert_source(
-				Generic::new(display, Interest::READ, Mode::Level),
-				|_, display, state| {
-					// Safety: we don't drop the display
-					unsafe {
-						display.get_mut().dispatch_clients(state).unwrap();
-					}
-					Ok(PostAction::Continue)
-				},
-			)
-			.unwrap();
-
-		socket_name
-	}
+	socket_name
 }
 
 #[derive(Default)]

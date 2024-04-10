@@ -26,7 +26,7 @@ impl MayState {
 	fn window_for_surface(&mut self, surface: &WlSurface) -> Option<Window> {
 		self.space
 			.elements()
-			.find(|&w| w.wl_surface().map(|w| w == *surface).unwrap_or(false))
+			.find(|&w| w.wl_surface().is_some_and(|w| w == *surface))
 			.cloned()
 	}
 }

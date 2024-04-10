@@ -55,7 +55,7 @@ pub fn handle_commit(popups: &mut PopupManager, space: &Space<Window>, surface: 
 	// Handle toplevel commits.
 	if let Some(window) = space
 		.elements()
-		.find(|w| w.wl_surface().map_or(false, |w| w == *surface))
+		.find(|w| w.wl_surface().is_some_and(|w| w == *surface))
 		.cloned()
 	{
 		if let Some(toplevel) = window.toplevel() {

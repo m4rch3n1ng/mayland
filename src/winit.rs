@@ -112,7 +112,14 @@ impl MayState {
 					refresh: 60_000,
 				};
 
+				if let Some(prev) = wd.output.current_mode() {
+					wd.output.delete_mode(prev);
+				}
+
 				wd.output.change_current_state(Some(mode), None, None, None);
+				wd.output.set_preferred(mode);
+
+				wd.render(self);
 			}
 			WinitEvent::Redraw => wd.render(self),
 			WinitEvent::CloseRequested => self.loop_signal.stop(),
