@@ -1,5 +1,6 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
+	config::Config,
 	layout::workspace::WorkspaceManager,
 	render::{CursorBuffer, MaylandRenderElements},
 };
@@ -89,6 +90,8 @@ impl State {
 
 #[derive(Debug)]
 pub struct Mayland {
+	pub config: Config,
+
 	pub display_handle: DisplayHandle,
 	pub socket_name: String,
 
@@ -138,6 +141,8 @@ pub struct OutputState {
 
 impl Mayland {
 	fn new(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
+		let config = Config::read();
+
 		let display_handle = display.handle();
 		let socket_name = init_wayland_display(display, event_loop);
 
@@ -172,6 +177,8 @@ impl Mayland {
 		let suppressed_keys = HashSet::new();
 
 		Mayland {
+			config,
+
 			display_handle,
 			socket_name,
 
