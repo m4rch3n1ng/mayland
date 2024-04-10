@@ -8,6 +8,7 @@ mod cli;
 mod input;
 mod state;
 mod winit;
+mod shell;
 
 fn main() {
 	let args = Cli::parse();

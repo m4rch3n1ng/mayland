@@ -1,4 +1,4 @@
-use super::{xdg::handle_commit, ClientState, MayState};
+use crate::state::{ClientState, MayState};
 use smithay::{
 	backend::renderer::utils::on_commit_buffer_handler,
 	delegate_compositor, delegate_shm,
@@ -16,13 +16,21 @@ use smithay::{
 	},
 };
 
+use self::xdg::handle_commit;
+
+pub mod xdg;
+
 impl CompositorHandler for MayState {
 	fn compositor_state(&mut self) -> &mut CompositorState {
 		&mut self.compositor_state
 	}
 
 	fn client_compositor_state<'a>(&self, client: &'a Client) -> &'a CompositorClientState {
-		&client.get_data::<ClientState>().unwrap().compositor_state
+		if let Some(state) = client.get_data::<ClientState>() {
+			return &state.compositor_state
+		}
+
+		panic!("unknown client data type")
 	}
 
 	fn commit(&mut self, surface: &WlSurface) {
@@ -42,7 +50,6 @@ impl CompositorHandler for MayState {
 		};
 
 		handle_commit(&mut self.popups, &self.space, surface);
-		// resize_grab::handle_commit(&mut self.space, surface);
 	}
 }
 
@@ -58,3 +65,4 @@ impl ShmHandler for MayState {
 
 delegate_compositor!(MayState);
 delegate_shm!(MayState);
+

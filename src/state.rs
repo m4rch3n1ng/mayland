@@ -1,27 +1,21 @@
-use smithay::desktop::{PopupManager, Space, Window};
-use smithay::input::keyboard::XkbConfig;
-use smithay::reexports::calloop::generic::Generic;
-use smithay::reexports::calloop::{EventLoop, Interest, LoopSignal, PostAction};
-use smithay::reexports::wayland_server::backend::ClientData;
-use smithay::wayland::compositor::{CompositorClientState, CompositorState};
-use smithay::wayland::selection::data_device::DataDeviceState;
-use smithay::wayland::shell::xdg::XdgShellState;
-use smithay::wayland::shm::ShmState;
-use smithay::wayland::socket::ListeningSocketSource;
 use smithay::{
-	input::{Seat, SeatState},
+	desktop::{PopupManager, Space, Window},
+	input::{keyboard::XkbConfig, Seat, SeatState},
 	reexports::{
-		calloop::Mode,
-		wayland_server::{Display, DisplayHandle},
+		calloop::{generic::Generic, EventLoop, Interest, LoopSignal, Mode, PostAction},
+		wayland_server::{backend::ClientData, Display, DisplayHandle},
+	},
+	wayland::{
+		compositor::{CompositorClientState, CompositorState},
+		selection::data_device::DataDeviceState,
+		shell::xdg::XdgShellState,
+		shm::ShmState,
+		socket::ListeningSocketSource,
 	},
 };
-use std::ffi::OsString;
-use std::sync::Arc;
-use std::time::Instant;
+use std::{ffi::OsString, sync::Arc, time::Instant};
 
-mod compositor;
 mod handlers;
-mod xdg;
 
 #[derive(Debug)]
 pub struct MayState {
