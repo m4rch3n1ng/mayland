@@ -3,18 +3,22 @@ use smithay::{
 	delegate_data_device, delegate_output, delegate_seat,
 	input::SeatHandler,
 	reexports::wayland_server::{protocol::wl_surface::WlSurface, Resource},
-	wayland::selection::{
-		data_device::{
-			set_data_device_focus, ClientDndGrabHandler, DataDeviceHandler, DataDeviceState,
-			ServerDndGrabHandler,
+	wayland::{
+		output::OutputHandler,
+		selection::{
+			data_device::{
+				set_data_device_focus, ClientDndGrabHandler, DataDeviceHandler, DataDeviceState,
+				ServerDndGrabHandler,
+			},
+			SelectionHandler,
 		},
-		SelectionHandler,
 	},
 };
 
 impl SeatHandler for MayState {
 	type KeyboardFocus = WlSurface;
 	type PointerFocus = WlSurface;
+	type TouchFocus = WlSurface;
 
 	fn seat_state(&mut self) -> &mut smithay::input::SeatState<Self> {
 		&mut self.seat_state
@@ -47,5 +51,7 @@ impl ClientDndGrabHandler for MayState {}
 impl ServerDndGrabHandler for MayState {}
 
 delegate_data_device!(MayState);
+
+impl OutputHandler for MayState {}
 
 delegate_output!(MayState);

@@ -6,6 +6,7 @@ use smithay::{
 	utils::Serial,
 	wayland::{
 		compositor::with_states,
+		seat::WaylandFocus,
 		shell::xdg::{
 			PopupSurface, PositionerState, ToplevelSurface, XdgPopupSurfaceData, XdgShellHandler,
 			XdgShellState, XdgToplevelSurfaceData,
@@ -19,7 +20,7 @@ impl XdgShellHandler for MayState {
 	}
 
 	fn new_toplevel(&mut self, surface: ToplevelSurface) {
-		let window = Window::new(surface);
+		let window = Window::new_wayland_window(surface);
 		self.space.map_element(window, (0, 0), false);
 	}
 
@@ -54,21 +55,23 @@ pub fn handle_commit(popups: &mut PopupManager, space: &Space<Window>, surface: 
 	// Handle toplevel commits.
 	if let Some(window) = space
 		.elements()
-		.find(|w| w.toplevel().wl_surface() == surface)
+		.find(|w| w.wl_surface().map_or(false, |w| w == *surface))
 		.cloned()
 	{
-		let initial_configure_sent = with_states(surface, |states| {
-			states
-				.data_map
-				.get::<XdgToplevelSurfaceData>()
-				.unwrap()
-				.lock()
-				.unwrap()
-				.initial_configure_sent
-		});
+		if let Some(toplevel) = window.toplevel() {
+			let initial_configure_sent = with_states(surface, |states| {
+				states
+					.data_map
+					.get::<XdgToplevelSurfaceData>()
+					.unwrap()
+					.lock()
+					.unwrap()
+					.initial_configure_sent
+			});
 
-		if !initial_configure_sent {
-			window.toplevel().send_configure();
+			if !initial_configure_sent {
+				toplevel.send_configure();
+			}
 		}
 	}
 

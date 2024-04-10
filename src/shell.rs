@@ -2,6 +2,7 @@ use crate::state::{ClientState, MayState};
 use smithay::{
 	backend::renderer::utils::on_commit_buffer_handler,
 	delegate_compositor, delegate_shm,
+	desktop::Window,
 	reexports::wayland_server::{
 		protocol::{wl_buffer, wl_surface::WlSurface},
 		Client,
@@ -12,6 +13,7 @@ use smithay::{
 			get_parent, is_sync_subsurface, CompositorClientState, CompositorHandler,
 			CompositorState,
 		},
+		seat::WaylandFocus,
 		shm::{ShmHandler, ShmState},
 	},
 };
@@ -20,6 +22,15 @@ use self::xdg::handle_commit;
 
 pub mod xdg;
 
+impl MayState {
+	fn window_for_surface(&mut self, surface: &WlSurface) -> Option<Window> {
+		self.space
+			.elements()
+			.find(|&w| w.wl_surface().map(|w| w == *surface).unwrap_or(false))
+			.cloned()
+	}
+}
+
 impl CompositorHandler for MayState {
 	fn compositor_state(&mut self) -> &mut CompositorState {
 		&mut self.compositor_state
@@ -27,7 +38,7 @@ impl CompositorHandler for MayState {
 
 	fn client_compositor_state<'a>(&self, client: &'a Client) -> &'a CompositorClientState {
 		if let Some(state) = client.get_data::<ClientState>() {
-			return &state.compositor_state
+			return &state.compositor_state;
 		}
 
 		panic!("unknown client data type")
@@ -40,11 +51,8 @@ impl CompositorHandler for MayState {
 			while let Some(parent) = get_parent(&root) {
 				root = parent;
 			}
-			if let Some(window) = self
-				.space
-				.elements()
-				.find(|w| w.toplevel().wl_surface() == &root)
-			{
+
+			if let Some(window) = self.window_for_surface(surface) {
 				window.on_commit();
 			}
 		};
@@ -65,4 +73,3 @@ impl ShmHandler for MayState {
 
 delegate_compositor!(MayState);
 delegate_shm!(MayState);
-

@@ -6,9 +6,9 @@ use std::process::Command;
 
 mod cli;
 mod input;
+mod shell;
 mod state;
 mod winit;
-mod shell;
 
 fn main() {
 	let args = Cli::parse();
