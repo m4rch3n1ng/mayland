@@ -16,12 +16,7 @@ fn main() {
 	} else {
 		State::new_udev(&mut event_loop, display)
 	};
-
-	// todo
-	if let Ok(keymap) = std::fs::read_to_string("/home/may/.config/keymap/may.xkb") {
-		let xkb = state.mayland.keyboard.clone();
-		xkb.set_keymap_from_string(&mut state, keymap).unwrap();
-	};
+	state.init_conf();
 
 	std::env::set_var("WAYLAND_DISPLAY", &state.mayland.socket_name);
 	std::env::set_var("GDK_BACKEND", "wayland");

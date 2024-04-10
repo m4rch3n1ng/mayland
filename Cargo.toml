@@ -11,6 +11,12 @@ tracing = "0.1.40"
 tracing-panic = "0.1.2"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 xcursor = "0.3.8"
+serde = { version = "1.0.197", features = ["derive"] }
+
+[dependencies.mayfig]
+git = "ssh://git@github.com/m4rch3n1ng/mayfig.git"
+branch = "main"
+version = "0.1.0"
 
 [dependencies.smithay]
 git = "https://github.com/Smithay/smithay"
