@@ -3,9 +3,9 @@ use smithay::{
 	backend::{
 		renderer::{
 			damage::OutputDamageTracker, element::surface::WaylandSurfaceRenderElement,
-			gles::GlesRenderer,
+			glow::GlowRenderer,
 		},
-		winit::{self, WinitEvent},
+		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
 	output::{Mode, Output, PhysicalProperties, Subpixel},
 	reexports::calloop::EventLoop,
@@ -13,10 +13,16 @@ use smithay::{
 };
 use std::time::Duration;
 
+struct WinitData {
+	backend: WinitGraphicsBackend<GlowRenderer>,
+	output: Output,
+	damage_tracker: OutputDamageTracker,
+}
+
 pub fn init(calloop: &mut EventLoop<MayState>, state: &mut MayState) {
 	let display_handle = &mut state.display_handle;
 
-	let (mut backend, winit) = winit::init().unwrap();
+	let (backend, winit) = winit::init::<GlowRenderer>().unwrap();
 
 	let mode = Mode {
 		size: backend.window_size(),
@@ -44,7 +50,12 @@ pub fn init(calloop: &mut EventLoop<MayState>, state: &mut MayState) {
 	);
 	output.set_preferred(mode);
 
-	let mut damage_tracker = OutputDamageTracker::from_output(&output);
+	let damage_tracker = OutputDamageTracker::from_output(&output);
+	let mut winit_data = WinitData {
+		backend,
+		output,
+		damage_tracker,
+	};
 
 	std::env::set_var("WAYLAND_DISPLAY", &state.socket_name);
 	std::env::set_var("GDK_BACKEND", "wayland");
@@ -52,64 +63,61 @@ pub fn init(calloop: &mut EventLoop<MayState>, state: &mut MayState) {
 	calloop
 		.handle()
 		.insert_source(winit, move |event, (), state| {
-			let display = &mut state.display_handle;
-
-			match event {
-				WinitEvent::Resized { size, .. } => {
-					output.change_current_state(
-						Some(Mode {
-							size,
-							refresh: 60_000,
-						}),
-						None,
-						None,
-						None,
-					);
-				}
-				WinitEvent::Redraw => {
-					let size = backend.window_size();
-					let damage = Rectangle::from_loc_and_size((0, 0), size);
-
-					backend.bind().unwrap();
-					smithay::desktop::space::render_output::<
-						_,
-						WaylandSurfaceRenderElement<GlesRenderer>,
-						_,
-						_,
-					>(
-						&output,
-						backend.renderer(),
-						1.0,
-						0,
-						[&state.space],
-						&[],
-						&mut damage_tracker,
-						[0.1, 0.1, 0.1, 1.0],
-					)
-					.unwrap();
-					backend.submit(Some(&[damage])).unwrap();
-
-					state.space.elements().for_each(|window| {
-						window.send_frame(
-							&output,
-							state.start_time.elapsed(),
-							Some(Duration::ZERO),
-							|_, _| Some(output.clone()),
-						);
-					});
-
-					state.space.refresh();
-					state.popups.cleanup();
-					let _ = display.flush_clients();
-
-					// Ask for redraw to schedule new frame.
-					backend.window().request_redraw();
-				}
-				WinitEvent::CloseRequested => {
-					state.loop_signal.stop();
-				}
-				event => println!("event {:?}", event),
-			}
+			state.handle_winit_event(event, &mut winit_data);
 		})
 		.unwrap();
+}
+
+impl WinitData {
+	fn render(&mut self, state: &mut MayState) {
+		let size = self.backend.window_size();
+		let damage = Rectangle::from_loc_and_size((0, 0), size);
+
+		self.backend.bind().unwrap();
+		smithay::desktop::space::render_output::<_, WaylandSurfaceRenderElement<GlowRenderer>, _, _>(
+			&self.output,self.backend.renderer(),
+			1.0,
+			0,
+			[&state.space],
+			&[],
+			&mut self.damage_tracker,
+			[0.1, 0.1, 0.1, 1.0]
+		).unwrap();
+		self.backend.submit(Some(&[damage])).unwrap();
+
+		state.space.elements().for_each(|window| {
+			window.send_frame(
+				&self.output,
+				state.start_time.elapsed(),
+				Some(Duration::ZERO),
+				|_, _| Some(self.output.clone()),
+			);
+		});
+
+		state.space.refresh();
+		state.popups.cleanup();
+		let _ = state.display_handle.flush_clients();
+
+		// Ask for redraw to schedule new frame.
+		self.backend.window().request_redraw();
+	}
+}
+
+impl MayState {
+	fn handle_winit_event(&mut self, event: WinitEvent, wd: &mut WinitData) {
+		match event {
+			WinitEvent::Resized { size, .. } => {
+				let mode = Mode {
+					size,
+					refresh: 60_000,
+				};
+
+				wd.output.change_current_state(Some(mode), None, None, None);
+			}
+			WinitEvent::Redraw => wd.render(self),
+			WinitEvent::CloseRequested => self.loop_signal.stop(),
+			WinitEvent::Input(input) => self.handle_input_event(input),
+			event => println!("event {:?}", event),
+		}
+	}
 }

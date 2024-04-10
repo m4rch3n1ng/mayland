@@ -34,7 +34,7 @@ pub struct MayState {
 	pub loop_signal: LoopSignal,
 	pub seat: Seat<Self>,
 	pub xdg_shell_state: XdgShellState,
-	pub socket_name: OsString,
+	pub socket_name: String,
 	pub shm_state: ShmState,
 	pub compositor_state: CompositorState,
 }
@@ -56,7 +56,9 @@ impl MayState {
 		seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
 		seat.add_pointer();
 
-		let socket_name = Self::init_wayland_listener(display, event_loop);
+		let socket_name = Self::init_wayland_listener(display, event_loop)
+			.into_string()
+			.unwrap();
 
 		MayState {
 			start_time: Instant::now(),
