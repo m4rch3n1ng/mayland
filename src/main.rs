@@ -1,7 +1,7 @@
 use crate::cli::{Cli, Init};
 use clap::Parser;
 use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
-use state::MayState;
+use state::State;
 use std::process::Command;
 
 mod cli;
@@ -16,10 +16,10 @@ fn main() {
 	let init = args.init();
 	let exec = args.exec();
 
-	let mut event_loop = EventLoop::<MayState>::try_new().unwrap();
+	let mut event_loop = EventLoop::<State>::try_new().unwrap();
 
-	let display = Display::<MayState>::new().unwrap();
-	let mut state = MayState::new(&mut event_loop, display);
+	let display = Display::<State>::new().unwrap();
+	let mut state = State::new(&mut event_loop, display);
 
 	// todo
 	let xkb = state.seat.get_keyboard().unwrap();

@@ -18,7 +18,7 @@ use std::{sync::Arc, time::Instant};
 mod handlers;
 
 #[derive(Debug)]
-pub struct MayState {
+pub struct State {
 	pub display_handle: DisplayHandle,
 	pub socket_name: String,
 
@@ -37,7 +37,7 @@ pub struct MayState {
 	pub shm_state: ShmState,
 }
 
-impl MayState {
+impl State {
 	pub fn new(event_loop: &mut EventLoop<Self>, display: Display<Self>) -> Self {
 		let display_handle = display.handle();
 		let socket_name = init_wayland_display(display, event_loop);
@@ -59,7 +59,7 @@ impl MayState {
 		let xdg_shell_state = XdgShellState::new::<Self>(&display_handle);
 		let shm_state = ShmState::new::<Self>(&display_handle, vec![]);
 
-		MayState {
+		State {
 			display_handle,
 			socket_name,
 
@@ -79,10 +79,7 @@ impl MayState {
 	}
 }
 
-fn init_wayland_display(
-	display: Display<MayState>,
-	event_loop: &mut EventLoop<MayState>,
-) -> String {
+fn init_wayland_display(display: Display<State>, event_loop: &mut EventLoop<State>) -> String {
 	// create socket for clients to connect to
 	let source = ListeningSocketSource::new_auto().unwrap();
 	let socket_name = source.socket_name().to_os_string().into_string().unwrap();

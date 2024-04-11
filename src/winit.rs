@@ -1,4 +1,4 @@
-use crate::MayState;
+use crate::State;
 use smithay::{
 	backend::{
 		renderer::{
@@ -19,7 +19,7 @@ struct WinitData {
 	damage_tracker: OutputDamageTracker,
 }
 
-pub fn init(calloop: &mut EventLoop<MayState>, state: &mut MayState) {
+pub fn init(calloop: &mut EventLoop<State>, state: &mut State) {
 	let display_handle = &mut state.display_handle;
 
 	let (backend, winit) = winit::init::<GlowRenderer>().unwrap();
@@ -41,7 +41,7 @@ pub fn init(calloop: &mut EventLoop<MayState>, state: &mut MayState) {
 
 	state.space.map_output(&output, (0, 0));
 
-	let _global = output.create_global::<MayState>(display_handle);
+	let _global = output.create_global::<State>(display_handle);
 	output.change_current_state(
 		Some(mode),
 		Some(Transform::Flipped180),
@@ -69,7 +69,7 @@ pub fn init(calloop: &mut EventLoop<MayState>, state: &mut MayState) {
 }
 
 impl WinitData {
-	fn render(&mut self, state: &mut MayState) {
+	fn render(&mut self, state: &mut State) {
 		let size = self.backend.window_size();
 		let damage = Rectangle::from_loc_and_size((0, 0), size);
 
@@ -103,7 +103,7 @@ impl WinitData {
 	}
 }
 
-impl MayState {
+impl State {
 	fn handle_winit_event(&mut self, event: WinitEvent, wd: &mut WinitData) {
 		match event {
 			WinitEvent::Resized { size, .. } => {

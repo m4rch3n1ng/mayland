@@ -1,4 +1,4 @@
-use crate::state::MayState;
+use crate::state::State;
 use smithay::{
 	delegate_xdg_shell,
 	desktop::{PopupKind, PopupManager, Space, Window},
@@ -14,7 +14,7 @@ use smithay::{
 	},
 };
 
-impl XdgShellHandler for MayState {
+impl XdgShellHandler for State {
 	fn xdg_shell_state(&mut self) -> &mut XdgShellState {
 		&mut self.xdg_shell_state
 	}
@@ -48,7 +48,7 @@ impl XdgShellHandler for MayState {
 	}
 }
 
-delegate_xdg_shell!(MayState);
+delegate_xdg_shell!(State);
 
 /// Should be called on `WlSurface::commit`
 pub fn handle_commit(popups: &mut PopupManager, space: &Space<Window>, surface: &WlSurface) {

@@ -1,0 +1,345 @@
+use smithay::{
+	backend::input::KeyState,
+	desktop::{LayerSurface, PopupKind, Window, WindowSurface},
+	input::{
+		keyboard::{KeyboardTarget, KeysymHandle, ModifiersState},
+		pointer::{
+			AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent,
+			GesturePinchBeginEvent, GesturePinchEndEvent, GesturePinchUpdateEvent,
+			GestureSwipeBeginEvent, GestureSwipeEndEvent, GestureSwipeUpdateEvent, MotionEvent,
+			PointerTarget, RelativeMotionEvent,
+		},
+		Seat,
+	},
+	reexports::{
+		wayland_server::{backend::ObjectId, protocol::wl_surface::WlSurface, Resource},
+		winit::window,
+	},
+	utils::{IsAlive, Serial},
+	wayland::seat::WaylandFocus,
+};
+
+use crate::state::State;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum KeyboardFocusTarget {
+	Window(Window),
+	LayerSurface(LayerSurface),
+	Popup(PopupKind),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum PointerFocusTarget {
+	WlSurface(WlSurface),
+}
+
+impl IsAlive for KeyboardFocusTarget {
+	fn alive(&self) -> bool {
+		match self {
+			KeyboardFocusTarget::Window(window) => window.alive(),
+			KeyboardFocusTarget::LayerSurface(layer) => layer.alive(),
+			KeyboardFocusTarget::Popup(popup) => popup.alive(),
+		}
+	}
+}
+
+impl IsAlive for PointerFocusTarget {
+	fn alive(&self) -> bool {
+		match self {
+			PointerFocusTarget::WlSurface(surface) => surface.alive(),
+		}
+	}
+}
+
+impl KeyboardTarget<State> for KeyboardFocusTarget {
+	fn enter(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		keys: Vec<KeysymHandle<'_>>,
+		serial: Serial,
+	) {
+		match self {
+			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
+				WindowSurface::Wayland(w) => {
+					KeyboardTarget::enter(w.wl_surface(), seat, data, keys, serial)
+				}
+			},
+			KeyboardFocusTarget::LayerSurface(l) => {
+				KeyboardTarget::enter(l.wl_surface(), seat, data, keys, serial)
+			}
+			KeyboardFocusTarget::Popup(p) => {
+				KeyboardTarget::enter(p.wl_surface(), seat, data, keys, serial)
+			}
+		}
+	}
+
+	fn leave(&self, seat: &Seat<State>, data: &mut State, serial: Serial) {
+		match self {
+			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
+				WindowSurface::Wayland(w) => {
+					KeyboardTarget::leave(w.wl_surface(), seat, data, serial)
+				}
+			},
+			KeyboardFocusTarget::LayerSurface(l) => {
+				KeyboardTarget::leave(l.wl_surface(), seat, data, serial)
+			}
+			KeyboardFocusTarget::Popup(p) => {
+				KeyboardTarget::leave(p.wl_surface(), seat, data, serial)
+			}
+		}
+	}
+
+	fn key(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		key: KeysymHandle<'_>,
+		state: KeyState,
+		serial: Serial,
+		time: u32,
+	) {
+		match self {
+			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
+				WindowSurface::Wayland(w) => {
+					KeyboardTarget::key(w.wl_surface(), seat, data, key, state, serial, time)
+				}
+			},
+			KeyboardFocusTarget::LayerSurface(l) => {
+				KeyboardTarget::key(l.wl_surface(), seat, data, key, state, serial, time)
+			}
+			KeyboardFocusTarget::Popup(p) => {
+				KeyboardTarget::key(p.wl_surface(), seat, data, key, state, serial, time)
+			}
+		}
+	}
+
+	fn modifiers(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		modifiers: ModifiersState,
+		serial: Serial,
+	) {
+		match self {
+			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
+				WindowSurface::Wayland(w) => {
+					KeyboardTarget::modifiers(w.wl_surface(), seat, data, modifiers, serial)
+				}
+			},
+			KeyboardFocusTarget::LayerSurface(l) => {
+				KeyboardTarget::modifiers(l.wl_surface(), seat, data, modifiers, serial)
+			}
+			KeyboardFocusTarget::Popup(p) => {
+				KeyboardTarget::modifiers(p.wl_surface(), seat, data, modifiers, serial)
+			}
+		}
+	}
+}
+
+impl PointerTarget<State> for PointerFocusTarget {
+	fn enter(&self, seat: &Seat<State>, data: &mut State, event: &MotionEvent) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => PointerTarget::enter(w, seat, data, event),
+		}
+	}
+
+	fn motion(&self, seat: &Seat<State>, data: &mut State, event: &MotionEvent) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => PointerTarget::motion(w, seat, data, event),
+		}
+	}
+
+	fn relative_motion(&self, seat: &Seat<State>, data: &mut State, event: &RelativeMotionEvent) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => {
+				PointerTarget::relative_motion(w, seat, data, event)
+			}
+		}
+	}
+
+	fn button(&self, seat: &Seat<State>, data: &mut State, event: &ButtonEvent) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => PointerTarget::button(w, seat, data, event),
+		}
+	}
+
+	fn axis(&self, seat: &Seat<State>, data: &mut State, frame: AxisFrame) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => PointerTarget::axis(w, seat, data, frame),
+		}
+	}
+
+	fn frame(&self, seat: &Seat<State>, data: &mut State) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => PointerTarget::frame(w, seat, data),
+		}
+	}
+
+	fn gesture_swipe_begin(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		event: &GestureSwipeBeginEvent,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => {
+				PointerTarget::gesture_swipe_begin(w, seat, data, event)
+			}
+		}
+	}
+
+	fn gesture_swipe_update(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		event: &GestureSwipeUpdateEvent,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => {
+				PointerTarget::gesture_swipe_update(w, seat, data, event)
+			}
+		}
+	}
+
+	fn gesture_swipe_end(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		event: &GestureSwipeEndEvent,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => {
+				PointerTarget::gesture_swipe_end(w, seat, data, event)
+			}
+		}
+	}
+
+	fn gesture_pinch_begin(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		event: &GesturePinchBeginEvent,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => {
+				PointerTarget::gesture_pinch_begin(w, seat, data, event)
+			}
+		}
+	}
+
+	fn gesture_pinch_update(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		event: &GesturePinchUpdateEvent,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => {
+				PointerTarget::gesture_pinch_update(w, seat, data, event)
+			}
+		}
+	}
+
+	fn gesture_pinch_end(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		event: &GesturePinchEndEvent,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => {
+				PointerTarget::gesture_pinch_end(w, seat, data, event)
+			}
+		}
+	}
+
+	fn gesture_hold_begin(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		event: &GestureHoldBeginEvent,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => {
+				PointerTarget::gesture_hold_begin(w, seat, data, event)
+			}
+		}
+	}
+
+	fn gesture_hold_end(&self, seat: &Seat<State>, data: &mut State, event: &GestureHoldEndEvent) {
+		match self {
+			PointerFocusTarget::WlSurface(surface) => {
+				PointerTarget::gesture_hold_end(surface, seat, data, event)
+			}
+		}
+	}
+
+	fn leave(
+		&self,
+		seat: &Seat<State>,
+		data: &mut State,
+		serial: smithay::utils::Serial,
+		time: u32,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => PointerTarget::leave(w, seat, data, serial, time),
+		}
+	}
+}
+
+impl WaylandFocus for KeyboardFocusTarget {
+	fn wl_surface(&self) -> Option<WlSurface> {
+		match self {
+			KeyboardFocusTarget::Window(w) => w.wl_surface(),
+			KeyboardFocusTarget::LayerSurface(l) => Some(l.wl_surface().clone()),
+			KeyboardFocusTarget::Popup(p) => Some(p.wl_surface().clone()),
+		}
+	}
+
+	fn same_client_as(&self, object_id: &ObjectId) -> bool {
+		match self {
+			KeyboardFocusTarget::Window(w) => w.same_client_as(object_id),
+			KeyboardFocusTarget::LayerSurface(l) => l.wl_surface().id().same_client_as(object_id),
+			KeyboardFocusTarget::Popup(p) => p.wl_surface().id().same_client_as(object_id),
+		}
+	}
+}
+
+impl WaylandFocus for PointerFocusTarget {
+	fn wl_surface(&self) -> Option<WlSurface> {
+		match self {
+			PointerFocusTarget::WlSurface(w) => w.wl_surface(),
+		}
+	}
+
+	fn same_client_as(&self, object_id: &ObjectId) -> bool {
+		match self {
+			PointerFocusTarget::WlSurface(w) => w.same_client_as(object_id),
+		}
+	}
+}
+
+impl From<WlSurface> for PointerFocusTarget {
+	fn from(value: WlSurface) -> Self {
+		PointerFocusTarget::WlSurface(value)
+	}
+}
+
+impl From<&WlSurface> for PointerFocusTarget {
+	fn from(value: &WlSurface) -> Self {
+		PointerFocusTarget::WlSurface(value.clone())
+	}
+}
+
+impl From<PopupKind> for PointerFocusTarget {
+	fn from(value: PopupKind) -> Self {
+		PointerFocusTarget::WlSurface(value.wl_surface().clone())
+	}
+}
+
+impl From<Window> for KeyboardFocusTarget {
+	fn from(value: Window) -> Self {
+		KeyboardFocusTarget::Window(value)
+	}
+}

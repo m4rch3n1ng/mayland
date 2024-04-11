@@ -1,14 +1,15 @@
-use crate::state::MayState;
+use crate::{shell::focus::PointerFocusTarget, state::State};
 use smithay::{
 	backend::{
 		input::{Event, InputEvent, KeyboardKeyEvent},
 		winit::WinitInput,
 	},
+	desktop::layer_map_for_output,
 	input::keyboard::FilterResult,
-	utils::SERIAL_COUNTER,
+	utils::{Logical, Point, SERIAL_COUNTER},
 };
 
-impl MayState {
+impl State {
 	pub fn handle_input_event(&mut self, event: InputEvent<WinitInput>) {
 		match event {
 			InputEvent::Keyboard { event, .. } => {
@@ -30,5 +31,19 @@ impl MayState {
 			InputEvent::PointerMotionAbsolute { .. } => {}
 			_ => println!("input {:?}", event),
 		}
+	}
+
+	pub fn surface_under(
+		&self,
+		pos: Point<f64, Logical>,
+	) -> Option<(PointerFocusTarget, Point<i32, Logical>)> {
+		let output = self.space.outputs().find(|output| {
+			let geometry = self.space.output_geometry(output).unwrap();
+			geometry.contains(pos.to_i32_round())
+		})?;
+		let output_geo = self.space.output_geometry(output).unwrap();
+		let layers = layer_map_for_output(output);
+
+		todo!()
 	}
 }

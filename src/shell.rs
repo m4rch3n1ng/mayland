@@ -1,4 +1,4 @@
-use crate::state::{ClientState, MayState};
+use crate::state::{ClientState, State};
 use smithay::{
 	backend::renderer::utils::on_commit_buffer_handler,
 	delegate_compositor, delegate_shm,
@@ -20,9 +20,10 @@ use smithay::{
 
 use self::xdg::handle_commit;
 
+pub mod focus;
 pub mod xdg;
 
-impl MayState {
+impl State {
 	fn window_for_surface(&mut self, surface: &WlSurface) -> Option<Window> {
 		self.space
 			.elements()
@@ -31,7 +32,7 @@ impl MayState {
 	}
 }
 
-impl CompositorHandler for MayState {
+impl CompositorHandler for State {
 	fn compositor_state(&mut self) -> &mut CompositorState {
 		&mut self.compositor_state
 	}
@@ -61,15 +62,15 @@ impl CompositorHandler for MayState {
 	}
 }
 
-impl BufferHandler for MayState {
+impl BufferHandler for State {
 	fn buffer_destroyed(&mut self, _buffer: &wl_buffer::WlBuffer) {}
 }
 
-impl ShmHandler for MayState {
+impl ShmHandler for State {
 	fn shm_state(&self) -> &ShmState {
 		&self.shm_state
 	}
 }
 
-delegate_compositor!(MayState);
-delegate_shm!(MayState);
+delegate_compositor!(State);
+delegate_shm!(State);
