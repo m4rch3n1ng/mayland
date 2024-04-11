@@ -1,6 +1,5 @@
-use crate::shell::focus::{KeyboardFocusTarget, PointerFocusTarget};
-
 use super::State;
+use crate::shell::focus::{KeyboardFocusTarget, PointerFocusTarget};
 use smithay::{
 	delegate_data_device, delegate_output, delegate_seat,
 	input::SeatHandler,

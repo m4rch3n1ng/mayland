@@ -1,3 +1,5 @@
+use super::element::WindowElement;
+use crate::state::State;
 use smithay::{
 	backend::input::KeyState,
 	desktop::{LayerSurface, PopupKind, WindowSurface},
@@ -15,10 +17,6 @@ use smithay::{
 	utils::{IsAlive, Serial},
 	wayland::seat::WaylandFocus,
 };
-
-use crate::state::State;
-
-use super::element::WindowElement;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum KeyboardFocusTarget {
@@ -340,6 +338,12 @@ impl From<PopupKind> for PointerFocusTarget {
 impl From<LayerSurface> for KeyboardFocusTarget {
 	fn from(layer: LayerSurface) -> Self {
 		KeyboardFocusTarget::LayerSurface(layer)
+	}
+}
+
+impl From<&LayerSurface> for KeyboardFocusTarget {
+	fn from(value: &LayerSurface) -> Self {
+		KeyboardFocusTarget::LayerSurface(value.clone())
 	}
 }
 

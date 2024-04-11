@@ -1,4 +1,7 @@
-use crate::{shell::focus::PointerFocusTarget, state::State};
+use crate::{
+	shell::focus::{KeyboardFocusTarget, PointerFocusTarget},
+	state::State,
+};
 use smithay::{
 	backend::{
 		input::{
@@ -14,7 +17,7 @@ use smithay::{
 	},
 	reexports::wayland_server::protocol::wl_pointer,
 	utils::{Logical, Point, Serial, SERIAL_COUNTER},
-	wayland::shell::wlr_layer::Layer as WlrLayer,
+	wayland::{input_method::InputMethodSeat, shell::wlr_layer::Layer as WlrLayer},
 };
 
 impl State {
@@ -93,6 +96,31 @@ impl State {
 
 	fn update_keyboard_focus(&mut self, location: Point<f64, Logical>, serial: Serial) {
 		let keyboard = self.keyboard.clone();
+		let input_method = self.seat.input_method();
+
+		if self.pointer.is_grabbed() || keyboard.is_grabbed() && !input_method.keyboard_grabbed() {
+			return;
+		}
+
+		let output = self.space.output_under(location).next().cloned();
+		if let Some(output) = output.as_ref() {
+			let output_geo = self.space.output_geometry(output).unwrap();
+			let layers = layer_map_for_output(output);
+			if let Some(layer) = layers
+				.layer_under(WlrLayer::Overlay, location)
+				.or_else(|| layers.layer_under(WlrLayer::Top, location))
+			{
+				if layer.can_receive_keyboard_focus() {
+					let layer_geo = layers.layer_geometry(layer).unwrap();
+					if let Some((_, _)) = layer.surface_under(
+						location - output_geo.loc.to_f64() - layer_geo.loc.to_f64(),
+						WindowSurfaceType::ALL,
+					) {
+						keyboard.set_focus(self, Some(KeyboardFocusTarget::from(layer)), serial);
+					}
+				}
+			}
+		};
 
 		if let Some((window, _)) = self
 			.space
@@ -102,34 +130,64 @@ impl State {
 			self.space.raise_element(&window, true);
 			keyboard.set_focus(self, Some(window.into()), serial);
 		}
+
+		if let Some(output) = output.as_ref() {
+			let layers = layer_map_for_output(output);
+			if let Some(layer) = layers
+				.layer_under(WlrLayer::Bottom, location)
+				.or_else(|| layers.layer_under(WlrLayer::Background, location))
+			{
+				if layer.can_receive_keyboard_focus() {
+					let output_geo = self.space.output_geometry(output).unwrap();
+					let layer_geo = layers.layer_geometry(layer).unwrap();
+					if let Some((_, _)) = layer.surface_under(
+						location - output_geo.loc.to_f64() - layer_geo.loc.to_f64(),
+						WindowSurfaceType::ALL,
+					) {
+						keyboard.set_focus(self, Some(KeyboardFocusTarget::from(layer)), serial);
+					}
+				}
+			}
+		}
 	}
 
 	pub fn surface_under(
 		&self,
-		pos: Point<f64, Logical>,
+		location: Point<f64, Logical>,
 	) -> Option<(PointerFocusTarget, Point<i32, Logical>)> {
 		let output = self.space.outputs().find(|output| {
 			let geometry = self.space.output_geometry(output).unwrap();
-			geometry.contains(pos.to_i32_round())
+			geometry.contains(location.to_i32_round())
 		})?;
 		let output_geo = self.space.output_geometry(output).unwrap();
 		let layers = layer_map_for_output(output);
 
 		if let Some(layer) = layers
-			.layer_under(WlrLayer::Overlay, pos)
-			.or_else(|| layers.layer_under(WlrLayer::Top, pos))
+			.layer_under(WlrLayer::Overlay, location)
+			.or_else(|| layers.layer_under(WlrLayer::Top, location))
 		{
-			let layer_loc = layers.layer_geometry(layer).unwrap().loc;
+			let layer_loc = layers.layer_geometry(layer).unwrap();
 			layer
 				.surface_under(
-					pos - output_geo.loc.to_f64() - layer_loc.to_f64(),
+					location - output_geo.loc.to_f64() - layer_loc.loc.to_f64(),
 					WindowSurfaceType::ALL,
 				)
 				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc))
-		} else if let Some((window, loc)) = self.space.element_under(pos) {
+		} else if let Some((window, loc)) = self.space.element_under(location) {
 			window
-				.surface_under(pos - loc.to_f64(), WindowSurfaceType::ALL)
+				.surface_under(location - loc.to_f64(), WindowSurfaceType::ALL)
 				.map(|(surface, surf_loc)| (surface, surf_loc + loc))
+		} else if let Some(layer) = layers
+			.layer_under(WlrLayer::Bottom, location)
+			.or_else(|| layers.layer_under(WlrLayer::Background, location))
+		{
+			let layer_loc = layers.layer_geometry(layer).unwrap();
+			layer
+				.surface_under(
+					location - output_geo.loc.to_f64() - layer_loc.loc.to_f64(),
+					WindowSurfaceType::ALL,
+				)
+				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc))
 		} else {
 			None
 		}

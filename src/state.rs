@@ -12,6 +12,7 @@ use smithay::{
 	},
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
+		output::OutputManagerState,
 		selection::data_device::DataDeviceState,
 		shell::{wlr_layer::WlrLayerShellState, xdg::XdgShellState},
 		shm::ShmState,
@@ -38,6 +39,7 @@ pub struct State {
 	pub compositor_state: CompositorState,
 	pub data_device_state: DataDeviceState,
 	pub layer_shell_state: WlrLayerShellState,
+	pub output_manager_state: OutputManagerState,
 	pub seat_state: SeatState<Self>,
 	pub xdg_shell_state: XdgShellState,
 	pub shm_state: ShmState,
@@ -67,6 +69,7 @@ impl State {
 		let compositor_state = CompositorState::new::<Self>(&display_handle);
 		let data_device_state = DataDeviceState::new::<Self>(&display_handle);
 		let layer_shell_state = WlrLayerShellState::new::<Self>(&display_handle);
+		let output_manager_state = OutputManagerState::new_with_xdg_output::<Self>(&display_handle);
 		let xdg_shell_state = XdgShellState::new::<Self>(&display_handle);
 		let shm_state = ShmState::new::<Self>(&display_handle, vec![]);
 
@@ -84,6 +87,7 @@ impl State {
 			compositor_state,
 			data_device_state,
 			layer_shell_state,
+			output_manager_state,
 			seat_state,
 			xdg_shell_state,
 			shm_state,

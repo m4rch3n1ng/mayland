@@ -75,7 +75,8 @@ impl WinitData {
 
 		self.backend.bind().unwrap();
 		smithay::desktop::space::render_output::<_, WaylandSurfaceRenderElement<GlowRenderer>, _, _>(
-			&self.output,self.backend.renderer(),
+			&self.output,
+			self.backend.renderer(),
 			1.0,
 			0,
 			[&state.space],
