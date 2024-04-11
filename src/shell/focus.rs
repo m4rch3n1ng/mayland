@@ -1,6 +1,6 @@
 use smithay::{
 	backend::input::KeyState,
-	desktop::{LayerSurface, PopupKind, Window, WindowSurface},
+	desktop::{LayerSurface, PopupKind, WindowSurface},
 	input::{
 		keyboard::{KeyboardTarget, KeysymHandle, ModifiersState},
 		pointer::{
@@ -11,19 +11,18 @@ use smithay::{
 		},
 		Seat,
 	},
-	reexports::{
-		wayland_server::{backend::ObjectId, protocol::wl_surface::WlSurface, Resource},
-		winit::window,
-	},
+	reexports::wayland_server::{backend::ObjectId, protocol::wl_surface::WlSurface, Resource},
 	utils::{IsAlive, Serial},
 	wayland::seat::WaylandFocus,
 };
 
 use crate::state::State;
 
+use super::element::WindowElement;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum KeyboardFocusTarget {
-	Window(Window),
+	Window(WindowElement),
 	LayerSurface(LayerSurface),
 	Popup(PopupKind),
 }
@@ -36,9 +35,9 @@ pub enum PointerFocusTarget {
 impl IsAlive for KeyboardFocusTarget {
 	fn alive(&self) -> bool {
 		match self {
-			KeyboardFocusTarget::Window(window) => window.alive(),
-			KeyboardFocusTarget::LayerSurface(layer) => layer.alive(),
-			KeyboardFocusTarget::Popup(popup) => popup.alive(),
+			KeyboardFocusTarget::Window(w) => w.alive(),
+			KeyboardFocusTarget::LayerSurface(l) => l.alive(),
+			KeyboardFocusTarget::Popup(p) => p.alive(),
 		}
 	}
 }
@@ -299,7 +298,7 @@ impl WaylandFocus for KeyboardFocusTarget {
 
 	fn same_client_as(&self, object_id: &ObjectId) -> bool {
 		match self {
-			KeyboardFocusTarget::Window(w) => w.same_client_as(object_id),
+			KeyboardFocusTarget::Window(w) => w.0.same_client_as(object_id),
 			KeyboardFocusTarget::LayerSurface(l) => l.wl_surface().id().same_client_as(object_id),
 			KeyboardFocusTarget::Popup(p) => p.wl_surface().id().same_client_as(object_id),
 		}
@@ -321,25 +320,37 @@ impl WaylandFocus for PointerFocusTarget {
 }
 
 impl From<WlSurface> for PointerFocusTarget {
-	fn from(value: WlSurface) -> Self {
-		PointerFocusTarget::WlSurface(value)
+	fn from(wl_surface: WlSurface) -> Self {
+		PointerFocusTarget::WlSurface(wl_surface)
 	}
 }
 
 impl From<&WlSurface> for PointerFocusTarget {
-	fn from(value: &WlSurface) -> Self {
-		PointerFocusTarget::WlSurface(value.clone())
+	fn from(wl_surface: &WlSurface) -> Self {
+		PointerFocusTarget::WlSurface(wl_surface.clone())
 	}
 }
 
 impl From<PopupKind> for PointerFocusTarget {
-	fn from(value: PopupKind) -> Self {
-		PointerFocusTarget::WlSurface(value.wl_surface().clone())
+	fn from(popup: PopupKind) -> Self {
+		PointerFocusTarget::WlSurface(popup.wl_surface().clone())
 	}
 }
 
-impl From<Window> for KeyboardFocusTarget {
-	fn from(value: Window) -> Self {
-		KeyboardFocusTarget::Window(value)
+impl From<LayerSurface> for KeyboardFocusTarget {
+	fn from(layer: LayerSurface) -> Self {
+		KeyboardFocusTarget::LayerSurface(layer)
+	}
+}
+
+impl From<PopupKind> for KeyboardFocusTarget {
+	fn from(popup: PopupKind) -> Self {
+		KeyboardFocusTarget::Popup(popup)
+	}
+}
+
+impl From<WindowElement> for KeyboardFocusTarget {
+	fn from(window: WindowElement) -> Self {
+		KeyboardFocusTarget::Window(window)
 	}
 }

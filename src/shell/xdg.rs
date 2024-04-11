@@ -1,12 +1,12 @@
+use super::element::WindowElement;
 use crate::state::State;
 use smithay::{
-	delegate_xdg_shell,
+	delegate_layer_shell, delegate_xdg_shell,
 	desktop::{PopupKind, PopupManager, Space, Window},
 	reexports::wayland_server::protocol::{wl_seat::WlSeat, wl_surface::WlSurface},
 	utils::Serial,
 	wayland::{
 		compositor::with_states,
-		seat::WaylandFocus,
 		shell::xdg::{
 			PopupSurface, PositionerState, ToplevelSurface, XdgPopupSurfaceData, XdgShellHandler,
 			XdgShellState, XdgToplevelSurfaceData,
@@ -20,7 +20,7 @@ impl XdgShellHandler for State {
 	}
 
 	fn new_toplevel(&mut self, surface: ToplevelSurface) {
-		let window = Window::new_wayland_window(surface);
+		let window = WindowElement(Window::new_wayland_window(surface));
 		self.space.map_element(window, (0, 0), false);
 	}
 
@@ -49,16 +49,17 @@ impl XdgShellHandler for State {
 }
 
 delegate_xdg_shell!(State);
+delegate_layer_shell!(State);
 
 /// Should be called on `WlSurface::commit`
-pub fn handle_commit(popups: &mut PopupManager, space: &Space<Window>, surface: &WlSurface) {
+pub fn handle_commit(popups: &mut PopupManager, space: &Space<WindowElement>, surface: &WlSurface) {
 	// Handle toplevel commits.
 	if let Some(window) = space
 		.elements()
 		.find(|w| w.wl_surface().is_some_and(|w| w == *surface))
 		.cloned()
 	{
-		if let Some(toplevel) = window.toplevel() {
+		if let Some(toplevel) = window.0.toplevel() {
 			let initial_configure_sent = with_states(surface, |states| {
 				states
 					.data_map

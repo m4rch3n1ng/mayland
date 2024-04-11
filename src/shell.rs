@@ -1,10 +1,12 @@
+use self::{element::WindowElement, xdg::handle_commit};
 use crate::state::{ClientState, State};
 use smithay::{
 	backend::renderer::utils::on_commit_buffer_handler,
 	delegate_compositor, delegate_shm,
-	desktop::Window,
+	desktop::{layer_map_for_output, LayerSurface},
+	output::Output,
 	reexports::wayland_server::{
-		protocol::{wl_buffer, wl_surface::WlSurface},
+		protocol::{wl_buffer, wl_output::WlOutput, wl_surface::WlSurface},
 		Client,
 	},
 	wayland::{
@@ -13,23 +15,19 @@ use smithay::{
 			get_parent, is_sync_subsurface, CompositorClientState, CompositorHandler,
 			CompositorState,
 		},
-		seat::WaylandFocus,
+		shell::wlr_layer::{
+			Layer, LayerSurface as WlrLayerSurface, WlrLayerShellHandler, WlrLayerShellState,
+		},
 		shm::{ShmHandler, ShmState},
 	},
 };
 
-use self::xdg::handle_commit;
-
+pub mod element;
 pub mod focus;
 pub mod xdg;
 
-impl State {
-	fn window_for_surface(&mut self, surface: &WlSurface) -> Option<Window> {
-		self.space
-			.elements()
-			.find(|&w| w.wl_surface().is_some_and(|w| w == *surface))
-			.cloned()
-	}
+impl BufferHandler for State {
+	fn buffer_destroyed(&mut self, _buffer: &wl_buffer::WlBuffer) {}
 }
 
 impl CompositorHandler for State {
@@ -54,7 +52,7 @@ impl CompositorHandler for State {
 			}
 
 			if let Some(window) = self.window_for_surface(surface) {
-				window.on_commit();
+				window.0.on_commit();
 			}
 		};
 
@@ -62,8 +60,35 @@ impl CompositorHandler for State {
 	}
 }
 
-impl BufferHandler for State {
-	fn buffer_destroyed(&mut self, _buffer: &wl_buffer::WlBuffer) {}
+impl WlrLayerShellHandler for State {
+	fn shell_state(&mut self) -> &mut WlrLayerShellState {
+		&mut self.layer_shell_state
+	}
+
+	fn new_layer_surface(
+		&mut self,
+		surface: WlrLayerSurface,
+		wl_output: Option<WlOutput>,
+		_layer: Layer,
+		namespace: String,
+	) {
+		let output = wl_output
+			.as_ref()
+			.and_then(Output::from_resource)
+			.unwrap_or_else(|| self.space.outputs().next().unwrap().clone());
+		let mut map = layer_map_for_output(&output);
+		map.map_layer(&LayerSurface::new(surface, namespace))
+			.unwrap();
+	}
+}
+
+impl State {
+	fn window_for_surface(&mut self, surface: &WlSurface) -> Option<WindowElement> {
+		self.space
+			.elements()
+			.find(|&w| w.wl_surface().is_some_and(|w| w == *surface))
+			.cloned()
+	}
 }
 
 impl ShmHandler for State {

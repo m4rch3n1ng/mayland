@@ -86,7 +86,7 @@ impl WinitData {
 		self.backend.submit(Some(&[damage])).unwrap();
 
 		state.space.elements().for_each(|window| {
-			window.send_frame(
+			window.0.send_frame(
 				&self.output,
 				state.start_time.elapsed(),
 				Some(Duration::ZERO),

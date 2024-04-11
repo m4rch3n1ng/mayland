@@ -22,7 +22,7 @@ fn main() {
 	let mut state = State::new(&mut event_loop, display);
 
 	// todo
-	let xkb = state.seat.get_keyboard().unwrap();
+	let xkb = state.keyboard.clone();
 	let keymap = std::fs::read_to_string("/home/may/.config/keymap/comp.xkb").unwrap();
 	xkb.set_keymap_from_string(&mut state, keymap).unwrap();
 

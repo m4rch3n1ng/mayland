@@ -1,6 +1,11 @@
+use crate::shell::element::WindowElement;
 use smithay::{
-	desktop::{PopupManager, Space, Window},
-	input::{keyboard::XkbConfig, Seat, SeatState},
+	desktop::{PopupManager, Space},
+	input::{
+		keyboard::{KeyboardHandle, XkbConfig},
+		pointer::PointerHandle,
+		Seat, SeatState,
+	},
 	reexports::{
 		calloop::{generic::Generic, EventLoop, Interest, LoopSignal, Mode, PostAction},
 		wayland_server::{backend::ClientData, Display, DisplayHandle},
@@ -8,7 +13,7 @@ use smithay::{
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
 		selection::data_device::DataDeviceState,
-		shell::xdg::XdgShellState,
+		shell::{wlr_layer::WlrLayerShellState, xdg::XdgShellState},
 		shm::ShmState,
 		socket::ListeningSocketSource,
 	},
@@ -24,7 +29,7 @@ pub struct State {
 
 	pub seat: Seat<Self>,
 	pub popups: PopupManager,
-	pub space: Space<Window>,
+	pub space: Space<WindowElement>,
 
 	pub start_time: std::time::Instant,
 	pub loop_signal: LoopSignal,
@@ -32,9 +37,14 @@ pub struct State {
 	// wayland state
 	pub compositor_state: CompositorState,
 	pub data_device_state: DataDeviceState,
+	pub layer_shell_state: WlrLayerShellState,
 	pub seat_state: SeatState<Self>,
 	pub xdg_shell_state: XdgShellState,
 	pub shm_state: ShmState,
+
+	// input
+	pub pointer: PointerHandle<State>,
+	pub keyboard: KeyboardHandle<State>,
 }
 
 impl State {
@@ -45,8 +55,8 @@ impl State {
 		let mut seat_state = SeatState::new();
 		let mut seat = seat_state.new_wl_seat(&display_handle, "winit");
 
-		seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
-		seat.add_pointer();
+		let keyboard = seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
+		let pointer = seat.add_pointer();
 
 		let popups = PopupManager::default();
 		let space = Space::default();
@@ -56,6 +66,7 @@ impl State {
 
 		let compositor_state = CompositorState::new::<Self>(&display_handle);
 		let data_device_state = DataDeviceState::new::<Self>(&display_handle);
+		let layer_shell_state = WlrLayerShellState::new::<Self>(&display_handle);
 		let xdg_shell_state = XdgShellState::new::<Self>(&display_handle);
 		let shm_state = ShmState::new::<Self>(&display_handle, vec![]);
 
@@ -72,9 +83,13 @@ impl State {
 
 			compositor_state,
 			data_device_state,
+			layer_shell_state,
 			seat_state,
 			xdg_shell_state,
 			shm_state,
+
+			pointer,
+			keyboard,
 		}
 	}
 }
