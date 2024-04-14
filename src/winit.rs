@@ -3,7 +3,7 @@ use smithay::{
 	backend::{
 		renderer::{
 			damage::OutputDamageTracker, element::surface::WaylandSurfaceRenderElement,
-			glow::GlowRenderer,
+			glow::GlowRenderer, ImportEgl,
 		},
 		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
@@ -22,7 +22,7 @@ struct WinitData {
 pub fn init(calloop: &mut EventLoop<State>, state: &mut State) {
 	let display_handle = &mut state.display_handle;
 
-	let (backend, winit) = winit::init::<GlowRenderer>().unwrap();
+	let (mut backend, winit) = winit::init::<GlowRenderer>().unwrap();
 
 	let mode = Mode {
 		size: backend.window_size(),
@@ -49,6 +49,10 @@ pub fn init(calloop: &mut EventLoop<State>, state: &mut State) {
 		Some((0, 0).into()),
 	);
 	output.set_preferred(mode);
+
+	if backend.renderer().bind_wl_display(display_handle).is_ok() {
+		println!("EGL hardware-acceleration enabled");
+	};
 
 	let damage_tracker = OutputDamageTracker::from_output(&output);
 	let mut winit_data = WinitData {

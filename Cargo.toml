@@ -12,7 +12,9 @@ version = "0.3.0"
 default-features = false
 features = [
 	"backend_winit",
+	"backend_egl",
 	"wayland_frontend",
 	"desktop",
-	"renderer_glow"
+	"renderer_glow",
+	"use_system_lib"
 ]
