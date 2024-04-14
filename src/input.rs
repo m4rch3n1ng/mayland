@@ -44,7 +44,7 @@ impl State {
 			}
 			InputEvent::PointerButton { event } => self.on_pointer_button::<WinitInput>(event),
 
-			_ => {}
+			evt => println!("evt {:?}", evt),
 		}
 	}
 
@@ -54,12 +54,11 @@ impl State {
 		let location = event.position_transformed(output_geo.size) + output_geo.loc.to_f64();
 
 		let under = self.surface_under(location);
-
-		let ptr = self.pointer.clone();
 		let serial = SERIAL_COUNTER.next_serial();
 
 		self.update_keyboard_focus(location, serial);
 
+		let ptr = self.pointer.clone();
 		ptr.motion(
 			self,
 			under,
@@ -128,7 +127,10 @@ impl State {
 			.map(|(w, p)| (w.clone(), p))
 		{
 			self.space.raise_element(&window, true);
-			keyboard.set_focus(self, Some(window.into()), serial);
+			keyboard.set_focus(self, Some(KeyboardFocusTarget::from(window)), serial);
+			self.space.elements().for_each(|window| {
+				window.0.toplevel().unwrap().send_pending_configure();
+			});
 		}
 
 		if let Some(output) = output.as_ref() {

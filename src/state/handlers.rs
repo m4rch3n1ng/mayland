@@ -1,10 +1,13 @@
 use super::State;
 use crate::shell::focus::{KeyboardFocusTarget, PointerFocusTarget};
 use smithay::{
-	delegate_data_device, delegate_output, delegate_seat,
+	backend::allocator::dmabuf::Dmabuf,
+	delegate_data_control, delegate_data_device, delegate_dmabuf, delegate_output,
+	delegate_primary_selection, delegate_seat,
 	input::SeatHandler,
 	reexports::wayland_server::{protocol::wl_surface::WlSurface, Resource},
 	wayland::{
+		dmabuf::{DmabufGlobal, DmabufHandler, DmabufState, ImportNotifier},
 		output::OutputHandler,
 		seat::WaylandFocus,
 		selection::{
@@ -12,6 +15,8 @@ use smithay::{
 				set_data_device_focus, ClientDndGrabHandler, DataDeviceHandler, DataDeviceState,
 				ServerDndGrabHandler,
 			},
+			primary_selection::{PrimarySelectionHandler, PrimarySelectionState},
+			wlr_data_control::{DataControlHandler, DataControlState},
 			SelectionHandler,
 		},
 	},
@@ -59,3 +64,38 @@ delegate_data_device!(State);
 impl OutputHandler for State {}
 
 delegate_output!(State);
+
+// <new />
+
+impl PrimarySelectionHandler for State {
+	fn primary_selection_state(&self) -> &PrimarySelectionState {
+		&self.primary_selection_state
+	}
+}
+
+delegate_primary_selection!(State);
+
+impl DataControlHandler for State {
+	fn data_control_state(&self) -> &DataControlState {
+		&self.data_control_state
+	}
+}
+
+delegate_data_control!(State);
+
+impl DmabufHandler for State {
+	fn dmabuf_state(&mut self) -> &mut DmabufState {
+		&mut self.dmabuf_state
+	}
+
+	fn dmabuf_imported(
+		&mut self,
+		_global: &DmabufGlobal,
+		_dmabuf: Dmabuf,
+		_notifier: ImportNotifier,
+	) {
+		todo!();
+	}
+}
+
+delegate_dmabuf!(State);

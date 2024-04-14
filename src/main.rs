@@ -31,9 +31,16 @@ fn main() {
 		Init::Tty => todo!("tty"),
 	}
 
-	if let Some(cmd) = exec {
-		println!("exec {:?}", cmd);
+	if let Some(exec) = exec {
+		let split = exec.split_whitespace().collect::<Vec<_>>();
+		let [cmd, args @ ..] = &split[..] else {
+			panic!()
+		};
+
+		println!("exec {:?} {:?}", cmd, args);
+
 		Command::new(cmd)
+			.args(args)
 			.envs([("WAYLAND_DISPLAY", &state.socket_name)])
 			.spawn()
 			.unwrap();

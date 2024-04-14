@@ -99,7 +99,7 @@ impl WinitData {
 		state.popups.cleanup();
 		let _ = state.display_handle.flush_clients();
 
-		// Ask for redraw to schedule new frame.
+		// ask for redraw to schedule new frame.
 		self.backend.window().request_redraw();
 	}
 }

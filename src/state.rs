@@ -12,8 +12,12 @@ use smithay::{
 	},
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
+		dmabuf::DmabufState,
 		output::OutputManagerState,
-		selection::data_device::DataDeviceState,
+		selection::{
+			data_device::DataDeviceState, primary_selection::PrimarySelectionState,
+			wlr_data_control::DataControlState,
+		},
 		shell::{wlr_layer::WlrLayerShellState, xdg::XdgShellState},
 		shm::ShmState,
 		socket::ListeningSocketSource,
@@ -38,8 +42,11 @@ pub struct State {
 	// wayland state
 	pub compositor_state: CompositorState,
 	pub data_device_state: DataDeviceState,
+	pub dmabuf_state: DmabufState,
 	pub layer_shell_state: WlrLayerShellState,
 	pub output_manager_state: OutputManagerState,
+	pub primary_selection_state: PrimarySelectionState,
+	pub data_control_state: DataControlState,
 	pub seat_state: SeatState<Self>,
 	pub xdg_shell_state: XdgShellState,
 	pub shm_state: ShmState,
@@ -68,8 +75,15 @@ impl State {
 
 		let compositor_state = CompositorState::new::<Self>(&display_handle);
 		let data_device_state = DataDeviceState::new::<Self>(&display_handle);
+		let dmabuf_state = DmabufState::new();
 		let layer_shell_state = WlrLayerShellState::new::<Self>(&display_handle);
 		let output_manager_state = OutputManagerState::new_with_xdg_output::<Self>(&display_handle);
+		let primary_selection_state = PrimarySelectionState::new::<Self>(&display_handle);
+		let data_control_state = DataControlState::new::<Self, _>(
+			&display_handle,
+			Some(&primary_selection_state),
+			|_| true,
+		);
 		let xdg_shell_state = XdgShellState::new::<Self>(&display_handle);
 		let shm_state = ShmState::new::<Self>(&display_handle, vec![]);
 
@@ -86,8 +100,11 @@ impl State {
 
 			compositor_state,
 			data_device_state,
+			dmabuf_state,
 			layer_shell_state,
 			output_manager_state,
+			primary_selection_state,
+			data_control_state,
 			seat_state,
 			xdg_shell_state,
 			shm_state,

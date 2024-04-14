@@ -51,9 +51,9 @@ impl XdgShellHandler for State {
 delegate_xdg_shell!(State);
 delegate_layer_shell!(State);
 
-/// Should be called on `WlSurface::commit`
+/// should be called on `WlSurface::commit`
 pub fn handle_commit(popups: &mut PopupManager, space: &Space<WindowElement>, surface: &WlSurface) {
-	// Handle toplevel commits.
+	// handle toplevel commits.
 	if let Some(window) = space
 		.elements()
 		.find(|w| w.wl_surface().is_some_and(|w| w == *surface))
@@ -76,7 +76,7 @@ pub fn handle_commit(popups: &mut PopupManager, space: &Space<WindowElement>, su
 		}
 	}
 
-	// Handle popup commits.
+	// handle popup commits.
 	popups.commit(surface);
 	if let Some(popup) = popups.find_popup(surface) {
 		match popup {
@@ -91,8 +91,7 @@ pub fn handle_commit(popups: &mut PopupManager, space: &Space<WindowElement>, su
 						.initial_configure_sent
 				});
 				if !initial_configure_sent {
-					// NOTE: This should never fail as the initial configure is always
-					// allowed.
+					// NOTE: this should never fail as the initial configure is always allowed.
 					xdg.send_configure().expect("initial configure failed");
 				}
 			}
