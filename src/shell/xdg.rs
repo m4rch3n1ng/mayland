@@ -16,16 +16,16 @@ use smithay::{
 
 impl XdgShellHandler for State {
 	fn xdg_shell_state(&mut self) -> &mut XdgShellState {
-		&mut self.xdg_shell_state
+		&mut self.mayland.xdg_shell_state
 	}
 
 	fn new_toplevel(&mut self, surface: ToplevelSurface) {
 		let window = WindowElement(Window::new_wayland_window(surface));
-		self.space.map_element(window, (0, 0), false);
+		self.mayland.space.map_element(window, (0, 0), false);
 	}
 
 	fn new_popup(&mut self, surface: PopupSurface, _positioner: PositionerState) {
-		let _ = self.popups.track_popup(PopupKind::Xdg(surface));
+		let _ = self.mayland.popups.track_popup(PopupKind::Xdg(surface));
 	}
 
 	fn reposition_request(

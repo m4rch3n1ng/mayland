@@ -4,11 +4,11 @@ use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
 use state::State;
 use std::process::Command;
 
+mod backend;
 mod cli;
 mod input;
 mod shell;
 mod state;
-mod winit;
 
 fn main() {
 	let args = Cli::parse();
@@ -19,17 +19,18 @@ fn main() {
 	let mut event_loop = EventLoop::<State>::try_new().unwrap();
 
 	let display = Display::<State>::new().unwrap();
-	let mut state = State::new(&mut event_loop, display);
+	let mut state = match init {
+		Init::Winit => State::new_winit(&mut event_loop, display),
+		Init::Tty => todo!("tty"),
+	};
 
 	// todo
-	let xkb = state.keyboard.clone();
+	let xkb = state.mayland.keyboard.clone();
 	let keymap = std::fs::read_to_string("/home/may/.config/keymap/comp.xkb").unwrap();
 	xkb.set_keymap_from_string(&mut state, keymap).unwrap();
 
-	match init {
-		Init::Winit => winit::init(&mut event_loop, &mut state),
-		Init::Tty => todo!("tty"),
-	}
+	std::env::set_var("WAYLAND_DISPLAY", &state.mayland.socket_name);
+	std::env::set_var("GDK_BACKEND", "wayland");
 
 	if let Some(exec) = exec {
 		let split = exec.split_whitespace().collect::<Vec<_>>();
@@ -39,16 +40,8 @@ fn main() {
 
 		println!("exec {:?} {:?}", cmd, args);
 
-		Command::new(cmd)
-			.args(args)
-			.envs([("WAYLAND_DISPLAY", &state.socket_name)])
-			.spawn()
-			.unwrap();
+		Command::new(cmd).args(args).spawn().unwrap();
 	}
 
-	event_loop
-		.run(None, &mut state, move |_| {
-			// println!("data {:?}", ev);
-		})
-		.unwrap();
+	event_loop.run(None, &mut state, |_| {}).unwrap();
 }

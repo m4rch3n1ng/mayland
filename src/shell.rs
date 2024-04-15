@@ -32,7 +32,7 @@ impl BufferHandler for State {
 
 impl CompositorHandler for State {
 	fn compositor_state(&mut self) -> &mut CompositorState {
-		&mut self.compositor_state
+		&mut self.mayland.compositor_state
 	}
 
 	fn client_compositor_state<'a>(&self, client: &'a Client) -> &'a CompositorClientState {
@@ -56,13 +56,13 @@ impl CompositorHandler for State {
 			}
 		};
 
-		handle_commit(&mut self.popups, &self.space, surface);
+		handle_commit(&mut self.mayland.popups, &self.mayland.space, surface);
 	}
 }
 
 impl WlrLayerShellHandler for State {
 	fn shell_state(&mut self) -> &mut WlrLayerShellState {
-		&mut self.layer_shell_state
+		&mut self.mayland.layer_shell_state
 	}
 
 	fn new_layer_surface(
@@ -75,7 +75,7 @@ impl WlrLayerShellHandler for State {
 		let output = wl_output
 			.as_ref()
 			.and_then(Output::from_resource)
-			.unwrap_or_else(|| self.space.outputs().next().unwrap().clone());
+			.unwrap_or_else(|| self.mayland.space.outputs().next().unwrap().clone());
 		let mut map = layer_map_for_output(&output);
 		map.map_layer(&LayerSurface::new(surface, namespace))
 			.unwrap();
@@ -84,7 +84,8 @@ impl WlrLayerShellHandler for State {
 
 impl State {
 	fn window_for_surface(&mut self, surface: &WlSurface) -> Option<WindowElement> {
-		self.space
+		self.mayland
+			.space
 			.elements()
 			.find(|&w| w.wl_surface().is_some_and(|w| w == *surface))
 			.cloned()
@@ -93,7 +94,7 @@ impl State {
 
 impl ShmHandler for State {
 	fn shm_state(&self) -> &ShmState {
-		&self.shm_state
+		&self.mayland.shm_state
 	}
 }
 

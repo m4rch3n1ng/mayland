@@ -28,7 +28,7 @@ impl SeatHandler for State {
 	type TouchFocus = WlSurface;
 
 	fn seat_state(&mut self) -> &mut smithay::input::SeatState<Self> {
-		&mut self.seat_state
+		&mut self.mayland.seat_state
 	}
 
 	fn focus_changed(
@@ -36,7 +36,7 @@ impl SeatHandler for State {
 		seat: &smithay::input::Seat<Self>,
 		target: Option<&Self::KeyboardFocus>,
 	) {
-		let dh = &self.display_handle;
+		let dh = &self.mayland.display_handle;
 
 		let wl_surface = target.and_then(WaylandFocus::wl_surface);
 		let client = wl_surface.and_then(|s| dh.get_client(s.id()).ok());
@@ -52,7 +52,7 @@ impl SelectionHandler for State {
 
 impl DataDeviceHandler for State {
 	fn data_device_state(&self) -> &DataDeviceState {
-		&self.data_device_state
+		&self.mayland.data_device_state
 	}
 }
 
@@ -65,11 +65,9 @@ impl OutputHandler for State {}
 
 delegate_output!(State);
 
-// <new />
-
 impl PrimarySelectionHandler for State {
 	fn primary_selection_state(&self) -> &PrimarySelectionState {
-		&self.primary_selection_state
+		&self.mayland.primary_selection_state
 	}
 }
 
@@ -77,7 +75,7 @@ delegate_primary_selection!(State);
 
 impl DataControlHandler for State {
 	fn data_control_state(&self) -> &DataControlState {
-		&self.data_control_state
+		&self.mayland.data_control_state
 	}
 }
 
@@ -85,7 +83,7 @@ delegate_data_control!(State);
 
 impl DmabufHandler for State {
 	fn dmabuf_state(&mut self) -> &mut DmabufState {
-		&mut self.dmabuf_state
+		&mut self.mayland.dmabuf_state
 	}
 
 	fn dmabuf_imported(

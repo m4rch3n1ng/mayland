@@ -1,4 +1,7 @@
-use crate::shell::element::WindowElement;
+use crate::{
+	backend::{Backend, Winit},
+	shell::element::WindowElement,
+};
 use smithay::{
 	desktop::{PopupManager, Space},
 	input::{
@@ -27,12 +30,33 @@ use std::{sync::Arc, time::Instant};
 
 mod handlers;
 
-#[derive(Debug)]
 pub struct State {
+	pub backend: Backend,
+	pub mayland: Mayland,
+}
+
+impl State {
+	pub fn new_winit(event_loop: &mut EventLoop<State>, display: Display<State>) -> Self {
+		let mut space = Space::default();
+
+		let winit = Winit::init(event_loop, &mut display.handle(), &mut space);
+		let winit = Backend::Winit(winit);
+
+		let mayland = Mayland::new(event_loop, display, space);
+
+		State {
+			backend: winit,
+			mayland,
+		}
+	}
+}
+
+#[derive(Debug)]
+pub struct Mayland {
 	pub display_handle: DisplayHandle,
 	pub socket_name: String,
 
-	pub seat: Seat<Self>,
+	pub seat: Seat<State>,
 	pub popups: PopupManager,
 	pub space: Space<WindowElement>,
 
@@ -47,7 +71,7 @@ pub struct State {
 	pub output_manager_state: OutputManagerState,
 	pub primary_selection_state: PrimarySelectionState,
 	pub data_control_state: DataControlState,
-	pub seat_state: SeatState<Self>,
+	pub seat_state: SeatState<State>,
 	pub xdg_shell_state: XdgShellState,
 	pub shm_state: ShmState,
 
@@ -56,8 +80,12 @@ pub struct State {
 	pub keyboard: KeyboardHandle<State>,
 }
 
-impl State {
-	pub fn new(event_loop: &mut EventLoop<Self>, display: Display<Self>) -> Self {
+impl Mayland {
+	fn new(
+		event_loop: &mut EventLoop<State>,
+		display: Display<State>,
+		space: Space<WindowElement>,
+	) -> Self {
 		let display_handle = display.handle();
 		let socket_name = init_wayland_display(display, event_loop);
 
@@ -68,26 +96,26 @@ impl State {
 		let pointer = seat.add_pointer();
 
 		let popups = PopupManager::default();
-		let space = Space::default();
 
 		let start_time = Instant::now();
 		let loop_signal = event_loop.get_signal();
 
-		let compositor_state = CompositorState::new::<Self>(&display_handle);
-		let data_device_state = DataDeviceState::new::<Self>(&display_handle);
+		let compositor_state = CompositorState::new::<State>(&display_handle);
+		let data_device_state = DataDeviceState::new::<State>(&display_handle);
 		let dmabuf_state = DmabufState::new();
-		let layer_shell_state = WlrLayerShellState::new::<Self>(&display_handle);
-		let output_manager_state = OutputManagerState::new_with_xdg_output::<Self>(&display_handle);
-		let primary_selection_state = PrimarySelectionState::new::<Self>(&display_handle);
-		let data_control_state = DataControlState::new::<Self, _>(
+		let layer_shell_state = WlrLayerShellState::new::<State>(&display_handle);
+		let output_manager_state =
+			OutputManagerState::new_with_xdg_output::<State>(&display_handle);
+		let primary_selection_state = PrimarySelectionState::new::<State>(&display_handle);
+		let data_control_state = DataControlState::new::<State, _>(
 			&display_handle,
 			Some(&primary_selection_state),
 			|_| true,
 		);
-		let xdg_shell_state = XdgShellState::new::<Self>(&display_handle);
-		let shm_state = ShmState::new::<Self>(&display_handle, vec![]);
+		let xdg_shell_state = XdgShellState::new::<State>(&display_handle);
+		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
 
-		State {
+		Mayland {
 			display_handle,
 			socket_name,
 
@@ -127,6 +155,7 @@ fn init_wayland_display(display: Display<State>, event_loop: &mut EventLoop<Stat
 		.insert_source(source, move |client_stream, (), state| {
 			// insert client into display
 			state
+				.mayland
 				.display_handle
 				.insert_client(client_stream, Arc::new(ClientState::default()))
 				.unwrap();
