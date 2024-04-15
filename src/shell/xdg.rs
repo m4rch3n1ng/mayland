@@ -4,7 +4,7 @@ use smithay::{
 	delegate_layer_shell, delegate_xdg_shell,
 	desktop::{PopupKind, PopupManager, Space, Window},
 	reexports::wayland_server::protocol::{wl_seat::WlSeat, wl_surface::WlSurface},
-	utils::Serial,
+	utils::{Serial, SERIAL_COUNTER},
 	wayland::{
 		compositor::with_states,
 		shell::xdg::{
@@ -21,7 +21,13 @@ impl XdgShellHandler for State {
 
 	fn new_toplevel(&mut self, surface: ToplevelSurface) {
 		let window = WindowElement(Window::new_wayland_window(surface));
-		self.mayland.space.map_element(window, (0, 0), false);
+		self.mayland
+			.space
+			.map_element(window.clone(), (0, 0), false);
+
+		let serial = SERIAL_COUNTER.next_serial();
+		let keyboard = self.mayland.keyboard.clone();
+		self.focus_window(window, &keyboard, serial);
 	}
 
 	fn new_popup(&mut self, surface: PopupSurface, _positioner: PositionerState) {

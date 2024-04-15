@@ -1,6 +1,9 @@
 use crate::{
 	action::Action,
-	shell::focus::{KeyboardFocusTarget, PointerFocusTarget},
+	shell::{
+		element::WindowElement,
+		focus::{KeyboardFocusTarget, PointerFocusTarget},
+	},
 	state::State,
 };
 use smithay::{
@@ -13,7 +16,7 @@ use smithay::{
 	},
 	desktop::{layer_map_for_output, WindowSurfaceType},
 	input::{
-		keyboard::{FilterResult, Keysym, KeysymHandle, ModifiersState},
+		keyboard::{FilterResult, KeyboardHandle, Keysym, KeysymHandle, ModifiersState},
 		pointer::{AxisFrame, ButtonEvent, MotionEvent},
 	},
 	reexports::wayland_server::protocol::wl_pointer,
@@ -217,11 +220,7 @@ impl State {
 			.element_under(location)
 			.map(|(w, p)| (w.clone(), p))
 		{
-			self.mayland.space.raise_element(&window, true);
-			keyboard.set_focus(self, Some(KeyboardFocusTarget::from(window)), serial);
-			self.mayland.space.elements().for_each(|window| {
-				window.0.toplevel().unwrap().send_pending_configure();
-			});
+			self.focus_window(window, &keyboard, serial);
 		}
 
 		if let Some(output) = output.as_ref() {
@@ -242,6 +241,19 @@ impl State {
 				}
 			}
 		}
+	}
+
+	pub fn focus_window(
+		&mut self,
+		window: WindowElement,
+		keyboard: &KeyboardHandle<State>,
+		serial: Serial,
+	) {
+		self.mayland.space.raise_element(&window, true);
+		keyboard.set_focus(self, Some(KeyboardFocusTarget::from(window)), serial);
+		self.mayland.space.elements().for_each(|window| {
+			window.0.toplevel().unwrap().send_pending_configure();
+		});
 	}
 
 	pub fn surface_under(

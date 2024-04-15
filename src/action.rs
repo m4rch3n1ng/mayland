@@ -1,5 +1,5 @@
-use std::process::Command;
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
+use std::process::Command;
 
 #[derive(Debug)]
 pub enum Action {
