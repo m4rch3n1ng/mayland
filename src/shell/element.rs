@@ -28,6 +28,12 @@ impl WindowElement {
 		}
 	}
 
+	pub fn close(&self) {
+		if let Some(toplevel) = self.0.toplevel() {
+			toplevel.send_close();
+		}
+	}
+
 	pub fn underlying_surface(&self) -> &WindowSurface {
 		self.0.underlying_surface()
 	}

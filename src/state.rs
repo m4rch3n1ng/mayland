@@ -26,7 +26,7 @@ use smithay::{
 		socket::ListeningSocketSource,
 	},
 };
-use std::{sync::Arc, time::Instant};
+use std::{collections::HashSet, sync::Arc, time::Instant};
 
 mod handlers;
 
@@ -78,6 +78,8 @@ pub struct Mayland {
 	// input
 	pub pointer: PointerHandle<State>,
 	pub keyboard: KeyboardHandle<State>,
+
+	pub suppressed_keys: HashSet<u32>,
 }
 
 impl Mayland {
@@ -91,9 +93,6 @@ impl Mayland {
 
 		let mut seat_state = SeatState::new();
 		let mut seat = seat_state.new_wl_seat(&display_handle, "winit");
-
-		let keyboard = seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
-		let pointer = seat.add_pointer();
 
 		let popups = PopupManager::default();
 
@@ -114,6 +113,11 @@ impl Mayland {
 		);
 		let xdg_shell_state = XdgShellState::new::<State>(&display_handle);
 		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
+
+		let keyboard = seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
+		let pointer = seat.add_pointer();
+
+		let suppressed_keys = HashSet::new();
 
 		Mayland {
 			display_handle,
@@ -139,6 +143,8 @@ impl Mayland {
 
 			pointer,
 			keyboard,
+
+			suppressed_keys,
 		}
 	}
 }

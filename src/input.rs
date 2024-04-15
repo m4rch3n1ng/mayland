@@ -1,18 +1,19 @@
 use crate::{
+	action::Action,
 	shell::focus::{KeyboardFocusTarget, PointerFocusTarget},
 	state::State,
 };
 use smithay::{
 	backend::{
 		input::{
-			AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent,
+			AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState,
 			KeyboardKeyEvent, PointerAxisEvent, PointerButtonEvent,
 		},
 		winit::WinitInput,
 	},
 	desktop::{layer_map_for_output, WindowSurfaceType},
 	input::{
-		keyboard::FilterResult,
+		keyboard::{FilterResult, Keysym, KeysymHandle, ModifiersState},
 		pointer::{AxisFrame, ButtonEvent, MotionEvent},
 	},
 	reexports::wayland_server::protocol::wl_pointer,
@@ -27,16 +28,22 @@ impl State {
 				let keyboard = self.mayland.keyboard.clone();
 
 				let code = event.key_code();
-				let state = event.state();
+				let key_state = event.state();
 				let serial = SERIAL_COUNTER.next_serial();
 				let time = event.time_msec();
 
-				let _ = keyboard.input(self, code, state, serial, time, |_state, _mods, keysym| {
-					let raw_sym = keysym.raw_syms()[0];
-					println!("key {:?}", raw_sym);
+				let Some(Some(action)) = keyboard.input(
+					self,
+					code,
+					key_state,
+					serial,
+					time,
+					|state, mods, keysym| state.handle_key(code, key_state, mods, keysym),
+				) else {
+					return;
+				};
 
-					FilterResult::Forward::<()>
-				});
+				self.handle_action(action);
 			}
 			InputEvent::PointerMotion { .. } => {}
 			InputEvent::PointerMotionAbsolute { event } => {
@@ -46,6 +53,41 @@ impl State {
 			InputEvent::PointerAxis { event } => self.on_pointer_axis::<WinitInput>(event),
 
 			evt => println!("evt {:?}", evt),
+		}
+	}
+
+	fn handle_key(
+		&mut self,
+		code: u32,
+		key_state: KeyState,
+		mods: &ModifiersState,
+		keysym: KeysymHandle,
+	) -> FilterResult<Option<Action>> {
+		let Some(raw_sym) = keysym.raw_latin_sym_or_raw_current_sym() else {
+			return FilterResult::Forward;
+		};
+
+		if key_state == KeyState::Released {
+			if self.mayland.suppressed_keys.take(&code).is_some() {
+				return FilterResult::Intercept(None);
+			} else {
+				return FilterResult::Forward;
+			}
+		};
+
+		let action = if mods.alt && raw_sym == Keysym::Escape {
+			Some(Action::Quit)
+		} else if mods.alt && raw_sym == Keysym::q {
+			Some(Action::CloseWindow)
+		} else {
+			None
+		};
+
+		if let Some(action) = action {
+			self.mayland.suppressed_keys.insert(code);
+			FilterResult::Intercept(Some(action))
+		} else {
+			FilterResult::Forward
 		}
 	}
 

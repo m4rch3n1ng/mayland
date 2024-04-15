@@ -4,6 +4,7 @@ use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
 use state::State;
 use std::process::Command;
 
+mod action;
 mod backend;
 mod cli;
 mod input;
