@@ -5,18 +5,12 @@ use clap::{Args, Parser};
 pub struct Cli {
 	#[command(flatten)]
 	pub init: InitArg,
-	#[arg(short, long, value_name = "cmd", help = "startup command")]
-	pub exec: Option<String>,
 }
 
 impl Cli {
 	pub fn init(&self) -> Init {
 		let init = &self.init;
 		init.to_enum()
-	}
-
-	pub fn exec(&self) -> Option<&String> {
-		self.exec.as_ref()
 	}
 }
 

@@ -2,7 +2,6 @@ use crate::cli::{Cli, Init};
 use clap::Parser;
 use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
 use state::State;
-use std::process::Command;
 
 mod action;
 mod backend;
@@ -13,9 +12,7 @@ mod state;
 
 fn main() {
 	let args = Cli::parse();
-
 	let init = args.init();
-	let exec = args.exec();
 
 	let mut event_loop = EventLoop::<State>::try_new().unwrap();
 
@@ -32,17 +29,6 @@ fn main() {
 
 	std::env::set_var("WAYLAND_DISPLAY", &state.mayland.socket_name);
 	std::env::set_var("GDK_BACKEND", "wayland");
-
-	if let Some(exec) = exec {
-		let split = exec.split_whitespace().collect::<Vec<_>>();
-		let [cmd, args @ ..] = &split[..] else {
-			panic!()
-		};
-
-		println!("exec {:?} {:?}", cmd, args);
-
-		Command::new(cmd).args(args).spawn().unwrap();
-	}
 
 	event_loop.run(None, &mut state, |_| {}).unwrap();
 }

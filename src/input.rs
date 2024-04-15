@@ -79,6 +79,8 @@ impl State {
 			Some(Action::Quit)
 		} else if mods.alt && raw_sym == Keysym::q {
 			Some(Action::CloseWindow)
+		} else if mods.alt && raw_sym == Keysym::t {
+			Some(Action::Spawn("alacritty".to_owned()))
 		} else {
 			None
 		};

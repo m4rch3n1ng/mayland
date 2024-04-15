@@ -1,9 +1,12 @@
+use std::process::Command;
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
 
 #[derive(Debug)]
 pub enum Action {
 	Quit,
 	CloseWindow,
+
+	Spawn(String),
 }
 
 impl State {
@@ -21,6 +24,19 @@ impl State {
 			Action::Quit => {
 				self.mayland.loop_signal.stop();
 				self.mayland.loop_signal.wakeup();
+			}
+			Action::Spawn(spawn) => {
+				let mut cmd = Command::new("/bin/sh");
+				cmd.arg("-c")
+					.arg(&spawn)
+					.env("WAYLAND_DISPLAY", &self.mayland.socket_name);
+
+				std::thread::spawn(move || match cmd.spawn() {
+					Ok(mut child) => {
+						let _ = child.wait();
+					}
+					Err(err) => println!("error spawning child: {:?}", err),
+				});
 			}
 		}
 	}
