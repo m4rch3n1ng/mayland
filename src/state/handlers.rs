@@ -89,10 +89,14 @@ impl DmabufHandler for State {
 	fn dmabuf_imported(
 		&mut self,
 		_global: &DmabufGlobal,
-		_dmabuf: Dmabuf,
-		_notifier: ImportNotifier,
+		dmabuf: Dmabuf,
+		notifier: ImportNotifier,
 	) {
-		todo!();
+		if self.backend.import_dmabuf(&dmabuf) {
+			let _ = notifier.successful::<State>();
+		} else {
+			notifier.failed();
+		}
 	}
 }
 

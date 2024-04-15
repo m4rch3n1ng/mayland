@@ -59,14 +59,14 @@ impl KeyboardTarget<State> for KeyboardFocusTarget {
 		match self {
 			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
 				WindowSurface::Wayland(w) => {
-					KeyboardTarget::enter(w.wl_surface(), seat, data, keys, serial)
+					KeyboardTarget::enter(w.wl_surface(), seat, data, keys, serial);
 				}
 			},
 			KeyboardFocusTarget::LayerSurface(l) => {
-				KeyboardTarget::enter(l.wl_surface(), seat, data, keys, serial)
+				KeyboardTarget::enter(l.wl_surface(), seat, data, keys, serial);
 			}
 			KeyboardFocusTarget::Popup(p) => {
-				KeyboardTarget::enter(p.wl_surface(), seat, data, keys, serial)
+				KeyboardTarget::enter(p.wl_surface(), seat, data, keys, serial);
 			}
 		}
 	}
@@ -75,14 +75,14 @@ impl KeyboardTarget<State> for KeyboardFocusTarget {
 		match self {
 			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
 				WindowSurface::Wayland(w) => {
-					KeyboardTarget::leave(w.wl_surface(), seat, data, serial)
+					KeyboardTarget::leave(w.wl_surface(), seat, data, serial);
 				}
 			},
 			KeyboardFocusTarget::LayerSurface(l) => {
-				KeyboardTarget::leave(l.wl_surface(), seat, data, serial)
+				KeyboardTarget::leave(l.wl_surface(), seat, data, serial);
 			}
 			KeyboardFocusTarget::Popup(p) => {
-				KeyboardTarget::leave(p.wl_surface(), seat, data, serial)
+				KeyboardTarget::leave(p.wl_surface(), seat, data, serial);
 			}
 		}
 	}
@@ -99,14 +99,14 @@ impl KeyboardTarget<State> for KeyboardFocusTarget {
 		match self {
 			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
 				WindowSurface::Wayland(w) => {
-					KeyboardTarget::key(w.wl_surface(), seat, data, key, state, serial, time)
+					KeyboardTarget::key(w.wl_surface(), seat, data, key, state, serial, time);
 				}
 			},
 			KeyboardFocusTarget::LayerSurface(l) => {
-				KeyboardTarget::key(l.wl_surface(), seat, data, key, state, serial, time)
+				KeyboardTarget::key(l.wl_surface(), seat, data, key, state, serial, time);
 			}
 			KeyboardFocusTarget::Popup(p) => {
-				KeyboardTarget::key(p.wl_surface(), seat, data, key, state, serial, time)
+				KeyboardTarget::key(p.wl_surface(), seat, data, key, state, serial, time);
 			}
 		}
 	}
@@ -121,14 +121,14 @@ impl KeyboardTarget<State> for KeyboardFocusTarget {
 		match self {
 			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
 				WindowSurface::Wayland(w) => {
-					KeyboardTarget::modifiers(w.wl_surface(), seat, data, modifiers, serial)
+					KeyboardTarget::modifiers(w.wl_surface(), seat, data, modifiers, serial);
 				}
 			},
 			KeyboardFocusTarget::LayerSurface(l) => {
-				KeyboardTarget::modifiers(l.wl_surface(), seat, data, modifiers, serial)
+				KeyboardTarget::modifiers(l.wl_surface(), seat, data, modifiers, serial);
 			}
 			KeyboardFocusTarget::Popup(p) => {
-				KeyboardTarget::modifiers(p.wl_surface(), seat, data, modifiers, serial)
+				KeyboardTarget::modifiers(p.wl_surface(), seat, data, modifiers, serial);
 			}
 		}
 	}
@@ -150,7 +150,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 	fn relative_motion(&self, seat: &Seat<State>, data: &mut State, event: &RelativeMotionEvent) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
-				PointerTarget::relative_motion(w, seat, data, event)
+				PointerTarget::relative_motion(w, seat, data, event);
 			}
 		}
 	}
@@ -181,7 +181,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 	) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
-				PointerTarget::gesture_swipe_begin(w, seat, data, event)
+				PointerTarget::gesture_swipe_begin(w, seat, data, event);
 			}
 		}
 	}
@@ -194,7 +194,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 	) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
-				PointerTarget::gesture_swipe_update(w, seat, data, event)
+				PointerTarget::gesture_swipe_update(w, seat, data, event);
 			}
 		}
 	}
@@ -207,7 +207,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 	) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
-				PointerTarget::gesture_swipe_end(w, seat, data, event)
+				PointerTarget::gesture_swipe_end(w, seat, data, event);
 			}
 		}
 	}
@@ -220,7 +220,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 	) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
-				PointerTarget::gesture_pinch_begin(w, seat, data, event)
+				PointerTarget::gesture_pinch_begin(w, seat, data, event);
 			}
 		}
 	}
@@ -233,7 +233,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 	) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
-				PointerTarget::gesture_pinch_update(w, seat, data, event)
+				PointerTarget::gesture_pinch_update(w, seat, data, event);
 			}
 		}
 	}
@@ -246,7 +246,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 	) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
-				PointerTarget::gesture_pinch_end(w, seat, data, event)
+				PointerTarget::gesture_pinch_end(w, seat, data, event);
 			}
 		}
 	}
@@ -259,7 +259,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 	) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
-				PointerTarget::gesture_hold_begin(w, seat, data, event)
+				PointerTarget::gesture_hold_begin(w, seat, data, event);
 			}
 		}
 	}
@@ -267,7 +267,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 	fn gesture_hold_end(&self, seat: &Seat<State>, data: &mut State, event: &GestureHoldEndEvent) {
 		match self {
 			PointerFocusTarget::WlSurface(surface) => {
-				PointerTarget::gesture_hold_end(surface, seat, data, event)
+				PointerTarget::gesture_hold_end(surface, seat, data, event);
 			}
 		}
 	}

@@ -1,9 +1,10 @@
 use crate::{shell::element::WindowElement, state::Mayland, State};
 use smithay::{
 	backend::{
+		allocator::dmabuf::Dmabuf,
 		renderer::{
 			damage::OutputDamageTracker, element::surface::WaylandSurfaceRenderElement,
-			glow::GlowRenderer, ImportEgl,
+			glow::GlowRenderer, ImportDma, ImportEgl,
 		},
 		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
@@ -110,6 +111,14 @@ impl Winit {
 
 		// ask for redraw to schedule new frame.
 		self.backend.window().request_redraw();
+	}
+
+	pub fn import_dmabuf(&mut self, dmabuf: &Dmabuf) -> bool {
+		self.backend
+			.renderer()
+			.import_dmabuf(dmabuf, None)
+			.inspect_err(|err| println!("error importing dmabuf: {:?}", err))
+			.is_ok()
 	}
 }
 

@@ -5,15 +5,15 @@ use crate::{
 use smithay::{
 	backend::{
 		input::{
-			AbsolutePositionEvent, Event, InputBackend, InputEvent, KeyboardKeyEvent,
-			PointerButtonEvent,
+			AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent,
+			KeyboardKeyEvent, PointerAxisEvent, PointerButtonEvent,
 		},
 		winit::WinitInput,
 	},
 	desktop::{layer_map_for_output, WindowSurfaceType},
 	input::{
 		keyboard::FilterResult,
-		pointer::{ButtonEvent, MotionEvent},
+		pointer::{AxisFrame, ButtonEvent, MotionEvent},
 	},
 	reexports::wayland_server::protocol::wl_pointer,
 	utils::{Logical, Point, Serial, SERIAL_COUNTER},
@@ -40,9 +40,10 @@ impl State {
 			}
 			InputEvent::PointerMotion { .. } => {}
 			InputEvent::PointerMotionAbsolute { event } => {
-				self.on_pointer_move_absolute::<WinitInput>(event)
+				self.on_pointer_move_absolute::<WinitInput>(event);
 			}
 			InputEvent::PointerButton { event } => self.on_pointer_button::<WinitInput>(event),
+			InputEvent::PointerAxis { event } => self.on_pointer_axis::<WinitInput>(event),
 
 			evt => println!("evt {:?}", evt),
 		}
@@ -90,6 +91,49 @@ impl State {
 				time: event.time_msec(),
 			},
 		);
+		pointer.frame(self);
+	}
+
+	fn on_pointer_axis<B: InputBackend>(&mut self, event: B::PointerAxisEvent) {
+		let horizontal_amount_v120 = event.amount_v120(Axis::Horizontal);
+		let horizontal_amount = event
+			.amount(Axis::Horizontal)
+			.or_else(|| horizontal_amount_v120.map(|amt| amt * 15. / 120.))
+			.unwrap_or(0.0);
+		let vertical_amount_v120 = event.amount_v120(Axis::Vertical);
+		let vertical_amount = event
+			.amount(Axis::Vertical)
+			.or_else(|| vertical_amount_v120.map(|amt| amt * 15. / 120.))
+			.unwrap_or(0.0);
+
+		let mut frame = AxisFrame::new(event.time_msec()).source(event.source());
+		if horizontal_amount != 0.0 {
+			frame = frame
+				.relative_direction(Axis::Horizontal, event.relative_direction(Axis::Horizontal));
+			frame = frame.value(Axis::Horizontal, horizontal_amount);
+			if let Some(amount_v120) = horizontal_amount_v120 {
+				frame = frame.v120(Axis::Horizontal, amount_v120 as i32);
+			}
+		}
+		if vertical_amount != 0.0 {
+			frame =
+				frame.relative_direction(Axis::Vertical, event.relative_direction(Axis::Vertical));
+			frame = frame.value(Axis::Vertical, vertical_amount);
+			if let Some(amount_v120) = vertical_amount_v120 {
+				frame = frame.v120(Axis::Vertical, amount_v120 as i32);
+			}
+		}
+		if event.source() == AxisSource::Finger {
+			if event.amount(Axis::Horizontal) == Some(0.0) {
+				frame = frame.stop(Axis::Horizontal);
+			}
+			if event.amount(Axis::Vertical) == Some(0.0) {
+				frame = frame.stop(Axis::Vertical);
+			}
+		}
+
+		let pointer = self.mayland.pointer.clone();
+		pointer.axis(self, frame);
 		pointer.frame(self);
 	}
 

@@ -61,19 +61,19 @@ impl SpaceElement for WindowElement {
 	}
 
 	fn set_activate(&self, activated: bool) {
-		self.0.set_activate(activated)
+		self.0.set_activate(activated);
 	}
 
 	fn output_enter(&self, output: &Output, overlap: Rectangle<i32, Logical>) {
-		self.0.output_enter(output, overlap)
+		self.0.output_enter(output, overlap);
 	}
 
 	fn output_leave(&self, output: &Output) {
-		self.0.output_leave(output)
+		self.0.output_leave(output);
 	}
 
 	fn refresh(&self) {
-		self.0.refresh()
+		self.0.refresh();
 	}
 }
 
