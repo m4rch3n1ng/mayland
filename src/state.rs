@@ -21,7 +21,10 @@ use smithay::{
 			data_device::DataDeviceState, primary_selection::PrimarySelectionState,
 			wlr_data_control::DataControlState,
 		},
-		shell::{wlr_layer::WlrLayerShellState, xdg::XdgShellState},
+		shell::{
+			wlr_layer::WlrLayerShellState,
+			xdg::{decoration::XdgDecorationState, XdgShellState},
+		},
 		shm::ShmState,
 		socket::ListeningSocketSource,
 	},
@@ -72,6 +75,7 @@ pub struct Mayland {
 	pub primary_selection_state: PrimarySelectionState,
 	pub data_control_state: DataControlState,
 	pub seat_state: SeatState<State>,
+	pub xdg_decoration_state: XdgDecorationState,
 	pub xdg_shell_state: XdgShellState,
 	pub shm_state: ShmState,
 
@@ -111,6 +115,7 @@ impl Mayland {
 			Some(&primary_selection_state),
 			|_| true,
 		);
+		let xdg_decoration_state = XdgDecorationState::new::<State>(&display_handle);
 		let xdg_shell_state = XdgShellState::new::<State>(&display_handle);
 		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
 
@@ -138,6 +143,7 @@ impl Mayland {
 			primary_selection_state,
 			data_control_state,
 			seat_state,
+			xdg_decoration_state,
 			xdg_shell_state,
 			shm_state,
 

@@ -3,9 +3,12 @@ use crate::shell::focus::{KeyboardFocusTarget, PointerFocusTarget};
 use smithay::{
 	backend::allocator::dmabuf::Dmabuf,
 	delegate_data_control, delegate_data_device, delegate_dmabuf, delegate_output,
-	delegate_primary_selection, delegate_seat,
+	delegate_primary_selection, delegate_seat, delegate_xdg_decoration,
 	input::SeatHandler,
-	reexports::wayland_server::{protocol::wl_surface::WlSurface, Resource},
+	reexports::{
+		wayland_protocols::xdg::decoration::zv1::server::zxdg_toplevel_decoration_v1::Mode as DecorationMode,
+		wayland_server::{protocol::wl_surface::WlSurface, Resource},
+	},
 	wayland::{
 		dmabuf::{DmabufGlobal, DmabufHandler, DmabufState, ImportNotifier},
 		output::OutputHandler,
@@ -19,6 +22,7 @@ use smithay::{
 			wlr_data_control::{DataControlHandler, DataControlState},
 			SelectionHandler,
 		},
+		shell::xdg::{decoration::XdgDecorationHandler, ToplevelSurface},
 	},
 };
 
@@ -101,3 +105,26 @@ impl DmabufHandler for State {
 }
 
 delegate_dmabuf!(State);
+
+impl XdgDecorationHandler for State {
+	fn new_decoration(&mut self, toplevel: ToplevelSurface) {
+		toplevel.with_pending_state(|state| {
+			state.decoration_mode = Some(DecorationMode::ClientSide);
+		});
+		toplevel.send_pending_configure();
+	}
+
+	fn request_mode(&mut self, toplevel: ToplevelSurface, mode: DecorationMode) {
+		toplevel.with_pending_state(|state| state.decoration_mode = Some(mode));
+		toplevel.send_pending_configure();
+	}
+
+	fn unset_mode(&mut self, toplevel: ToplevelSurface) {
+		toplevel.with_pending_state(|state| {
+			state.decoration_mode = Some(DecorationMode::ClientSide);
+		});
+		toplevel.send_pending_configure();
+	}
+}
+
+delegate_xdg_decoration!(State);
