@@ -1,13 +1,19 @@
-use super::focus::PointerFocusTarget;
+use crate::state::State;
 use smithay::{
 	backend::renderer::{
 		element::{surface::WaylandSurfaceRenderElement, AsRenderElements},
 		ImportAll, ImportMem, Renderer, Texture,
 	},
-	desktop::{space::SpaceElement, Window, WindowSurface, WindowSurfaceType},
+	desktop::{space::SpaceElement, Window, WindowSurface},
+	input::pointer::{
+		AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent, GesturePinchBeginEvent,
+		GesturePinchEndEvent, GesturePinchUpdateEvent, GestureSwipeBeginEvent,
+		GestureSwipeEndEvent, GestureSwipeUpdateEvent, MotionEvent, PointerTarget,
+		RelativeMotionEvent,
+	},
 	output::Output,
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
-	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale},
+	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial},
 	wayland::seat::WaylandFocus,
 };
 
@@ -15,19 +21,6 @@ use smithay::{
 pub struct WindowElement(pub Window);
 
 impl WindowElement {
-	pub fn surface_under(
-		&self,
-		location: Point<f64, Logical>,
-		window_type: WindowSurfaceType,
-	) -> Option<(PointerFocusTarget, Point<i32, Logical>)> {
-		let surface_under = self.0.surface_under(location, window_type);
-		match self.0.underlying_surface() {
-			WindowSurface::Wayland(_) => {
-				surface_under.map(|(surface, loc)| (PointerFocusTarget::WlSurface(surface), loc))
-			}
-		}
-	}
-
 	pub fn close(&self) {
 		if let Some(toplevel) = self.0.toplevel() {
 			toplevel.send_close();
@@ -36,10 +29,6 @@ impl WindowElement {
 
 	pub fn underlying_surface(&self) -> &WindowSurface {
 		self.0.underlying_surface()
-	}
-
-	pub fn wl_surface(&self) -> Option<WlSurface> {
-		self.0.wl_surface()
 	}
 }
 
@@ -98,5 +87,157 @@ where
 		alpha: f32,
 	) -> Vec<C> {
 		self.0.render_elements(renderer, location, scale, alpha)
+	}
+}
+
+impl PointerTarget<State> for WindowElement {
+	fn enter(&self, seat: &smithay::input::Seat<State>, data: &mut State, event: &MotionEvent) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::enter(&w, seat, data, event);
+		}
+	}
+
+	fn motion(&self, seat: &smithay::input::Seat<State>, data: &mut State, event: &MotionEvent) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::motion(&w, seat, data, event);
+		}
+	}
+
+	fn relative_motion(
+		&self,
+		seat: &smithay::input::Seat<State>,
+		data: &mut State,
+		event: &RelativeMotionEvent,
+	) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::relative_motion(&w, seat, data, event);
+		}
+	}
+
+	fn button(&self, seat: &smithay::input::Seat<State>, data: &mut State, event: &ButtonEvent) {
+		let mods = data.mayland.keyboard.modifier_state();
+		if mods.alt {
+			println!("is alt {:?}", mods.alt);
+		} else if let Some(w) = self.wl_surface() {
+			PointerTarget::button(&w, seat, data, event);
+		}
+	}
+
+	fn axis(&self, seat: &smithay::input::Seat<State>, data: &mut State, frame: AxisFrame) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::axis(&w, seat, data, frame);
+		}
+	}
+
+	fn frame(&self, seat: &smithay::input::Seat<State>, data: &mut State) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::frame(&w, seat, data);
+		}
+	}
+
+	fn gesture_swipe_begin(
+		&self,
+		seat: &smithay::input::Seat<State>,
+		data: &mut State,
+		event: &GestureSwipeBeginEvent,
+	) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::gesture_swipe_begin(&w, seat, data, event);
+		}
+	}
+
+	fn gesture_swipe_update(
+		&self,
+		seat: &smithay::input::Seat<State>,
+		data: &mut State,
+		event: &GestureSwipeUpdateEvent,
+	) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::gesture_swipe_update(&w, seat, data, event);
+		}
+	}
+
+	fn gesture_swipe_end(
+		&self,
+		seat: &smithay::input::Seat<State>,
+		data: &mut State,
+		event: &GestureSwipeEndEvent,
+	) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::gesture_swipe_end(&w, seat, data, event);
+		}
+	}
+
+	fn gesture_pinch_begin(
+		&self,
+		seat: &smithay::input::Seat<State>,
+		data: &mut State,
+		event: &GesturePinchBeginEvent,
+	) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::gesture_pinch_begin(&w, seat, data, event);
+		}
+	}
+
+	fn gesture_pinch_update(
+		&self,
+		seat: &smithay::input::Seat<State>,
+		data: &mut State,
+		event: &GesturePinchUpdateEvent,
+	) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::gesture_pinch_update(&w, seat, data, event);
+		}
+	}
+
+	fn gesture_pinch_end(
+		&self,
+		seat: &smithay::input::Seat<State>,
+		data: &mut State,
+		event: &GesturePinchEndEvent,
+	) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::gesture_pinch_end(&w, seat, data, event);
+		}
+	}
+
+	fn gesture_hold_begin(
+		&self,
+		seat: &smithay::input::Seat<State>,
+		data: &mut State,
+		event: &GestureHoldBeginEvent,
+	) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::gesture_hold_begin(&w, seat, data, event);
+		}
+	}
+
+	fn gesture_hold_end(
+		&self,
+		seat: &smithay::input::Seat<State>,
+		data: &mut State,
+		event: &GestureHoldEndEvent,
+	) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::gesture_hold_end(&w, seat, data, event);
+		}
+	}
+
+	fn leave(
+		&self,
+		seat: &smithay::input::Seat<State>,
+		data: &mut State,
+		serial: Serial,
+		time: u32,
+	) {
+		if let Some(w) = self.wl_surface() {
+			PointerTarget::leave(&w, seat, data, serial, time);
+		}
+	}
+}
+
+impl WaylandFocus for WindowElement {
+	fn wl_surface(&self) -> Option<WlSurface> {
+		self.0.wl_surface()
 	}
 }

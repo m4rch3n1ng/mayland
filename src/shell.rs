@@ -15,6 +15,7 @@ use smithay::{
 			get_parent, is_sync_subsurface, CompositorClientState, CompositorHandler,
 			CompositorState,
 		},
+		seat::WaylandFocus,
 		shell::wlr_layer::{
 			Layer, LayerSurface as WlrLayerSurface, WlrLayerShellHandler, WlrLayerShellState,
 		},

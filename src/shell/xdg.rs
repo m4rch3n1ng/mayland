@@ -7,6 +7,7 @@ use smithay::{
 	utils::{Serial, SERIAL_COUNTER},
 	wayland::{
 		compositor::with_states,
+		seat::WaylandFocus,
 		shell::xdg::{
 			PopupSurface, PositionerState, ToplevelSurface, XdgPopupSurfaceData, XdgShellHandler,
 			XdgShellState, XdgToplevelSurfaceData,

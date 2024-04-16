@@ -84,6 +84,8 @@ impl State {
 			Some(Action::CloseWindow)
 		} else if mods.alt && raw_sym == Keysym::t {
 			Some(Action::Spawn("alacritty".to_owned()))
+		} else if mods.alt && raw_sym == Keysym::e {
+			Some(Action::Spawn("nautilus".to_owned()))
 		} else {
 			None
 		};
@@ -279,9 +281,7 @@ impl State {
 				)
 				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc))
 		} else if let Some((window, loc)) = self.mayland.space.element_under(location) {
-			window
-				.surface_under(location - loc.to_f64(), WindowSurfaceType::ALL)
-				.map(|(surface, surf_loc)| (surface, surf_loc + loc))
+			Some((PointerFocusTarget::from(window), loc))
 		} else if let Some(layer) = layers
 			.layer_under(WlrLayer::Bottom, location)
 			.or_else(|| layers.layer_under(WlrLayer::Background, location))
