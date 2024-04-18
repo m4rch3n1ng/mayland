@@ -160,13 +160,12 @@ impl State {
 		}
 
 		let start_data = pointer.grab_start_data().unwrap();
-		if start_data.focus.is_none()
-			|| !start_data
-				.focus
-				.as_ref()
-				.unwrap()
-				.0
-				.same_client_as(&window.wl_surface().unwrap().id())
+
+		if start_data
+			.focus
+			.as_ref()
+			.zip(window.wl_surface())
+			.map_or(true, |(focus, wl)| !focus.0.same_client_as(&wl.id()))
 		{
 			return;
 		}
