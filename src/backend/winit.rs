@@ -92,8 +92,9 @@ impl Winit {
 			[&mayland.space],
 			&[],
 			&mut self.damage_tracker,
-			[0.1, 0.1, 0.1, 1.0]
-		).unwrap();
+			[0.1, 0.1, 0.1, 1.0],
+		)
+		.unwrap();
 		self.backend.submit(Some(&[damage])).unwrap();
 
 		mayland.space.elements().for_each(|window| {

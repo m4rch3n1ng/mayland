@@ -10,7 +10,9 @@ use smithay::{
 		Seat, SeatState,
 	},
 	reexports::{
-		calloop::{generic::Generic, EventLoop, Interest, LoopSignal, Mode, PostAction},
+		calloop::{
+			generic::Generic, EventLoop, Interest, LoopHandle, LoopSignal, Mode, PostAction,
+		},
 		wayland_server::{backend::ClientData, Display, DisplayHandle},
 	},
 	wayland::{
@@ -39,7 +41,7 @@ pub struct State {
 }
 
 impl State {
-	pub fn new_winit(event_loop: &mut EventLoop<State>, display: Display<State>) -> Self {
+	pub fn new_winit(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
 		let mut space = Space::default();
 
 		let winit = Winit::init(event_loop, &mut display.handle(), &mut space);
@@ -65,6 +67,7 @@ pub struct Mayland {
 
 	pub start_time: std::time::Instant,
 	pub loop_signal: LoopSignal,
+	pub loop_handle: LoopHandle<'static, State>,
 
 	// wayland state
 	pub compositor_state: CompositorState,
@@ -88,7 +91,7 @@ pub struct Mayland {
 
 impl Mayland {
 	fn new(
-		event_loop: &mut EventLoop<State>,
+		event_loop: &mut EventLoop<'static, State>,
 		display: Display<State>,
 		space: Space<WindowElement>,
 	) -> Self {
@@ -102,6 +105,7 @@ impl Mayland {
 
 		let start_time = Instant::now();
 		let loop_signal = event_loop.get_signal();
+		let loop_handle = event_loop.handle();
 
 		let compositor_state = CompositorState::new::<State>(&display_handle);
 		let data_device_state = DataDeviceState::new::<State>(&display_handle);
@@ -134,6 +138,7 @@ impl Mayland {
 
 			start_time,
 			loop_signal,
+			loop_handle,
 
 			compositor_state,
 			data_device_state,

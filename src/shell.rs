@@ -25,6 +25,7 @@ use smithay::{
 
 pub mod element;
 pub mod focus;
+pub mod grab;
 pub mod xdg;
 
 impl BufferHandler for State {

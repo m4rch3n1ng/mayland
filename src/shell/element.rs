@@ -5,11 +5,14 @@ use smithay::{
 		ImportAll, ImportMem, Renderer, Texture,
 	},
 	desktop::{space::SpaceElement, Window, WindowSurface},
-	input::pointer::{
-		AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent, GesturePinchBeginEvent,
-		GesturePinchEndEvent, GesturePinchUpdateEvent, GestureSwipeBeginEvent,
-		GestureSwipeEndEvent, GestureSwipeUpdateEvent, MotionEvent, PointerTarget,
-		RelativeMotionEvent,
+	input::{
+		pointer::{
+			AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent,
+			GesturePinchBeginEvent, GesturePinchEndEvent, GesturePinchUpdateEvent,
+			GestureSwipeBeginEvent, GestureSwipeEndEvent, GestureSwipeUpdateEvent, MotionEvent,
+			PointerTarget, RelativeMotionEvent,
+		},
+		Seat,
 	},
 	output::Output,
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
@@ -114,10 +117,14 @@ impl PointerTarget<State> for WindowElement {
 		}
 	}
 
-	fn button(&self, seat: &smithay::input::Seat<State>, data: &mut State, event: &ButtonEvent) {
+	fn button(&self, seat: &Seat<State>, data: &mut State, event: &ButtonEvent) {
 		let mods = data.mayland.keyboard.modifier_state();
 		if mods.alt {
-			println!("is alt {:?}", mods.alt);
+			let serial = event.serial;
+			let window = self.clone();
+			data.mayland
+				.loop_handle
+				.insert_idle(move |state| state.xdg_move(window, serial));
 		} else if let Some(w) = self.wl_surface() {
 			PointerTarget::button(&w, seat, data, event);
 		}
