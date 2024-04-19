@@ -9,11 +9,15 @@ use smithay::{
 		pointer::PointerHandle,
 		Seat, SeatState,
 	},
+	output::Output,
 	reexports::{
 		calloop::{
-			generic::Generic, EventLoop, Interest, LoopHandle, LoopSignal, Mode, PostAction,
+			generic::Generic, EventLoop, Idle, Interest, LoopHandle, LoopSignal, Mode, PostAction,
 		},
-		wayland_server::{backend::ClientData, Display, DisplayHandle},
+		wayland_server::{
+			backend::{ClientData, GlobalId},
+			Display, DisplayHandle,
+		},
 	},
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
@@ -31,7 +35,11 @@ use smithay::{
 		socket::ListeningSocketSource,
 	},
 };
-use std::{collections::HashSet, sync::Arc, time::Instant};
+use std::{
+	collections::{HashMap, HashSet},
+	sync::Arc,
+	time::Instant,
+};
 
 mod handlers;
 
@@ -62,6 +70,7 @@ pub struct Mayland {
 	pub seat: Seat<State>,
 	pub popups: PopupManager,
 	pub space: Space<WindowElement>,
+	pub output_state: HashMap<Output, OutputState>,
 
 	pub start_time: std::time::Instant,
 	pub loop_signal: LoopSignal,
@@ -85,6 +94,12 @@ pub struct Mayland {
 	pub keyboard: KeyboardHandle<State>,
 
 	pub suppressed_keys: HashSet<u32>,
+}
+
+#[derive(Debug)]
+pub struct OutputState {
+	pub global: GlobalId,
+	pub queued: Option<Idle<'static>>,
 }
 
 impl Mayland {
@@ -130,6 +145,7 @@ impl Mayland {
 			seat,
 			popups,
 			space,
+			output_state: HashMap::new(),
 
 			start_time,
 			loop_signal,
@@ -152,6 +168,55 @@ impl Mayland {
 
 			suppressed_keys,
 		}
+	}
+}
+
+impl Mayland {
+	pub fn add_output(&mut self, output: Output) {
+		let x = self
+			.space
+			.outputs()
+			.map(|output| self.space.output_geometry(output).unwrap())
+			.map(|geom| geom.loc.x + geom.size.w)
+			.max()
+			.unwrap_or(0);
+
+		self.space.map_output(&output, (x, 0));
+
+		let state = OutputState {
+			global: output.create_global::<State>(&self.display_handle),
+			queued: None,
+		};
+
+		let prev = self.output_state.insert(output, state);
+		assert!(prev.is_none(), "output was already tracked");
+	}
+
+	pub fn queue_redraw_all(&mut self) {
+		let outputs = self.output_state.keys().cloned().collect::<Vec<_>>();
+		for output in outputs {
+			self.queue_redraw(output);
+		}
+	}
+
+	pub fn queue_redraw(&mut self, output: Output) {
+		let output_state = self.output_state.get_mut(&output).unwrap();
+
+		if output_state.queued.is_some() {
+			return;
+		}
+
+		let idle = self.loop_handle.insert_idle(move |state| {
+			state.mayland.redraw(&mut state.backend, &output);
+		});
+		output_state.queued = Some(idle);
+	}
+
+	fn redraw(&mut self, backend: &mut Backend, output: &Output) {
+		let output_state = self.output_state.get_mut(output).unwrap();
+		assert!(output_state.queued.take().is_some());
+
+		backend.render(self);
 	}
 }
 

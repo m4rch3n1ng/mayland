@@ -30,5 +30,10 @@ fn main() {
 	std::env::set_var("WAYLAND_DISPLAY", &state.mayland.socket_name);
 	std::env::set_var("GDK_BACKEND", "wayland");
 
-	event_loop.run(None, &mut state, |_| {}).unwrap();
+	event_loop
+		.run(None, &mut state, |state| {
+			state.mayland.popups.cleanup();
+			state.mayland.display_handle.flush_clients().unwrap();
+		})
+		.unwrap();
 }

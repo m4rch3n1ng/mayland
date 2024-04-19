@@ -39,7 +39,7 @@ impl Winit {
 			},
 		);
 
-		mayland.space.map_output(&output, (0, 0));
+		mayland.add_output(output.clone());
 
 		let _global = output.create_global::<State>(&mayland.display_handle);
 		output.change_current_state(
@@ -143,7 +143,10 @@ impl State {
 
 				winit.render(&mut self.mayland);
 			}
-			WinitEvent::Redraw => self.backend.render(&mut self.mayland),
+			WinitEvent::Redraw => {
+				self.mayland
+					.queue_redraw(self.backend.winit().output.clone());
+			}
 			WinitEvent::CloseRequested => self.mayland.loop_signal.stop(),
 			WinitEvent::Input(input) => self.handle_input_event(input),
 		}

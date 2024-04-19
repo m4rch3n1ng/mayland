@@ -105,6 +105,8 @@ impl State {
 			},
 		);
 		ptr.frame(self);
+
+		self.mayland.queue_redraw_all();
 	}
 
 	fn on_pointer_button<I: InputBackend>(&mut self, event: I::PointerButtonEvent) {
