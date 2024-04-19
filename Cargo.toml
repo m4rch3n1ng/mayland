@@ -11,10 +11,10 @@ git = "https://github.com/Smithay/smithay"
 version = "0.3.0"
 default-features = false
 features = [
-	"backend_winit",
 	"backend_egl",
-	"wayland_frontend",
+	"backend_winit",
 	"desktop",
 	"renderer_glow",
-	"use_system_lib"
+	"use_system_lib",
+	"wayland_frontend",
 ]
