@@ -55,7 +55,7 @@ impl PointerGrab<State> for MoveGrab {
 	) {
 		handle.button(data, event);
 		if handle.current_pressed().is_empty() {
-			handle.unset_grab(data, event.serial, event.time, true);
+			handle.unset_grab(self, data, event.serial, event.time, true);
 		}
 	}
 
