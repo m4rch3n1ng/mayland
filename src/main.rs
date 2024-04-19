@@ -1,25 +1,21 @@
-use crate::cli::{Cli, Init};
-use clap::Parser;
 use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
 use state::State;
 
 mod action;
 mod backend;
-mod cli;
 mod input;
 mod shell;
 mod state;
 
 fn main() {
-	let args = Cli::parse();
-	let init = args.init();
-
 	let mut event_loop = EventLoop::<State>::try_new().unwrap();
-
 	let display = Display::<State>::new().unwrap();
-	let mut state = match init {
-		Init::Winit => State::new_winit(&mut event_loop, display),
-		Init::Tty => todo!("tty"),
+
+	let has_display = std::env::var("WAYLAND_DISPLAY").is_ok() || std::env::var("DISPLAY").is_ok();
+	let mut state = if has_display {
+		State::new_winit(&mut event_loop, display)
+	} else {
+		todo!("tty")
 	};
 
 	// todo
