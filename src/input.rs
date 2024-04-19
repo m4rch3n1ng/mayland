@@ -7,12 +7,9 @@ use crate::{
 	state::State,
 };
 use smithay::{
-	backend::{
-		input::{
-			AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState,
-			KeyboardKeyEvent, PointerAxisEvent, PointerButtonEvent,
-		},
-		winit::WinitInput,
+	backend::input::{
+		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState,
+		KeyboardKeyEvent, PointerAxisEvent, PointerButtonEvent,
 	},
 	desktop::{layer_map_for_output, WindowSurfaceType},
 	input::{
@@ -25,80 +22,69 @@ use smithay::{
 };
 
 impl State {
-	pub fn handle_input_event(&mut self, event: InputEvent<WinitInput>) {
+	pub fn handle_input_event<I: InputBackend>(&mut self, event: InputEvent<I>) {
 		match event {
-			InputEvent::Keyboard { event, .. } => {
-				let keyboard = self.mayland.keyboard.clone();
+			InputEvent::DeviceAdded { .. } => println!("device added"),
+			InputEvent::DeviceRemoved { .. } => println!("devices removed"),
 
-				let code = event.key_code();
-				let key_state = event.state();
-				let serial = SERIAL_COUNTER.next_serial();
-				let time = event.time_msec();
-
-				let Some(Some(action)) = keyboard.input(
-					self,
-					code,
-					key_state,
-					serial,
-					time,
-					|state, mods, keysym| state.handle_key(code, key_state, mods, keysym),
-				) else {
-					return;
-				};
-
-				self.handle_action(action);
-			}
-			InputEvent::PointerMotion { .. } => {}
+			InputEvent::Keyboard { event, .. } => self.on_keyboard::<I>(event),
+			InputEvent::PointerMotion { .. } => println!("pointer motion"),
 			InputEvent::PointerMotionAbsolute { event } => {
-				self.on_pointer_move_absolute::<WinitInput>(event);
+				self.on_pointer_move_absolute::<I>(event)
 			}
-			InputEvent::PointerButton { event } => self.on_pointer_button::<WinitInput>(event),
-			InputEvent::PointerAxis { event } => self.on_pointer_axis::<WinitInput>(event),
+			InputEvent::PointerButton { event } => self.on_pointer_button::<I>(event),
+			InputEvent::PointerAxis { event } => self.on_pointer_axis::<I>(event),
 
-			evt => println!("evt {:?}", evt),
+			InputEvent::GestureSwipeBegin { .. } => println!("gesture swipe begin"),
+			InputEvent::GestureSwipeUpdate { .. } => println!("gesture swipe update"),
+			InputEvent::GestureSwipeEnd { .. } => println!("gesture swipe end"),
+
+			InputEvent::GesturePinchBegin { .. } => println!("gesture pinch begin"),
+			InputEvent::GesturePinchUpdate { .. } => println!("gesture pinch update"),
+			InputEvent::GesturePinchEnd { .. } => println!("gesture pinch end"),
+
+			InputEvent::GestureHoldBegin { .. } => println!("gesture hold begin"),
+			InputEvent::GestureHoldEnd { .. } => println!("gesture hold end"),
+
+			InputEvent::TouchDown { .. } => println!("touch down"),
+			InputEvent::TouchMotion { .. } => println!("touch motion"),
+			InputEvent::TouchUp { .. } => println!("touch up"),
+			InputEvent::TouchCancel { .. } => println!("touch cancel"),
+			InputEvent::TouchFrame { .. } => println!("touch frame"),
+
+			InputEvent::TabletToolAxis { .. } => println!("tablet tool axis"),
+			InputEvent::TabletToolProximity { .. } => println!("tablet tool proximity"),
+			InputEvent::TabletToolTip { .. } => println!("tablet tool tip"),
+			InputEvent::TabletToolButton { .. } => println!("tablet tool button"),
+
+			InputEvent::SwitchToggle { .. } => println!("switch toggle"),
+			InputEvent::Special(_) => println!("special"),
 		}
 	}
 
-	fn handle_key(
-		&mut self,
-		code: u32,
-		key_state: KeyState,
-		mods: &ModifiersState,
-		keysym: KeysymHandle,
-	) -> FilterResult<Option<Action>> {
-		let Some(raw_sym) = keysym.raw_latin_sym_or_raw_current_sym() else {
-			return FilterResult::Forward;
+	fn on_keyboard<I: InputBackend>(&mut self, event: I::KeyboardKeyEvent) {
+		let keyboard = self.mayland.keyboard.clone();
+
+		let code = event.key_code();
+		let key_state = event.state();
+		let serial = SERIAL_COUNTER.next_serial();
+		let time = event.time_msec();
+
+		let Some(Some(action)) = keyboard.input(
+			self,
+			code,
+			key_state,
+			serial,
+			time,
+			|state, mods, keysym| state.handle_key(code, key_state, mods, keysym),
+		) else {
+			return;
 		};
 
-		if key_state == KeyState::Released {
-			if self.mayland.suppressed_keys.take(&code).is_some() {
-				return FilterResult::Intercept(None);
-			} else {
-				return FilterResult::Forward;
-			}
-		};
-
-		let action = if mods.alt && raw_sym == Keysym::Escape {
-			Some(Action::Quit)
-		} else if mods.alt && raw_sym == Keysym::q {
-			Some(Action::CloseWindow)
-		} else if mods.alt && raw_sym == Keysym::t {
-			Some(Action::Spawn("alacritty".to_owned()))
-		} else if mods.alt && raw_sym == Keysym::e {
-			Some(Action::Spawn("nautilus".to_owned()))
-		} else {
-			None
-		};
-
-		if let Some(action) = action {
-			self.mayland.suppressed_keys.insert(code);
-			FilterResult::Intercept(Some(action))
-		} else {
-			FilterResult::Forward
-		}
+		self.handle_action(action);
 	}
 
-	fn on_pointer_move_absolute<B: InputBackend>(&mut self, event: B::PointerMotionAbsoluteEvent) {
+	fn on_pointer_move_absolute<I: InputBackend>(&mut self, event: I::PointerMotionAbsoluteEvent) {
 		let output = self.mayland.space.outputs().next().unwrap().clone();
 		let output_geo = self.mayland.space.output_geometry(&output).unwrap();
 		let location = event.position_transformed(output_geo.size) + output_geo.loc.to_f64();
@@ -121,7 +107,7 @@ impl State {
 		ptr.frame(self);
 	}
 
-	fn on_pointer_button<B: InputBackend>(&mut self, event: B::PointerButtonEvent) {
+	fn on_pointer_button<I: InputBackend>(&mut self, event: I::PointerButtonEvent) {
 		let serial = SERIAL_COUNTER.next_serial();
 		let button = event.button_code();
 		let state = wl_pointer::ButtonState::from(event.state());
@@ -143,7 +129,7 @@ impl State {
 		pointer.frame(self);
 	}
 
-	fn on_pointer_axis<B: InputBackend>(&mut self, event: B::PointerAxisEvent) {
+	fn on_pointer_axis<I: InputBackend>(&mut self, event: I::PointerAxisEvent) {
 		let horizontal_amount_v120 = event.amount_v120(Axis::Horizontal);
 		let horizontal_amount = event
 			.amount(Axis::Horizontal)
@@ -184,6 +170,45 @@ impl State {
 		let pointer = self.mayland.pointer.clone();
 		pointer.axis(self, frame);
 		pointer.frame(self);
+	}
+
+	fn handle_key(
+		&mut self,
+		code: u32,
+		key_state: KeyState,
+		mods: &ModifiersState,
+		keysym: KeysymHandle,
+	) -> FilterResult<Option<Action>> {
+		let Some(raw_sym) = keysym.raw_latin_sym_or_raw_current_sym() else {
+			return FilterResult::Forward;
+		};
+
+		if key_state == KeyState::Released {
+			if self.mayland.suppressed_keys.take(&code).is_some() {
+				return FilterResult::Intercept(None);
+			} else {
+				return FilterResult::Forward;
+			}
+		};
+
+		let action = if mods.alt && raw_sym == Keysym::Escape {
+			Some(Action::Quit)
+		} else if mods.alt && raw_sym == Keysym::q {
+			Some(Action::CloseWindow)
+		} else if mods.alt && raw_sym == Keysym::t {
+			Some(Action::Spawn("alacritty".to_owned()))
+		} else if mods.alt && raw_sym == Keysym::e {
+			Some(Action::Spawn("nautilus".to_owned()))
+		} else {
+			None
+		};
+
+		if let Some(action) = action {
+			self.mayland.suppressed_keys.insert(code);
+			FilterResult::Intercept(Some(action))
+		} else {
+			FilterResult::Forward
+		}
 	}
 
 	fn update_keyboard_focus(&mut self, location: Point<f64, Logical>, serial: Serial) {
