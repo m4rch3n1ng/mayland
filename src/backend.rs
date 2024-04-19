@@ -51,8 +51,15 @@ impl Backend {
 
 	pub fn winit(&mut self) -> &mut Winit {
 		match self {
-			Backend::Udev(_udev) => todo!(),
+			Backend::Udev(_udev) => unreachable!(),
 			Backend::Winit(winit) => winit,
+		}
+	}
+
+	pub fn udev(&mut self) -> &mut Udev {
+		match self {
+			Backend::Udev(udev) => udev,
+			Backend::Winit(_winit) => unreachable!(),
 		}
 	}
 }
