@@ -3,7 +3,9 @@ use libc::dev_t;
 use smithay::{
 	backend::{
 		allocator::{
-			dmabuf::Dmabuf, gbm::{GbmAllocator, GbmDevice}, Format as DrmFormat
+			dmabuf::Dmabuf,
+			gbm::{GbmAllocator, GbmBufferFlags, GbmDevice},
+			Format as DrmFormat, Fourcc,
 		},
 		drm::{compositor::DrmCompositor, DrmDevice, DrmDeviceFd, DrmEvent, DrmEventTime},
 		egl::{EGLContext, EGLDisplay},
@@ -14,16 +16,20 @@ use smithay::{
 		udev::{self, UdevBackend, UdevEvent},
 	},
 	desktop::utils::OutputPresentationFeedback,
+	output::{Mode, Output, OutputModeSource, PhysicalProperties, Subpixel},
 	reexports::{
 		calloop::{Dispatcher, RegistrationToken},
-		drm::control::crtc,
+		drm::control::{connector, crtc, ModeTypeFlags},
 		input::Libinput,
 		rustix::fs::OFlags,
 		wayland_protocols::wp::presentation_time::server::wp_presentation_feedback,
 	},
 	utils::{DeviceFd, Monotonic},
 };
-use smithay_drm_extras::drm_scanner::DrmScanner;
+use smithay_drm_extras::{
+	drm_scanner::{DrmScanEvent, DrmScanner},
+	edid::EdidInfo,
+};
 use std::{
 	collections::{HashMap, HashSet},
 	path::{Path, PathBuf},
@@ -36,6 +42,9 @@ type GbmDrmCompositor = DrmCompositor<
 	OutputPresentationFeedback,
 	DrmDeviceFd,
 >;
+
+const BACKGROUND_COLOR: [f32; 4] = [0.0, 0.5, 0.5, 1.];
+const SUPPORTED_COLOR_FORMATS: &[Fourcc] = &[Fourcc::Argb8888, Fourcc::Abgr8888];
 
 #[derive(Debug)]
 pub struct OutputDevice {
@@ -218,18 +227,17 @@ impl Udev {
 							}
 						}
 
-						// let output = state
-						// 	.mayland
-						// 	.space
-						// 	.outputs()
-						// 	.find(|output| {
-						// 		let tty_state = output.user_data().get::<TtyOutputState>().unwrap();
-						// 		tty_state.device_id == device.id && tty_state.crtc == crtc
-						// 	})
-						// 	.unwrap()
-						// 	.clone();
-
-						// let output_state = state.mayland.out
+						let output = state
+							.mayland
+							.space
+							.outputs()
+							.find(|output| {
+								let tty_state = output.user_data().get::<TtyOutputState>().unwrap();
+								tty_state.device_id == device.id && tty_state.crtc == crtc
+							})
+							.unwrap()
+							.clone();
+						state.mayland.queue_redraw(output);
 					}
 					DrmEvent::Error(error) => println!("drm error {:?}", error),
 				}
@@ -254,10 +262,119 @@ impl Udev {
 	}
 
 	fn device_changed(&mut self, device_id: dev_t, mayland: &mut Mayland) {
-		
+		let Some(device) = &mut self.output_device else {
+			return;
+		};
+		if device.id != device_id {
+			return;
+		}
+
+		for event in device.drm_scanner.scan_connectors(&device.drm) {
+			match event {
+				DrmScanEvent::Connected {
+					connector,
+					crtc: Some(crtc),
+				} => {
+					self.connector_connected(connector, crtc, mayland);
+				}
+				DrmScanEvent::Disconnected {
+					connector,
+					crtc: Some(crtc),
+				} => {
+					self.connector_disconnected(connector, crtc, mayland);
+				}
+				_ => {}
+			}
+		}
 	}
 
-	fn device_removed(&mut self, device_id: dev_t, mayland: &mut Mayland) {}
+	fn device_removed(&mut self, device_id: dev_t, mayland: &mut Mayland) {
+		todo!()
+	}
+
+	fn connector_connected(
+		&mut self,
+		connector: connector::Info,
+		crtc: crtc::Handle,
+		mayland: &mut Mayland,
+	) {
+		let output_name = format!(
+			"{}-{}",
+			connector.interface().as_str(),
+			connector.interface_id(),
+		);
+		println!("connecting connector: {output_name}");
+
+		let device = self.output_device.as_mut().unwrap();
+
+		let mode = connector
+			.modes()
+			.iter()
+			.filter(|m| m.mode_type().contains(ModeTypeFlags::PREFERRED))
+			.max_by_key(|m| m.vrefresh())
+			.unwrap();
+
+		let surface = device
+			.drm
+			.create_surface(crtc, *mode, &[connector.handle()])
+			.unwrap();
+
+		let gbm_flags = GbmBufferFlags::RENDERING | GbmBufferFlags::SCANOUT;
+		let allocator = GbmAllocator::new(device.gbm.clone(), gbm_flags);
+
+		let (physical_width, physical_height) = connector.size().unwrap_or((0, 0));
+
+		let (make, model) = EdidInfo::for_connector(&device.drm, connector.handle())
+			.map(|info| (info.manufacturer, info.model))
+			.unwrap_or_else(|| ("Unknown".into(), "Unknown".into()));
+
+		let output = Output::new(
+			output_name,
+			PhysicalProperties {
+				size: (physical_width as i32, physical_height as i32).into(),
+				subpixel: Subpixel::Unknown,
+				model,
+				make,
+			},
+		);
+
+		let wl_mode = Mode::from(*mode);
+		output.change_current_state(Some(wl_mode), None, None, Some((0, 0).into()));
+		output.set_preferred(wl_mode);
+
+		output.user_data().insert_if_missing(|| TtyOutputState {
+			device_id: device.id,
+			crtc,
+		});
+
+		let compositor = DrmCompositor::new(
+			OutputModeSource::Auto(output.clone()),
+			surface,
+			None,
+			allocator,
+			device.gbm.clone(),
+			SUPPORTED_COLOR_FORMATS,
+			device.formats.clone(),
+			device.drm.cursor_size(),
+			Some(device.gbm.clone()),
+		)
+		.unwrap();
+
+		let res = device.surfaces.insert(crtc, compositor);
+		assert!(res.is_none(), "crtc must not have already existed");
+
+		mayland.add_output(output.clone());
+		mayland.queue_redraw(output);
+	}
+
+	fn connector_disconnected(
+		&mut self,
+		connector: connector::Info,
+		crtc: crtc::Handle,
+		mayland: &mut Mayland,
+	) {
+		todo!()
+	}
 }
 
 impl State {
