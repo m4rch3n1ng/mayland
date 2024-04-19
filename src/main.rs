@@ -19,7 +19,7 @@ fn main() {
 		State::new_winit(&mut event_loop, display)
 	} else {
 		trace::with_file();
-		todo!("tty")
+		State::new_udev(&mut event_loop, display)
 	};
 
 	std::panic::set_hook(Box::new(tracing_panic::panic_hook));

@@ -1,5 +1,9 @@
 use crate::{
-	backend::{Backend, Winit},
+	backend::{
+		udev::{self, Udev},
+		winit::Winit,
+		Backend,
+	},
 	render::{Cursor, MaylandRenderElements},
 	shell::element::WindowElement,
 };
@@ -62,6 +66,18 @@ impl State {
 
 		State {
 			backend: winit,
+			mayland,
+		}
+	}
+
+	pub fn new_udev(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
+		let mut mayland = Mayland::new(event_loop, display);
+
+		let udev = Udev::init(&mut mayland);
+		let udev = Backend::Udev(udev);
+
+		State {
+			backend: udev,
 			mayland,
 		}
 	}
