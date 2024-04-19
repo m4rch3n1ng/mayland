@@ -1,4 +1,4 @@
-use crate::{shell::element::WindowElement, state::Mayland, State};
+use crate::{state::Mayland, State};
 use smithay::{
 	backend::{
 		allocator::dmabuf::Dmabuf,
@@ -8,9 +8,7 @@ use smithay::{
 		},
 		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
-	desktop::Space,
 	output::{Mode, Output, PhysicalProperties, Subpixel},
-	reexports::{calloop::EventLoop, wayland_server::DisplayHandle},
 	utils::{Rectangle, Transform},
 };
 use std::time::Duration;
@@ -23,11 +21,7 @@ pub struct Winit {
 }
 
 impl Winit {
-	pub fn init(
-		calloop: &mut EventLoop<State>,
-		display_handle: &mut DisplayHandle,
-		space: &mut Space<WindowElement>,
-	) -> Self {
+	pub fn init(mayland: &mut Mayland) -> Self {
 		let (mut backend, winit_evt) = winit::init::<GlowRenderer>().unwrap();
 
 		let mode = Mode {
@@ -45,9 +39,9 @@ impl Winit {
 			},
 		);
 
-		space.map_output(&output, (0, 0));
+		mayland.space.map_output(&output, (0, 0));
 
-		let _global = output.create_global::<State>(display_handle);
+		let _global = output.create_global::<State>(&mayland.display_handle);
 		output.change_current_state(
 			Some(mode),
 			Some(Transform::Flipped180),
@@ -56,7 +50,11 @@ impl Winit {
 		);
 		output.set_preferred(mode);
 
-		if backend.renderer().bind_wl_display(display_handle).is_ok() {
+		if backend
+			.renderer()
+			.bind_wl_display(&mayland.display_handle)
+			.is_ok()
+		{
 			println!("EGL hardware-acceleration enabled");
 		};
 
@@ -67,8 +65,8 @@ impl Winit {
 			damage_tracker,
 		};
 
-		calloop
-			.handle()
+		mayland
+			.loop_handle
 			.insert_source(winit_evt, |event, (), state| {
 				state.handle_winit_event(event);
 			})

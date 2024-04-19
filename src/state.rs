@@ -42,12 +42,10 @@ pub struct State {
 
 impl State {
 	pub fn new_winit(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
-		let mut space = Space::default();
+		let mut mayland = Mayland::new(event_loop, display);
 
-		let winit = Winit::init(event_loop, &mut display.handle(), &mut space);
+		let winit = Winit::init(&mut mayland);
 		let winit = Backend::Winit(winit);
-
-		let mayland = Mayland::new(event_loop, display, space);
 
 		State {
 			backend: winit,
@@ -90,11 +88,7 @@ pub struct Mayland {
 }
 
 impl Mayland {
-	fn new(
-		event_loop: &mut EventLoop<'static, State>,
-		display: Display<State>,
-		space: Space<WindowElement>,
-	) -> Self {
+	fn new(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
 		let display_handle = display.handle();
 		let socket_name = init_wayland_display(display, event_loop);
 
@@ -102,6 +96,7 @@ impl Mayland {
 		let mut seat = seat_state.new_wl_seat(&display_handle, "winit");
 
 		let popups = PopupManager::default();
+		let space = Space::default();
 
 		let start_time = Instant::now();
 		let loop_signal = event_loop.get_signal();
