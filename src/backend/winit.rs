@@ -9,11 +9,9 @@ use smithay::{
 		},
 		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
-	desktop::layer_map_for_output,
 	output::{Mode, Output, PhysicalProperties, Subpixel},
 	utils::{Rectangle, Transform},
 };
-use std::time::Duration;
 
 #[derive(Debug)]
 pub struct Winit {
@@ -99,24 +97,7 @@ impl Winit {
 
 		self.backend.submit(Some(&[damage])).unwrap();
 
-		for window in mayland.space.elements() {
-			window.0.send_frame(
-				output,
-				mayland.start_time.elapsed(),
-				Some(Duration::ZERO),
-				|_, _| Some(output.clone()),
-			);
-		}
-
-		let layer_map = layer_map_for_output(output);
-		for layer_surface in layer_map.layers() {
-			layer_surface.send_frame(
-				output,
-				mayland.start_time.elapsed(),
-				Some(Duration::ZERO),
-				|_, _| Some(output.clone()),
-			)
-		}
+		mayland.post_repaint(output);
 
 		// ask for redraw to schedule new frame.
 		self.backend.window().request_redraw();

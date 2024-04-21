@@ -8,7 +8,7 @@ use smithay::{
 		element::{surface::WaylandSurfaceRenderElement, RenderElement},
 		glow::GlowRenderer,
 	},
-	desktop::{PopupManager, Space},
+	desktop::{layer_map_for_output, PopupManager, Space},
 	input::{
 		keyboard::{KeyboardHandle, XkbConfig},
 		pointer::PointerHandle,
@@ -43,7 +43,7 @@ use smithay::{
 use std::{
 	collections::{HashMap, HashSet},
 	sync::Arc,
-	time::Instant,
+	time::{Duration, Instant},
 };
 
 mod handlers;
@@ -261,6 +261,27 @@ impl Mayland {
 		let cursor = Cursor::load();
 		let texture = cursor.element(renderer, pointer_pos);
 		MaylandRenderElements::DefaultPointer(texture)
+	}
+
+	pub fn post_repaint(&self, output: &Output) {
+		for window in self.space.elements() {
+			window.0.send_frame(
+				output,
+				self.start_time.elapsed(),
+				Some(Duration::ZERO),
+				|_, _| Some(output.clone()),
+			);
+		}
+
+		let layer_map = layer_map_for_output(output);
+		for layer_surface in layer_map.layers() {
+			layer_surface.send_frame(
+				output,
+				self.start_time.elapsed(),
+				Some(Duration::ZERO),
+				|_, _| Some(output.clone()),
+			)
+		}
 	}
 }
 
