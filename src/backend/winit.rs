@@ -1,4 +1,5 @@
-use crate::{state::Mayland, State};
+use super::BACKGROUND_COLOR;
+use crate::{render::MaylandRenderElements, state::Mayland, State};
 use smithay::{
 	backend::{
 		allocator::dmabuf::Dmabuf,
@@ -8,6 +9,7 @@ use smithay::{
 		},
 		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
+	desktop::layer_map_for_output,
 	output::{Mode, Output, PhysicalProperties, Subpixel},
 	utils::{Rectangle, Transform},
 };
@@ -77,36 +79,44 @@ impl Winit {
 }
 
 impl Winit {
-	pub fn render(&mut self, mayland: &mut Mayland) {
+	pub fn render(
+		&mut self,
+		mayland: &mut Mayland,
+		output: &Output,
+		elements: &[MaylandRenderElements<
+			GlowRenderer,
+			WaylandSurfaceRenderElement<GlowRenderer>,
+		>],
+	) {
 		let size = self.backend.window_size();
 		let damage = Rectangle::from_loc_and_size((0, 0), size);
 
 		self.backend.bind().unwrap();
-		smithay::desktop::space::render_output::<_, WaylandSurfaceRenderElement<GlowRenderer>, _, _>(
-			&self.output,
-			self.backend.renderer(),
-			1.0,
-			0,
-			[&mayland.space],
-			&[],
-			&mut self.damage_tracker,
-			[0.1, 0.1, 0.1, 1.0],
-		)
-		.unwrap();
+		let renderer = self.backend.renderer();
+		self.damage_tracker
+			.render_output(renderer, 0, elements, BACKGROUND_COLOR)
+			.unwrap();
+
 		self.backend.submit(Some(&[damage])).unwrap();
 
-		mayland.space.elements().for_each(|window| {
+		for window in mayland.space.elements() {
 			window.0.send_frame(
-				&self.output,
+				output,
 				mayland.start_time.elapsed(),
 				Some(Duration::ZERO),
-				|_, _| Some(self.output.clone()),
+				|_, _| Some(output.clone()),
 			);
-		});
+		}
 
-		mayland.space.refresh();
-		mayland.popups.cleanup();
-		let _ = mayland.display_handle.flush_clients();
+		let layer_map = layer_map_for_output(output);
+		for layer_surface in layer_map.layers() {
+			layer_surface.send_frame(
+				output,
+				mayland.start_time.elapsed(),
+				Some(Duration::ZERO),
+				|_, _| Some(output.clone()),
+			)
+		}
 
 		// ask for redraw to schedule new frame.
 		self.backend.window().request_redraw();
@@ -118,6 +128,10 @@ impl Winit {
 			.import_dmabuf(dmabuf, None)
 			.inspect_err(|err| println!("error importing dmabuf: {:?}", err))
 			.is_ok()
+	}
+
+	pub fn renderer(&mut self) -> &mut GlowRenderer {
+		self.backend.renderer()
 	}
 }
 
@@ -141,7 +155,7 @@ impl State {
 					.change_current_state(Some(mode), None, None, None);
 				winit.output.set_preferred(mode);
 
-				winit.render(&mut self.mayland);
+				self.mayland.queue_redraw(winit.output.clone());
 			}
 			WinitEvent::Redraw => {
 				self.mayland

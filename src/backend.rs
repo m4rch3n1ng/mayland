@@ -1,8 +1,16 @@
 pub use self::winit::Winit;
-use crate::state::Mayland;
-use smithay::backend::allocator::dmabuf::Dmabuf;
+use crate::{render::MaylandRenderElements, state::Mayland};
+use smithay::{
+	backend::{
+		allocator::dmabuf::Dmabuf,
+		renderer::{element::surface::WaylandSurfaceRenderElement, glow::GlowRenderer},
+	},
+	output::Output,
+};
 
 pub mod winit;
+
+pub const BACKGROUND_COLOR: [f32; 4] = [0.0, 0.5, 0.5, 1.];
 
 #[derive(Debug)]
 pub enum Backend {
@@ -10,9 +18,23 @@ pub enum Backend {
 }
 
 impl Backend {
-	pub fn render(&mut self, mayland: &mut Mayland) {
+	pub fn render(
+		&mut self,
+		mayland: &mut Mayland,
+		output: &Output,
+		elements: &[MaylandRenderElements<
+			GlowRenderer,
+			WaylandSurfaceRenderElement<GlowRenderer>,
+		>],
+	) {
 		match self {
-			Backend::Winit(winit) => winit.render(mayland),
+			Backend::Winit(winit) => winit.render(mayland, output, elements),
+		}
+	}
+
+	pub fn renderer(&mut self) -> &mut GlowRenderer {
+		match self {
+			Backend::Winit(winit) => winit.renderer(),
 		}
 	}
 

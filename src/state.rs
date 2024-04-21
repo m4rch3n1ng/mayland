@@ -1,8 +1,13 @@
 use crate::{
 	backend::{Backend, Winit},
+	render::{Cursor, MaylandRenderElements},
 	shell::element::WindowElement,
 };
 use smithay::{
+	backend::renderer::{
+		element::{surface::WaylandSurfaceRenderElement, RenderElement},
+		glow::GlowRenderer,
+	},
 	desktop::{PopupManager, Space},
 	input::{
 		keyboard::{KeyboardHandle, XkbConfig},
@@ -216,7 +221,46 @@ impl Mayland {
 		let output_state = self.output_state.get_mut(output).unwrap();
 		assert!(output_state.queued.take().is_some());
 
-		backend.render(self);
+		let renderer = backend.renderer();
+		let elements = self.elements(renderer, output);
+
+		backend.render(self, output, &elements);
+	}
+
+	fn elements(
+		&mut self,
+		renderer: &mut GlowRenderer,
+		output: &Output,
+	) -> Vec<MaylandRenderElements<GlowRenderer, WaylandSurfaceRenderElement<GlowRenderer>>> {
+		let mut elements = Vec::new();
+
+		let pointer_element = self.pointer_element(renderer);
+		elements.push(pointer_element);
+
+		let space_elements = smithay::desktop::space::space_render_elements::<_, WindowElement, _>(
+			renderer,
+			[&self.space],
+			output,
+			1.0,
+		)
+		.unwrap();
+		elements.extend(space_elements.into_iter().map(MaylandRenderElements::Space));
+
+		elements
+	}
+
+	fn pointer_element<E: RenderElement<GlowRenderer>>(
+		&mut self,
+		renderer: &mut GlowRenderer,
+	) -> MaylandRenderElements<GlowRenderer, E> {
+		let pointer_pos = self
+			.pointer
+			.current_location()
+			.to_physical_precise_round::<_, i32>(1.);
+
+		let cursor = Cursor::load();
+		let texture = cursor.element(renderer, pointer_pos);
+		MaylandRenderElements::DefaultPointer(texture)
 	}
 }
 
