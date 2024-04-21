@@ -1,18 +1,21 @@
 use crate::{
-	backend::{
-		udev::{self, Udev},
-		winit::Winit,
-		Backend,
-	},
+	backend::{udev::Udev, winit::Winit, Backend},
 	render::{Cursor, MaylandRenderElements},
 	shell::element::WindowElement,
 };
 use smithay::{
 	backend::renderer::{
-		element::{surface::WaylandSurfaceRenderElement, RenderElement},
+		element::{surface::WaylandSurfaceRenderElement, RenderElement, RenderElementStates},
 		glow::GlowRenderer,
 	},
-	desktop::{layer_map_for_output, PopupManager, Space},
+	desktop::{
+		layer_map_for_output,
+		utils::{
+			surface_presentation_feedback_flags_from_states, surface_primary_scanout_output,
+			OutputPresentationFeedback,
+		},
+		PopupManager, Space,
+	},
 	input::{
 		keyboard::{KeyboardHandle, XkbConfig},
 		pointer::PointerHandle,
@@ -279,6 +282,42 @@ impl Mayland {
 
 		let texture = self.cursor.element(renderer, pointer_pos);
 		MaylandRenderElements::DefaultPointer(texture)
+	}
+
+	pub fn presentation_feedback(
+		&self,
+		output: &Output,
+		render_element_states: &RenderElementStates,
+	) -> OutputPresentationFeedback {
+		let mut output_presentation_feedback = OutputPresentationFeedback::new(output);
+
+		for window in self.space.elements() {
+			if self.space.outputs_for_element(window).contains(output) {
+				window.0.take_presentation_feedback(
+					&mut output_presentation_feedback,
+					surface_primary_scanout_output,
+					|surface, _| {
+						surface_presentation_feedback_flags_from_states(
+							surface,
+							render_element_states,
+						)
+					},
+				);
+			}
+		}
+
+		let layer_map = layer_map_for_output(output);
+		for layer_surface in layer_map.layers() {
+			layer_surface.take_presentation_feedback(
+				&mut output_presentation_feedback,
+				surface_primary_scanout_output,
+				|surface, _| {
+					surface_presentation_feedback_flags_from_states(surface, render_element_states)
+				},
+			);
+		}
+
+		output_presentation_feedback
 	}
 
 	pub fn post_repaint(&self, output: &Output) {

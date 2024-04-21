@@ -12,6 +12,8 @@ pub enum Action {
 
 impl State {
 	pub fn handle_action(&mut self, action: Action) {
+		println!("action {:?}", action);
+
 		match action {
 			Action::CloseWindow => {
 				let Some(focus) = self.mayland.keyboard.current_focus() else {

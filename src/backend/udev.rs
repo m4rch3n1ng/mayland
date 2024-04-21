@@ -1,4 +1,7 @@
-use crate::state::{Mayland, State};
+use crate::{
+	render::MaylandRenderElements,
+	state::{Mayland, State},
+};
 use libc::dev_t;
 use smithay::{
 	backend::{
@@ -11,7 +14,10 @@ use smithay::{
 		egl::{EGLContext, EGLDisplay},
 		input::InputEvent,
 		libinput::{LibinputInputBackend, LibinputSessionInterface},
-		renderer::{glow::GlowRenderer, Bind, ImportEgl},
+		renderer::{
+			element::surface::WaylandSurfaceRenderElement, glow::GlowRenderer,
+			Bind, ImportEgl,
+		},
 		session::{libseat::LibSeatSession, Event as SessionEvent, Session},
 		udev::{self, UdevBackend, UdevEvent},
 	},
@@ -36,6 +42,8 @@ use std::{
 	time::Duration,
 };
 
+use super::BACKGROUND_COLOR;
+
 type GbmDrmCompositor = DrmCompositor<
 	GbmAllocator<DrmDeviceFd>,
 	GbmDevice<DrmDeviceFd>,
@@ -43,7 +51,6 @@ type GbmDrmCompositor = DrmCompositor<
 	DrmDeviceFd,
 >;
 
-const BACKGROUND_COLOR: [f32; 4] = [0.0, 0.5, 0.5, 1.];
 const SUPPORTED_COLOR_FORMATS: &[Fourcc] = &[Fourcc::Argb8888, Fourcc::Abgr8888];
 
 #[derive(Debug)]
@@ -102,7 +109,7 @@ impl Udev {
 
 		mayland
 			.loop_handle
-			.insert_source(notifier, |event, _, state| match event {
+			.insert_source(notifier, |event, _, _state| match event {
 				SessionEvent::ActivateSession => {
 					println!("activate session");
 				}
@@ -126,6 +133,40 @@ impl Udev {
 		}
 
 		udev
+	}
+}
+
+impl Udev {
+	pub fn render(
+		&mut self,
+		mayland: &mut Mayland,
+		output: &Output,
+		elements: &[MaylandRenderElements<
+			GlowRenderer,
+			WaylandSurfaceRenderElement<GlowRenderer>,
+		>],
+	) {
+		let device = self.output_device.as_mut().unwrap();
+		let tty_state: &TtyOutputState = output.user_data().get().unwrap();
+		let drm_compositor = device.surfaces.get_mut(&tty_state.crtc).unwrap();
+
+		match drm_compositor.render_frame(&mut device.glow, elements, BACKGROUND_COLOR) {
+			Ok(render_output_res) => {
+				mayland.post_repaint(output);
+
+				let output_presentation_feedback =
+					mayland.presentation_feedback(output, &render_output_res.states);
+
+				drm_compositor
+					.queue_frame(output_presentation_feedback)
+					.unwrap();
+			}
+			Err(e) => panic!("called unwrap on error {:?}", e),
+		};
+	}
+
+	pub fn renderer(&mut self) -> &mut GlowRenderer {
+		&mut self.output_device.as_mut().unwrap().glow
 	}
 }
 

@@ -30,14 +30,14 @@ impl Backend {
 		>],
 	) {
 		match self {
-			Backend::Udev(_udev) => todo!(),
+			Backend::Udev(udev) => udev.render(mayland, output, elements),
 			Backend::Winit(winit) => winit.render(mayland, output, elements),
 		}
 	}
 
 	pub fn renderer(&mut self) -> &mut GlowRenderer {
 		match self {
-			Backend::Udev(_udev) => todo!(),
+			Backend::Udev(udev) => udev.renderer(),
 			Backend::Winit(winit) => winit.renderer(),
 		}
 	}
