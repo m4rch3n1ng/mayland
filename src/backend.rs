@@ -44,14 +44,14 @@ impl Backend {
 
 	pub fn import_dmabuf(&mut self, dmabuf: &Dmabuf) -> bool {
 		match self {
-			Backend::Udev(_udev) => todo!(),
+			Backend::Udev(udev) => udev.import_dmabuf(dmabuf),
 			Backend::Winit(winit) => winit.import_dmabuf(dmabuf),
 		}
 	}
 
 	pub fn winit(&mut self) -> &mut Winit {
 		match self {
-			Backend::Udev(_udev) => unreachable!(),
+			Backend::Udev(_udev) => unreachable!("should only be called in winit context"),
 			Backend::Winit(winit) => winit,
 		}
 	}
@@ -59,7 +59,7 @@ impl Backend {
 	pub fn udev(&mut self) -> &mut Udev {
 		match self {
 			Backend::Udev(udev) => udev,
-			Backend::Winit(_winit) => unreachable!(),
+			Backend::Winit(_winit) => unreachable!("should only be called in udev context"),
 		}
 	}
 }

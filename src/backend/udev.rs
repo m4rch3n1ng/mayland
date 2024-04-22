@@ -1,3 +1,4 @@
+use super::BACKGROUND_COLOR;
 use crate::{
 	render::MaylandRenderElements,
 	state::{Mayland, State},
@@ -15,7 +16,8 @@ use smithay::{
 		input::InputEvent,
 		libinput::{LibinputInputBackend, LibinputSessionInterface},
 		renderer::{
-			element::surface::WaylandSurfaceRenderElement, glow::GlowRenderer, Bind, ImportEgl,
+			element::surface::WaylandSurfaceRenderElement, glow::GlowRenderer, Bind, ImportDma,
+			ImportEgl,
 		},
 		session::{libseat::LibSeatSession, Event as SessionEvent, Session},
 		udev::{self, UdevBackend, UdevEvent},
@@ -42,8 +44,6 @@ use std::{
 };
 use tracing::{error, info};
 
-use super::BACKGROUND_COLOR;
-
 type GbmDrmCompositor = DrmCompositor<
 	GbmAllocator<DrmDeviceFd>,
 	GbmDevice<DrmDeviceFd>,
@@ -66,7 +66,7 @@ pub struct OutputDevice {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct TtyOutputState {
+struct UdevOutputState {
 	device_id: dev_t,
 	crtc: crtc::Handle,
 }
@@ -147,7 +147,7 @@ impl Udev {
 		>],
 	) {
 		let device = self.output_device.as_mut().unwrap();
-		let tty_state: &TtyOutputState = output.user_data().get().unwrap();
+		let tty_state: &UdevOutputState = output.user_data().get().unwrap();
 		let drm_compositor = device.surfaces.get_mut(&tty_state.crtc).unwrap();
 
 		match drm_compositor.render_frame(&mut device.glow, elements, BACKGROUND_COLOR) {
@@ -167,6 +167,18 @@ impl Udev {
 
 	pub fn renderer(&mut self) -> &mut GlowRenderer {
 		&mut self.output_device.as_mut().unwrap().glow
+	}
+
+	pub fn import_dmabuf(&mut self, dmabuf: &Dmabuf) -> bool {
+		let Some(output_device) = self.output_device.as_mut() else {
+			return false;
+		};
+
+		output_device
+			.glow
+			.import_dmabuf(dmabuf, None)
+			.inspect_err(|err| error!("error importing dmabuf: {:?}", err))
+			.is_ok()
 	}
 }
 
@@ -271,7 +283,8 @@ impl Udev {
 							.space
 							.outputs()
 							.find(|output| {
-								let tty_state = output.user_data().get::<TtyOutputState>().unwrap();
+								let tty_state =
+									output.user_data().get::<UdevOutputState>().unwrap();
 								tty_state.device_id == device.id && tty_state.crtc == crtc
 							})
 							.unwrap()
@@ -382,7 +395,7 @@ impl Udev {
 		output.change_current_state(Some(wl_mode), None, None, Some((0, 0).into()));
 		output.set_preferred(wl_mode);
 
-		output.user_data().insert_if_missing(|| TtyOutputState {
+		output.user_data().insert_if_missing(|| UdevOutputState {
 			device_id: device.id,
 			crtc,
 		});
