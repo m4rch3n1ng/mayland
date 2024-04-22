@@ -25,7 +25,7 @@ use smithay::{
 	reexports::{
 		calloop::{Dispatcher, RegistrationToken},
 		drm::control::{connector, crtc, ModeTypeFlags},
-		input::Libinput,
+		input::{AccelProfile, Libinput},
 		rustix::fs::OFlags,
 		wayland_protocols::wp::presentation_time::server::wp_presentation_feedback,
 	},
@@ -157,11 +157,11 @@ impl Udev {
 				let output_presentation_feedback =
 					mayland.presentation_feedback(output, &render_output_res.states);
 
-				drm_compositor
-					.queue_frame(output_presentation_feedback)
-					.unwrap();
+				if let Err(err) = drm_compositor.queue_frame(output_presentation_feedback) {
+					error!("error queueing frame {:?}", err);
+				}
 			}
-			Err(e) => panic!("called unwrap on error {:?}", e),
+			Err(err) => error!("error rendering frame {:?}", err),
 		};
 	}
 
@@ -327,6 +327,7 @@ impl Udev {
 		}
 	}
 
+	#[allow(unused_variables)]
 	fn device_removed(&mut self, device_id: dev_t, mayland: &mut Mayland) {
 		todo!()
 	}
@@ -406,6 +407,7 @@ impl Udev {
 		mayland.queue_redraw(output);
 	}
 
+	#[allow(unused_variables)]
 	fn connector_disconnected(
 		&mut self,
 		connector: connector::Info,
@@ -418,6 +420,13 @@ impl Udev {
 
 impl State {
 	fn handle_libinput_event(&mut self, event: &mut InputEvent<LibinputInputBackend>) {
-		info!("libinput event {:?}", event);
+		if let InputEvent::DeviceAdded { device } = event {
+			let is_touchpad = device.config_tap_finger_count() > 0;
+			if is_touchpad {
+				let _ = device.config_tap_set_enabled(true);
+				let _ = device.config_accel_set_profile(AccelProfile::Flat);
+				let _ = device.config_scroll_set_natural_scroll_enabled(true);
+			}
+		}
 	}
 }

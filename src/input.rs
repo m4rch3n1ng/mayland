@@ -9,12 +9,12 @@ use crate::{
 use smithay::{
 	backend::input::{
 		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState,
-		KeyboardKeyEvent, PointerAxisEvent, PointerButtonEvent,
+		KeyboardKeyEvent, PointerAxisEvent, PointerButtonEvent, PointerMotionEvent,
 	},
 	desktop::{layer_map_for_output, WindowSurfaceType},
 	input::{
 		keyboard::{FilterResult, KeyboardHandle, Keysym, KeysymHandle, ModifiersState},
-		pointer::{AxisFrame, ButtonEvent, MotionEvent},
+		pointer::{AxisFrame, ButtonEvent, MotionEvent, RelativeMotionEvent},
 	},
 	reexports::wayland_server::protocol::wl_pointer,
 	utils::{Logical, Point, Serial, SERIAL_COUNTER},
@@ -29,7 +29,7 @@ impl State {
 			InputEvent::DeviceRemoved { .. } => info!("devices removed"),
 
 			InputEvent::Keyboard { event, .. } => self.on_keyboard::<I>(event),
-			InputEvent::PointerMotion { .. } => info!("pointer motion"),
+			InputEvent::PointerMotion { event } => self.on_pointer_move::<I>(event),
 			InputEvent::PointerMotionAbsolute { event } => {
 				self.on_pointer_move_absolute::<I>(event)
 			}
@@ -83,6 +83,68 @@ impl State {
 		};
 
 		self.handle_action(action);
+	}
+
+	fn on_pointer_move<I: InputBackend>(&mut self, event: I::PointerMotionEvent) {
+		let pointer = self.mayland.pointer.clone();
+
+		let mut location = pointer.current_location();
+		location += event.delta();
+
+		let mut min_max_y = None::<(i32, i32)>;
+		let mut min_max_x = None::<(i32, i32)>;
+
+		for output in self.mayland.space.outputs() {
+			let geom = self.mayland.space.output_geometry(output).unwrap();
+			min_max_y = min_max_y
+				.map(|(min, max)| {
+					(
+						i32::min(min, geom.loc.y),
+						i32::max(max, geom.loc.y + geom.size.h),
+					)
+				})
+				.or(Some((geom.loc.y, geom.loc.y + geom.size.h)));
+			min_max_x = min_max_x
+				.map(|(min, max)| {
+					(
+						i32::min(min, geom.loc.x),
+						i32::max(max, geom.loc.x + geom.size.w),
+					)
+				})
+				.or(Some((geom.loc.x, geom.loc.x + geom.size.w)))
+		}
+
+		if let Some(((min_y, max_y), (min_x, max_x))) = min_max_y.zip(min_max_x) {
+			location.y = location.y.clamp(min_y as f64, max_y as f64);
+			location.x = location.x.clamp(min_x as f64, max_x as f64);
+		}
+
+		let under = self.surface_under(location);
+		let serial = SERIAL_COUNTER.next_serial();
+
+		self.update_keyboard_focus(location, serial);
+
+		pointer.motion(
+			self,
+			under.clone(),
+			&MotionEvent {
+				location,
+				serial,
+				time: event.time_msec(),
+			},
+		);
+
+		pointer.relative_motion(
+			self,
+			under,
+			&RelativeMotionEvent {
+				delta: event.delta(),
+				delta_unaccel: event.delta_unaccel(),
+				utime: event.time(),
+			},
+		);
+
+		self.mayland.queue_redraw_all();
 	}
 
 	fn on_pointer_move_absolute<I: InputBackend>(&mut self, event: I::PointerMotionAbsoluteEvent) {
@@ -294,6 +356,7 @@ impl State {
 			let geometry = self.mayland.space.output_geometry(output).unwrap();
 			geometry.contains(location.to_i32_round())
 		})?;
+
 		let output_geo = self.mayland.space.output_geometry(output).unwrap();
 		let layers = layer_map_for_output(output);
 
