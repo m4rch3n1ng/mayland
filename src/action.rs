@@ -1,5 +1,6 @@
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
 use std::process::Command;
+use tracing::error;
 
 #[derive(Debug)]
 pub enum Action {
@@ -35,7 +36,7 @@ impl State {
 					Ok(mut child) => {
 						let _ = child.wait();
 					}
-					Err(err) => println!("error spawning child: {:?}", err),
+					Err(err) => error!("error spawning child: {:?}", err),
 				});
 			}
 		}

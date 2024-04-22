@@ -12,6 +12,7 @@ use smithay::{
 	output::{Mode, Output, PhysicalProperties, Subpixel},
 	utils::{Rectangle, Transform},
 };
+use tracing::{error, info};
 
 #[derive(Debug)]
 pub struct Winit {
@@ -55,7 +56,7 @@ impl Winit {
 			.bind_wl_display(&mayland.display_handle)
 			.is_ok()
 		{
-			println!("EGL hardware-acceleration enabled");
+			info!("EGL hardware-acceleration enabled");
 		};
 
 		let damage_tracker = OutputDamageTracker::from_output(&output);
@@ -107,7 +108,7 @@ impl Winit {
 		self.backend
 			.renderer()
 			.import_dmabuf(dmabuf, None)
-			.inspect_err(|err| println!("error importing dmabuf: {:?}", err))
+			.inspect_err(|err| error!("error importing dmabuf: {:?}", err))
 			.is_ok()
 	}
 
@@ -119,7 +120,7 @@ impl Winit {
 impl State {
 	fn handle_winit_event(&mut self, event: WinitEvent) {
 		match event {
-			focus @ WinitEvent::Focus(_) => println!("event {:?}", focus),
+			focus @ WinitEvent::Focus(_) => info!("event {:?}", focus),
 			WinitEvent::Resized { size, .. } => {
 				let winit = self.backend.winit();
 				let mode = Mode {

@@ -20,45 +20,46 @@ use smithay::{
 	utils::{Logical, Point, Serial, SERIAL_COUNTER},
 	wayland::{input_method::InputMethodSeat, shell::wlr_layer::Layer as WlrLayer},
 };
+use tracing::info;
 
 impl State {
 	pub fn handle_input_event<I: InputBackend>(&mut self, event: InputEvent<I>) {
 		match event {
-			InputEvent::DeviceAdded { .. } => println!("device added"),
-			InputEvent::DeviceRemoved { .. } => println!("devices removed"),
+			InputEvent::DeviceAdded { .. } => info!("device added"),
+			InputEvent::DeviceRemoved { .. } => info!("devices removed"),
 
 			InputEvent::Keyboard { event, .. } => self.on_keyboard::<I>(event),
-			InputEvent::PointerMotion { .. } => println!("pointer motion"),
+			InputEvent::PointerMotion { .. } => info!("pointer motion"),
 			InputEvent::PointerMotionAbsolute { event } => {
 				self.on_pointer_move_absolute::<I>(event)
 			}
 			InputEvent::PointerButton { event } => self.on_pointer_button::<I>(event),
 			InputEvent::PointerAxis { event } => self.on_pointer_axis::<I>(event),
 
-			InputEvent::GestureSwipeBegin { .. } => println!("gesture swipe begin"),
-			InputEvent::GestureSwipeUpdate { .. } => println!("gesture swipe update"),
-			InputEvent::GestureSwipeEnd { .. } => println!("gesture swipe end"),
+			InputEvent::GestureSwipeBegin { .. } => info!("gesture swipe begin"),
+			InputEvent::GestureSwipeUpdate { .. } => info!("gesture swipe update"),
+			InputEvent::GestureSwipeEnd { .. } => info!("gesture swipe end"),
 
-			InputEvent::GesturePinchBegin { .. } => println!("gesture pinch begin"),
-			InputEvent::GesturePinchUpdate { .. } => println!("gesture pinch update"),
-			InputEvent::GesturePinchEnd { .. } => println!("gesture pinch end"),
+			InputEvent::GesturePinchBegin { .. } => info!("gesture pinch begin"),
+			InputEvent::GesturePinchUpdate { .. } => info!("gesture pinch update"),
+			InputEvent::GesturePinchEnd { .. } => info!("gesture pinch end"),
 
-			InputEvent::GestureHoldBegin { .. } => println!("gesture hold begin"),
-			InputEvent::GestureHoldEnd { .. } => println!("gesture hold end"),
+			InputEvent::GestureHoldBegin { .. } => info!("gesture hold begin"),
+			InputEvent::GestureHoldEnd { .. } => info!("gesture hold end"),
 
-			InputEvent::TouchDown { .. } => println!("touch down"),
-			InputEvent::TouchMotion { .. } => println!("touch motion"),
-			InputEvent::TouchUp { .. } => println!("touch up"),
-			InputEvent::TouchCancel { .. } => println!("touch cancel"),
-			InputEvent::TouchFrame { .. } => println!("touch frame"),
+			InputEvent::TouchDown { .. } => info!("touch down"),
+			InputEvent::TouchMotion { .. } => info!("touch motion"),
+			InputEvent::TouchUp { .. } => info!("touch up"),
+			InputEvent::TouchCancel { .. } => info!("touch cancel"),
+			InputEvent::TouchFrame { .. } => info!("touch frame"),
 
-			InputEvent::TabletToolAxis { .. } => println!("tablet tool axis"),
-			InputEvent::TabletToolProximity { .. } => println!("tablet tool proximity"),
-			InputEvent::TabletToolTip { .. } => println!("tablet tool tip"),
-			InputEvent::TabletToolButton { .. } => println!("tablet tool button"),
+			InputEvent::TabletToolAxis { .. } => info!("tablet tool axis"),
+			InputEvent::TabletToolProximity { .. } => info!("tablet tool proximity"),
+			InputEvent::TabletToolTip { .. } => info!("tablet tool tip"),
+			InputEvent::TabletToolButton { .. } => info!("tablet tool button"),
 
-			InputEvent::SwitchToggle { .. } => println!("switch toggle"),
-			InputEvent::Special(_) => println!("special"),
+			InputEvent::SwitchToggle { .. } => info!("switch toggle"),
+			InputEvent::Special(_) => info!("special"),
 		}
 	}
 
