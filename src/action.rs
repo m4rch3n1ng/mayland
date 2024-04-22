@@ -1,6 +1,6 @@
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
 use std::process::Command;
-use tracing::error;
+use tracing::{error, info};
 
 #[derive(Debug)]
 pub enum Action {
@@ -12,7 +12,7 @@ pub enum Action {
 
 impl State {
 	pub fn handle_action(&mut self, action: Action) {
-		println!("action {:?}", action);
+		info!("action {:?}", action);
 
 		match action {
 			Action::CloseWindow => {

@@ -15,8 +15,7 @@ use smithay::{
 		input::InputEvent,
 		libinput::{LibinputInputBackend, LibinputSessionInterface},
 		renderer::{
-			element::surface::WaylandSurfaceRenderElement, glow::GlowRenderer,
-			Bind, ImportEgl,
+			element::surface::WaylandSurfaceRenderElement, glow::GlowRenderer, Bind, ImportEgl,
 		},
 		session::{libseat::LibSeatSession, Event as SessionEvent, Session},
 		udev::{self, UdevBackend, UdevEvent},
@@ -41,6 +40,7 @@ use std::{
 	path::{Path, PathBuf},
 	time::Duration,
 };
+use tracing::{error, info};
 
 use super::BACKGROUND_COLOR;
 
@@ -111,10 +111,10 @@ impl Udev {
 			.loop_handle
 			.insert_source(notifier, |event, _, _state| match event {
 				SessionEvent::ActivateSession => {
-					println!("activate session");
+					info!("activate session");
 				}
 				SessionEvent::PauseSession => {
-					println!("pause session");
+					info!("pause session");
 				}
 			})
 			.unwrap();
@@ -175,7 +175,7 @@ impl Udev {
 		match event {
 			UdevEvent::Added { device_id, path } => {
 				if !self.session.is_active() {
-					println!("session inactive");
+					info!("session inactive");
 					return;
 				}
 
@@ -183,7 +183,7 @@ impl Udev {
 			}
 			UdevEvent::Changed { device_id } => {
 				if !self.session.is_active() {
-					println!("session inactive");
+					info!("session inactive");
 					return;
 				}
 
@@ -191,10 +191,8 @@ impl Udev {
 			}
 			UdevEvent::Removed { device_id } => {
 				if !self.session.is_active() {
-					{
-						println!("session inactive");
-						return;
-					}
+					info!("session inactive");
+					return;
 				}
 
 				self.device_removed(device_id, mayland);
@@ -204,7 +202,7 @@ impl Udev {
 
 	fn device_added(&mut self, device_id: dev_t, path: &Path, mayland: &mut Mayland) {
 		if path != self.primary_gpu_path {
-			println!("skipping non-primary gpu");
+			info!("skipping non-primary gpu");
 			return;
 		}
 
@@ -264,7 +262,7 @@ impl Udev {
 							}
 							Ok(None) => {}
 							Err(err) => {
-								println!("error marking frame as submitted {}", err);
+								error!("error marking frame as submitted {}", err);
 							}
 						}
 
@@ -280,7 +278,7 @@ impl Udev {
 							.clone();
 						state.mayland.queue_redraw(output);
 					}
-					DrmEvent::Error(error) => println!("drm error {:?}", error),
+					DrmEvent::Error(error) => error!("drm error {:?}", error),
 				}
 			})
 			.unwrap();
@@ -344,7 +342,7 @@ impl Udev {
 			connector.interface().as_str(),
 			connector.interface_id(),
 		);
-		println!("connecting connector: {output_name}");
+		info!("connecting connector: {output_name}");
 
 		let device = self.output_device.as_mut().unwrap();
 
@@ -420,6 +418,6 @@ impl Udev {
 
 impl State {
 	fn handle_libinput_event(&mut self, event: &mut InputEvent<LibinputInputBackend>) {
-		println!("libinput event");
+		info!("libinput event {:?}", event);
 	}
 }
