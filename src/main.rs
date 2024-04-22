@@ -22,6 +22,8 @@ fn main() {
 		todo!("tty")
 	};
 
+	std::panic::set_hook(Box::new(tracing_panic::panic_hook));
+
 	// todo
 	let xkb = state.mayland.keyboard.clone();
 	let keymap = std::fs::read_to_string("/home/may/.config/keymap/comp.xkb").unwrap();
