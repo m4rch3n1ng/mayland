@@ -219,6 +219,17 @@ impl Mayland {
 		assert!(prev.is_none(), "output was already tracked");
 	}
 
+	pub fn remove_output(&mut self, output: &Output) {
+		let mut state = self.output_state.remove(output).unwrap();
+		self.display_handle.remove_global::<State>(state.global);
+
+		if let Some(idle) = state.queued.take() {
+			idle.cancel();
+		};
+
+		self.space.unmap_output(output);
+	}
+
 	pub fn queue_redraw_all(&mut self) {
 		let outputs = self.output_state.keys().cloned().collect::<Vec<_>>();
 		for output in outputs {

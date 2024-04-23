@@ -340,9 +340,26 @@ impl Udev {
 		}
 	}
 
-	#[allow(unused_variables)]
 	fn device_removed(&mut self, device_id: dev_t, mayland: &mut Mayland) {
-		todo!()
+		let Some(device) = &mut self.output_device else {
+			return;
+		};
+		if device_id != device.id {
+			return;
+		}
+
+		let crtcs = device
+			.drm_scanner
+			.crtcs()
+			.map(|(info, crtc)| (info.clone(), crtc))
+			.collect::<Vec<_>>();
+		for (connector, crtc) in crtcs {
+			self.connector_disconnected(connector, crtc, mayland);
+		}
+
+		let mut device = self.output_device.take().unwrap();
+		device.glow.unbind_wl_display();
+		mayland.loop_handle.remove(device.token);
 	}
 
 	fn connector_connected(
@@ -420,14 +437,31 @@ impl Udev {
 		mayland.queue_redraw(output);
 	}
 
-	#[allow(unused_variables)]
 	fn connector_disconnected(
 		&mut self,
 		connector: connector::Info,
 		crtc: crtc::Handle,
 		mayland: &mut Mayland,
 	) {
-		todo!()
+		info!("disconnecting connector {:?}", connector);
+		let device = self.output_device.as_mut().unwrap();
+
+		if device.surfaces.remove(&crtc).is_none() {
+			info!("crtc wasn't enabled");
+			return;
+		}
+
+		let output = mayland
+			.space
+			.outputs()
+			.find(|output| {
+				let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
+				udev_state.crtc == crtc && udev_state.device_id == device.id
+			})
+			.unwrap()
+			.clone();
+
+		mayland.remove_output(&output);
 	}
 }
 
