@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use smithay::{
 	backend::{
 		allocator::Fourcc,
@@ -19,6 +21,12 @@ use xcursor::parser::Image;
 const FALLBACK_CURSOR_DATA: &[u8] = include_bytes!("../resources/cursor.rgba");
 
 pub struct Cursor(Image);
+
+impl Debug for Cursor {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.debug_tuple("Cursor").field(&..).finish()
+	}
+}
 
 impl Cursor {
 	pub fn load() -> Self {

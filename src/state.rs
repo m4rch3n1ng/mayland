@@ -97,6 +97,7 @@ pub struct Mayland {
 	// input
 	pub pointer: PointerHandle<State>,
 	pub keyboard: KeyboardHandle<State>,
+	pub cursor: Cursor,
 
 	pub suppressed_keys: HashSet<u32>,
 }
@@ -140,6 +141,7 @@ impl Mayland {
 
 		let keyboard = seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
 		let pointer = seat.add_pointer();
+		let cursor = Cursor::load();
 
 		let suppressed_keys = HashSet::new();
 
@@ -170,6 +172,7 @@ impl Mayland {
 
 			pointer,
 			keyboard,
+			cursor,
 
 			suppressed_keys,
 		}
@@ -258,8 +261,7 @@ impl Mayland {
 			.current_location()
 			.to_physical_precise_round::<_, i32>(1.);
 
-		let cursor = Cursor::load();
-		let texture = cursor.element(renderer, pointer_pos);
+		let texture = self.cursor.element(renderer, pointer_pos);
 		MaylandRenderElements::DefaultPointer(texture)
 	}
 
