@@ -157,8 +157,12 @@ impl Udev {
 				let output_presentation_feedback =
 					mayland.presentation_feedback(output, &render_output_res.states);
 
-				if let Err(err) = drm_compositor.queue_frame(output_presentation_feedback) {
-					error!("error queueing frame {:?}", err);
+				match drm_compositor.queue_frame(output_presentation_feedback) {
+					Ok(()) => {
+						let output_state = mayland.output_state.get_mut(output).unwrap();
+						output_state.waiting_for_vblank = true;
+					}
+					Err(err) => error!("error queueing frame {:?}", err),
 				}
 			}
 			Err(err) => error!("error rendering frame {:?}", err),
@@ -289,6 +293,10 @@ impl Udev {
 							})
 							.unwrap()
 							.clone();
+
+						let output_state = state.mayland.output_state.get_mut(&output).unwrap();
+						output_state.waiting_for_vblank = false;
+
 						state.mayland.queue_redraw(output);
 					}
 					DrmEvent::Error(error) => error!("drm error {:?}", error),

@@ -125,6 +125,7 @@ pub struct Mayland {
 pub struct OutputState {
 	pub global: GlobalId,
 	pub queued: Option<Idle<'static>>,
+	pub waiting_for_vblank: bool,
 }
 
 impl Mayland {
@@ -213,6 +214,7 @@ impl Mayland {
 		let state = OutputState {
 			global: output.create_global::<State>(&self.display_handle),
 			queued: None,
+			waiting_for_vblank: false,
 		};
 
 		let prev = self.output_state.insert(output, state);
@@ -240,7 +242,7 @@ impl Mayland {
 	pub fn queue_redraw(&mut self, output: Output) {
 		let output_state = self.output_state.get_mut(&output).unwrap();
 
-		if output_state.queued.is_some() {
+		if output_state.queued.is_some() || output_state.waiting_for_vblank {
 			return;
 		}
 
@@ -252,7 +254,9 @@ impl Mayland {
 
 	fn redraw(&mut self, backend: &mut Backend, output: &Output) {
 		let output_state = self.output_state.get_mut(output).unwrap();
+
 		assert!(output_state.queued.take().is_some());
+		assert!(!output_state.waiting_for_vblank);
 
 		let renderer = backend.renderer();
 		let elements = self.elements(renderer, output);
