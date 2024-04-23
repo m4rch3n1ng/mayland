@@ -120,11 +120,21 @@ impl PointerTarget<State> for WindowElement {
 	fn button(&self, seat: &Seat<State>, data: &mut State, event: &ButtonEvent) {
 		let mods = data.mayland.keyboard.modifier_state();
 		if mods.alt {
-			let serial = event.serial;
-			let window = self.clone();
-			data.mayland
-				.loop_handle
-				.insert_idle(move |state| state.xdg_move(window, serial));
+			let button = event.button;
+
+			if button == 272 {
+				let serial = event.serial;
+				let window = self.clone();
+				data.mayland
+					.loop_handle
+					.insert_idle(move |state| state.xdg_move(window, serial));
+			} else if button == 273 {
+				let serial = event.serial;
+				let window = self.clone();
+				data.mayland
+					.loop_handle
+					.insert_idle(move |state| state.xdg_resize(window, serial));
+			}
 		} else if let Some(w) = self.wl_surface() {
 			PointerTarget::button(&w, seat, data, event);
 		}

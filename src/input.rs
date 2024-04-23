@@ -199,7 +199,7 @@ impl State {
 		} else if mods.alt && raw_sym == Keysym::q {
 			Some(Action::CloseWindow)
 		} else if mods.alt && raw_sym == Keysym::t {
-			Some(Action::Spawn("alacritty".to_owned()))
+			Some(Action::Spawn("kitty".to_owned()))
 		} else if mods.alt && raw_sym == Keysym::e {
 			Some(Action::Spawn("nautilus".to_owned()))
 		} else {
