@@ -1,14 +1,21 @@
 use crate::{
-	backend::{Backend, Winit},
+	backend::{udev::Udev, winit::Winit, Backend},
 	render::{Cursor, MaylandRenderElements},
 	shell::element::WindowElement,
 };
 use smithay::{
 	backend::renderer::{
-		element::{surface::WaylandSurfaceRenderElement, RenderElement},
+		element::{surface::WaylandSurfaceRenderElement, RenderElement, RenderElementStates},
 		glow::GlowRenderer,
 	},
-	desktop::{layer_map_for_output, PopupManager, Space},
+	desktop::{
+		layer_map_for_output,
+		utils::{
+			surface_presentation_feedback_flags_from_states, surface_primary_scanout_output,
+			OutputPresentationFeedback,
+		},
+		PopupManager, Space,
+	},
 	input::{
 		keyboard::{KeyboardHandle, XkbConfig},
 		pointer::PointerHandle,
@@ -65,6 +72,18 @@ impl State {
 			mayland,
 		}
 	}
+
+	pub fn new_udev(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
+		let mut mayland = Mayland::new(event_loop, display);
+
+		let udev = Udev::init(&mut mayland);
+		let udev = Backend::Udev(udev);
+
+		State {
+			backend: udev,
+			mayland,
+		}
+	}
 }
 
 #[derive(Debug)]
@@ -106,6 +125,7 @@ pub struct Mayland {
 pub struct OutputState {
 	pub global: GlobalId,
 	pub queued: Option<Idle<'static>>,
+	pub waiting_for_vblank: bool,
 }
 
 impl Mayland {
@@ -194,10 +214,22 @@ impl Mayland {
 		let state = OutputState {
 			global: output.create_global::<State>(&self.display_handle),
 			queued: None,
+			waiting_for_vblank: false,
 		};
 
 		let prev = self.output_state.insert(output, state);
 		assert!(prev.is_none(), "output was already tracked");
+	}
+
+	pub fn remove_output(&mut self, output: &Output) {
+		let mut state = self.output_state.remove(output).unwrap();
+		self.display_handle.remove_global::<State>(state.global);
+
+		if let Some(idle) = state.queued.take() {
+			idle.cancel();
+		};
+
+		self.space.unmap_output(output);
 	}
 
 	pub fn queue_redraw_all(&mut self) {
@@ -210,7 +242,7 @@ impl Mayland {
 	pub fn queue_redraw(&mut self, output: Output) {
 		let output_state = self.output_state.get_mut(&output).unwrap();
 
-		if output_state.queued.is_some() {
+		if output_state.queued.is_some() || output_state.waiting_for_vblank {
 			return;
 		}
 
@@ -222,7 +254,9 @@ impl Mayland {
 
 	fn redraw(&mut self, backend: &mut Backend, output: &Output) {
 		let output_state = self.output_state.get_mut(output).unwrap();
+
 		assert!(output_state.queued.take().is_some());
+		assert!(!output_state.waiting_for_vblank);
 
 		let renderer = backend.renderer();
 		let elements = self.elements(renderer, output);
@@ -263,6 +297,42 @@ impl Mayland {
 
 		let texture = self.cursor.element(renderer, pointer_pos);
 		MaylandRenderElements::DefaultPointer(texture)
+	}
+
+	pub fn presentation_feedback(
+		&self,
+		output: &Output,
+		render_element_states: &RenderElementStates,
+	) -> OutputPresentationFeedback {
+		let mut output_presentation_feedback = OutputPresentationFeedback::new(output);
+
+		for window in self.space.elements() {
+			if self.space.outputs_for_element(window).contains(output) {
+				window.0.take_presentation_feedback(
+					&mut output_presentation_feedback,
+					surface_primary_scanout_output,
+					|surface, _| {
+						surface_presentation_feedback_flags_from_states(
+							surface,
+							render_element_states,
+						)
+					},
+				);
+			}
+		}
+
+		let layer_map = layer_map_for_output(output);
+		for layer_surface in layer_map.layers() {
+			layer_surface.take_presentation_feedback(
+				&mut output_presentation_feedback,
+				surface_primary_scanout_output,
+				|surface, _| {
+					surface_presentation_feedback_flags_from_states(surface, render_element_states)
+				},
+			);
+		}
+
+		output_presentation_feedback
 	}
 
 	pub fn post_repaint(&self, output: &Output) {

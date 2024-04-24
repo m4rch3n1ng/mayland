@@ -11,7 +11,10 @@ use smithay::{
 		},
 		SeatHandler,
 	},
-	reexports::{wayland_protocols::xdg::shell::server::xdg_toplevel::State as TopLevelState, wayland_server::Resource},
+	reexports::{
+		wayland_protocols::xdg::shell::server::xdg_toplevel::State as TopLevelState,
+		wayland_server::Resource,
+	},
 	utils::{IsAlive, Logical, Point, Serial, Size},
 	wayland::seat::WaylandFocus,
 };

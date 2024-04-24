@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+libc = "0.2.153"
 time = { version = "0.3.36", features = ["formatting", "macros"] }
 tracing = "0.1.40"
 tracing-panic = "0.1.2"
@@ -15,10 +16,19 @@ git = "https://github.com/Smithay/smithay"
 version = "0.3.0"
 default-features = false
 features = [
+	"backend_drm",
 	"backend_egl",
+	"backend_gbm",
+	"backend_libinput",
+	"backend_udev",
+	"backend_session_libseat",
 	"backend_winit",
 	"desktop",
 	"renderer_glow",
 	"use_system_lib",
 	"wayland_frontend",
 ]
+
+[dependencies.smithay-drm-extras]
+git = "https://github.com/Smithay/smithay"
+default-features = false
