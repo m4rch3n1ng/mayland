@@ -1,6 +1,6 @@
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
 use std::process::Command;
-use tracing::{error, info};
+use tracing::error;
 
 #[derive(Debug)]
 pub enum Action {
@@ -12,8 +12,6 @@ pub enum Action {
 
 impl State {
 	pub fn handle_action(&mut self, action: Action) {
-		info!("action {:?}", action);
-
 		match action {
 			Action::CloseWindow => {
 				let Some(focus) = self.mayland.keyboard.current_focus() else {
