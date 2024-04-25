@@ -1,11 +1,14 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
-	render::{Cursor, MaylandRenderElements},
+	render::{CursorBuffer, MaylandRenderElements},
 	shell::element::WindowElement,
 };
 use smithay::{
 	backend::renderer::{
-		element::{surface::WaylandSurfaceRenderElement, RenderElement, RenderElementStates},
+		element::{
+			memory::MemoryRenderBufferRenderElement, surface::WaylandSurfaceRenderElement, Kind,
+			RenderElement, RenderElementStates,
+		},
 		glow::GlowRenderer,
 	},
 	desktop::{
@@ -18,7 +21,7 @@ use smithay::{
 	},
 	input::{
 		keyboard::{KeyboardHandle, XkbConfig},
-		pointer::PointerHandle,
+		pointer::{CursorImageStatus, PointerHandle},
 		Seat, SeatState,
 	},
 	output::Output,
@@ -116,7 +119,8 @@ pub struct Mayland {
 	// input
 	pub pointer: PointerHandle<State>,
 	pub keyboard: KeyboardHandle<State>,
-	pub cursor: Cursor,
+	pub cursor_image: CursorImageStatus,
+	pub cursor_buffer: CursorBuffer,
 
 	pub suppressed_keys: HashSet<u32>,
 }
@@ -161,7 +165,7 @@ impl Mayland {
 
 		let keyboard = seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
 		let pointer = seat.add_pointer();
-		let cursor = Cursor::load();
+		let cursor_buffer = CursorBuffer::new();
 
 		let suppressed_keys = HashSet::new();
 
@@ -192,7 +196,8 @@ impl Mayland {
 
 			pointer,
 			keyboard,
-			cursor,
+			cursor_image: CursorImageStatus::default_named(),
+			cursor_buffer,
 
 			suppressed_keys,
 		}
@@ -295,7 +300,18 @@ impl Mayland {
 			.current_location()
 			.to_physical_precise_round::<_, i32>(1.);
 
-		let texture = self.cursor.element(renderer, pointer_pos);
+		let buffer = self.cursor_buffer.buffer();
+		let texture = MemoryRenderBufferRenderElement::from_buffer(
+			renderer,
+			pointer_pos.to_f64(),
+			&buffer,
+			None,
+			None,
+			None,
+			Kind::Cursor,
+		)
+		.unwrap();
+
 		MaylandRenderElements::DefaultPointer(texture)
 	}
 
@@ -352,7 +368,7 @@ impl Mayland {
 				self.start_time.elapsed(),
 				Some(Duration::ZERO),
 				|_, _| Some(output.clone()),
-			)
+			);
 		}
 	}
 }

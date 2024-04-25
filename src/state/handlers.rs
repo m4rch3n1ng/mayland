@@ -4,7 +4,7 @@ use smithay::{
 	backend::allocator::dmabuf::Dmabuf,
 	delegate_data_control, delegate_data_device, delegate_dmabuf, delegate_output,
 	delegate_primary_selection, delegate_seat, delegate_xdg_decoration,
-	input::SeatHandler,
+	input::{pointer::CursorImageStatus, Seat, SeatHandler, SeatState},
 	reexports::{
 		wayland_protocols::xdg::decoration::zv1::server::zxdg_toplevel_decoration_v1::Mode as DecorationMode,
 		wayland_server::{protocol::wl_surface::WlSurface, Resource},
@@ -31,15 +31,16 @@ impl SeatHandler for State {
 	type PointerFocus = PointerFocusTarget;
 	type TouchFocus = WlSurface;
 
-	fn seat_state(&mut self) -> &mut smithay::input::SeatState<Self> {
+	fn seat_state(&mut self) -> &mut SeatState<Self> {
 		&mut self.mayland.seat_state
 	}
 
-	fn focus_changed(
-		&mut self,
-		seat: &smithay::input::Seat<Self>,
-		target: Option<&Self::KeyboardFocus>,
-	) {
+	fn cursor_image(&mut self, _seat: &Seat<Self>, image: CursorImageStatus) {
+		self.mayland.cursor_image = image;
+		self.mayland.queue_redraw_all();
+	}
+
+	fn focus_changed(&mut self, seat: &Seat<Self>, target: Option<&Self::KeyboardFocus>) {
 		let dh = &self.mayland.display_handle;
 
 		let wl_surface = target.and_then(WaylandFocus::wl_surface);

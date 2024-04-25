@@ -55,10 +55,12 @@ impl CompositorHandler for State {
 
 			if let Some(window) = self.window_for_surface(surface) {
 				window.0.on_commit();
+				self.mayland.queue_redraw_all();
 			}
 		};
 
 		handle_commit(&mut self.mayland.popups, &self.mayland.space, surface);
+		self.mayland.queue_redraw_all();
 	}
 }
 

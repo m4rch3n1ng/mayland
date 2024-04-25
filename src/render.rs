@@ -1,14 +1,8 @@
-use std::fmt::Debug;
-
 use smithay::{
 	backend::{
 		allocator::Fourcc,
 		renderer::{
-			element::{
-				memory::{MemoryRenderBuffer, MemoryRenderBufferRenderElement},
-				Kind,
-			},
-			glow::GlowRenderer,
+			element::memory::{MemoryRenderBuffer, MemoryRenderBufferRenderElement},
 			ImportAll, ImportMem,
 		},
 	},
@@ -16,62 +10,56 @@ use smithay::{
 	render_elements,
 	utils::{Physical, Point, Transform},
 };
+use std::fmt::Debug;
 use xcursor::parser::Image;
 
 const FALLBACK_CURSOR_DATA: &[u8] = include_bytes!("../resources/cursor.rgba");
 
-pub struct Cursor(Image);
+fn load_default_cursor() -> (MemoryRenderBuffer, Point<i32, Physical>) {
+	let icon = Image {
+		size: 32,
+		width: 64,
+		height: 64,
+		xhot: 1,
+		yhot: 1,
+		delay: 0,
+		pixels_rgba: Vec::from(FALLBACK_CURSOR_DATA),
+		pixels_argb: vec![],
+	};
 
-impl Debug for Cursor {
+	let mem = MemoryRenderBuffer::from_slice(
+		&icon.pixels_rgba,
+		Fourcc::Argb8888,
+		(icon.width as i32, icon.height as i32),
+		2,
+		Transform::Normal,
+		None,
+	);
+
+	let hotspot = Point::from((icon.xhot as i32, icon.yhot as i32));
+
+	(mem, hotspot)
+}
+
+pub struct CursorBuffer(Option<(MemoryRenderBuffer, Point<i32, Physical>)>);
+
+impl Debug for CursorBuffer {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.debug_tuple("Cursor").field(&..).finish()
 	}
 }
 
-impl Cursor {
-	pub fn load() -> Self {
-		let icon = Image {
-			size: 32,
-			width: 64,
-			height: 64,
-			xhot: 1,
-			yhot: 1,
-			delay: 0,
-			pixels_rgba: Vec::from(FALLBACK_CURSOR_DATA),
-			pixels_argb: vec![],
-		};
-
-		Cursor(icon)
+impl CursorBuffer {
+	pub const fn new() -> Self {
+		CursorBuffer(None)
 	}
 
-	fn buffer(&self) -> MemoryRenderBuffer {
-		MemoryRenderBuffer::from_slice(
-			&self.0.pixels_rgba,
-			Fourcc::Argb8888,
-			(self.0.width as i32, self.0.height as i32),
-			2,
-			Transform::Normal,
-			None,
-		)
+	fn get(&mut self) -> &(MemoryRenderBuffer, Point<i32, Physical>) {
+		self.0.get_or_insert_with(load_default_cursor)
 	}
 
-	pub fn element(
-		&self,
-		renderer: &mut GlowRenderer,
-		position: Point<i32, Physical>,
-	) -> MemoryRenderBufferRenderElement<GlowRenderer> {
-		let texture = self.buffer();
-
-		MemoryRenderBufferRenderElement::from_buffer(
-			renderer,
-			position.to_f64(),
-			&texture,
-			None,
-			None,
-			None,
-			Kind::Cursor,
-		)
-		.unwrap()
+	pub fn buffer(&mut self) -> MemoryRenderBuffer {
+		self.get().0.clone()
 	}
 }
 

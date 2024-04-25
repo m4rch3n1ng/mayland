@@ -209,7 +209,7 @@ impl PointerGrab<State> for ResizeGrab {
 			WindowSurface::Wayland(xdg) => {
 				xdg.with_pending_state(|state| {
 					state.states.set(TopLevelState::Resizing);
-					state.size = Some(self.new_window_size)
+					state.size = Some(self.new_window_size);
 				});
 				xdg.send_pending_configure();
 

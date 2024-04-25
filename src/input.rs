@@ -111,7 +111,7 @@ impl State {
 						i32::max(max, geom.loc.x + geom.size.w),
 					)
 				})
-				.or(Some((geom.loc.x, geom.loc.x + geom.size.w)))
+				.or(Some((geom.loc.x, geom.loc.x + geom.size.w)));
 		}
 
 		if let Some(((min_y, max_y), (min_x, max_x))) = min_max_y.zip(min_max_x) {
@@ -333,6 +333,8 @@ impl State {
 				}
 			}
 		}
+
+		self.mayland.queue_redraw_all();
 	}
 
 	pub fn focus_window(
