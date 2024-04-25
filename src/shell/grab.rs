@@ -420,8 +420,11 @@ impl State {
 			return;
 		}
 
-		let size = window.0.geometry().size;
-		let window_offset = Point::from((-size.w / 2, -size.h / 2));
+		let pointer_location = pointer.current_location().to_i32_round();
+		let window_geometry = self.mayland.space.element_geometry(&window).unwrap();
+
+		let window_offset = pointer_location - window_geometry.loc;
+		let window_offset = Point::from((0, 0)) - window_offset;
 
 		let pointer_location = start_data.location.to_i32_round();
 		self.mayland

@@ -85,7 +85,7 @@ impl Udev {
 		let seat_name = session.seat();
 
 		let udev_backend = UdevBackend::new(&seat_name).unwrap();
-		let udev_dispatcher = Dispatcher::new(udev_backend, move |event, _, state: &mut State| {
+		let udev_dispatcher = Dispatcher::new(udev_backend, move |event, (), state: &mut State| {
 			let udev = state.backend.udev();
 			udev.on_udev_data(event, &mut state.mayland);
 		});
@@ -101,7 +101,7 @@ impl Udev {
 		let input_backend = LibinputInputBackend::new(libinput.clone());
 		mayland
 			.loop_handle
-			.insert_source(input_backend, |mut event, _, state| {
+			.insert_source(input_backend, |mut event, (), state| {
 				state.handle_libinput_event(&mut event);
 				state.handle_input_event(event);
 			})
@@ -109,7 +109,7 @@ impl Udev {
 
 		mayland
 			.loop_handle
-			.insert_source(notifier, |event, _, _state| match event {
+			.insert_source(notifier, |event, (), _state| match event {
 				SessionEvent::ActivateSession => {
 					info!("activate session");
 				}
@@ -222,7 +222,10 @@ impl Udev {
 			return;
 		}
 
-		assert!(self.output_device.is_none());
+		assert!(
+			self.output_device.is_none(),
+			"cannot add device if it already exists"
+		);
 
 		let flags = OFlags::RDWR | OFlags::CLOEXEC | OFlags::NOCTTY | OFlags::NONBLOCK;
 		let fd = self.session.open(path, flags).unwrap();
@@ -231,9 +234,11 @@ impl Udev {
 		let (drm, drm_notifier) = DrmDevice::new(fd.clone(), true).unwrap();
 		let gbm = GbmDevice::new(fd).unwrap();
 
+		// SAFETY: this project doesn't use an egl display outside of smithay
 		let display = unsafe { EGLDisplay::new(gbm.clone()) }.unwrap();
 		let egl_context = EGLContext::new(&display).unwrap();
 
+		// SAFETY: the egl context is only active in this thread
 		let mut glow = unsafe { GlowRenderer::new(egl_context) }.unwrap();
 		glow.bind_wl_display(&mayland.display_handle).unwrap();
 
@@ -256,7 +261,7 @@ impl Udev {
 
 						match drm_comp.frame_submitted() {
 							Ok(Some(mut feedback)) => {
-								let seq = metadata.as_ref().map(|meta| meta.sequence).unwrap_or(0);
+								let seq = metadata.as_ref().map_or(0, |meta| meta.sequence);
 								let flags = wp_presentation_feedback::Kind::Vsync
 									| wp_presentation_feedback::Kind::HwClock
 									| wp_presentation_feedback::Kind::HwCompletion;
@@ -265,7 +270,7 @@ impl Udev {
 								let refresh = output
 									.current_mode()
 									.map(|mode| {
-										Duration::from_secs_f64(1_000f64 / mode.refresh as f64)
+										Duration::from_secs_f64(1_000f64 / f64::from(mode.refresh))
 									})
 									.unwrap_or_default();
 

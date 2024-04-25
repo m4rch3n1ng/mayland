@@ -31,7 +31,7 @@ impl State {
 			InputEvent::Keyboard { event, .. } => self.on_keyboard::<I>(event),
 			InputEvent::PointerMotion { event } => self.on_pointer_move::<I>(event),
 			InputEvent::PointerMotionAbsolute { event } => {
-				self.on_pointer_move_absolute::<I>(event)
+				self.on_pointer_move_absolute::<I>(event);
 			}
 			InputEvent::PointerButton { event } => self.on_pointer_button::<I>(event),
 			InputEvent::PointerAxis { event } => self.on_pointer_axis::<I>(event),
@@ -115,8 +115,8 @@ impl State {
 		}
 
 		if let Some(((min_y, max_y), (min_x, max_x))) = min_max_y.zip(min_max_x) {
-			location.y = location.y.clamp(min_y as f64, max_y as f64);
-			location.x = location.x.clamp(min_x as f64, max_x as f64);
+			location.y = location.y.clamp(f64::from(min_y), f64::from(max_y));
+			location.x = location.x.clamp(f64::from(min_x), f64::from(max_x));
 		}
 
 		let under = self.surface_under(location);
