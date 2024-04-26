@@ -422,9 +422,7 @@ impl State {
 
 		let pointer_location = pointer.current_location().to_i32_round();
 		let window_geometry = self.mayland.space.element_geometry(&window).unwrap();
-
-		let window_offset = pointer_location - window_geometry.loc;
-		let window_offset = Point::from((0, 0)) - window_offset;
+		let window_offset = window_geometry.loc - pointer_location;
 
 		let pointer_location = start_data.location.to_i32_round();
 		self.mayland
