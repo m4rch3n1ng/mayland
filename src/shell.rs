@@ -84,7 +84,7 @@ impl WlrLayerShellHandler for State {
 		let output = wl_output
 			.as_ref()
 			.and_then(Output::from_resource)
-			.unwrap_or_else(|| self.mayland.space.outputs().next().unwrap().clone());
+			.unwrap_or_else(|| self.mayland.workspaces.outputs().next().unwrap().clone());
 		let mut map = layer_map_for_output(&output);
 		map.map_layer(&LayerSurface::new(surface, namespace))
 			.unwrap();
@@ -94,7 +94,7 @@ impl WlrLayerShellHandler for State {
 impl State {
 	fn element_for_surface(&mut self, surface: &WlSurface) -> Option<MappedWindowElement> {
 		self.mayland
-			.space
+			.workspaces
 			.elements()
 			.find(|&w| w.wl_surface().is_some_and(|w| w == *surface))
 			.cloned()

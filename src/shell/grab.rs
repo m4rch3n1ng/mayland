@@ -72,12 +72,12 @@ impl State {
 			};
 
 			if let Some((dx, dy)) = delta {
-				let mut location = self.mayland.space.element_location(&window).unwrap();
+				let mut location = self.mayland.workspaces.element_location(&window).unwrap();
 				location.x = initial_window_location.x + dx;
 				location.y = initial_window_location.y + dy;
 
 				self.mayland
-					.space
+					.workspaces
 					.map_element(window.clone(), location, true);
 			}
 		}

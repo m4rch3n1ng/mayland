@@ -283,7 +283,7 @@ impl Udev {
 
 						let output = state
 							.mayland
-							.space
+							.workspaces
 							.outputs()
 							.find(|output| {
 								let tty_state =
@@ -459,7 +459,7 @@ impl Udev {
 		}
 
 		let output = mayland
-			.space
+			.workspaces
 			.outputs()
 			.find(|output| {
 				let udev_state = output.user_data().get::<UdevOutputState>().unwrap();

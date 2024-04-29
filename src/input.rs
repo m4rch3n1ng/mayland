@@ -94,8 +94,8 @@ impl State {
 		let mut min_max_y = None::<(i32, i32)>;
 		let mut min_max_x = None::<(i32, i32)>;
 
-		for output in self.mayland.space.outputs() {
-			let geom = self.mayland.space.output_geometry(output).unwrap();
+		for output in self.mayland.workspaces.outputs() {
+			let geom = self.mayland.workspaces.output_geometry(output).unwrap();
 			min_max_y = min_max_y
 				.map(|(min, max)| {
 					(
@@ -148,8 +148,8 @@ impl State {
 	}
 
 	fn on_pointer_move_absolute<I: InputBackend>(&mut self, event: I::PointerMotionAbsoluteEvent) {
-		let output = self.mayland.space.outputs().next().unwrap().clone();
-		let output_geo = self.mayland.space.output_geometry(&output).unwrap();
+		let output = self.mayland.workspaces.outputs().next().unwrap().clone();
+		let output_geo = self.mayland.workspaces.output_geometry(&output).unwrap();
 		let location = event.position_transformed(output_geo.size) + output_geo.loc.to_f64();
 
 		let under = self.surface_under(location);
@@ -286,9 +286,14 @@ impl State {
 			return;
 		}
 
-		let output = self.mayland.space.output_under(location).next().cloned();
+		let output = self
+			.mayland
+			.workspaces
+			.output_under(location)
+			.next()
+			.cloned();
 		if let Some(output) = output.as_ref() {
-			let output_geo = self.mayland.space.output_geometry(output).unwrap();
+			let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
 			let layers = layer_map_for_output(output);
 			if let Some(layer) = layers
 				.layer_under(WlrLayer::Overlay, location)
@@ -308,7 +313,7 @@ impl State {
 
 		if let Some((window, _)) = self
 			.mayland
-			.space
+			.workspaces
 			.element_under(location)
 			.map(|(w, p)| (w.clone(), p))
 		{
@@ -322,7 +327,7 @@ impl State {
 				.or_else(|| layers.layer_under(WlrLayer::Background, location))
 			{
 				if layer.can_receive_keyboard_focus() {
-					let output_geo = self.mayland.space.output_geometry(output).unwrap();
+					let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
 					let layer_geo = layers.layer_geometry(layer).unwrap();
 					if let Some((_, _)) = layer.surface_under(
 						location - output_geo.loc.to_f64() - layer_geo.loc.to_f64(),
@@ -343,9 +348,9 @@ impl State {
 		keyboard: &KeyboardHandle<State>,
 		serial: Serial,
 	) {
-		self.mayland.space.raise_element(&window, true);
+		self.mayland.workspaces.raise_element(&window, true);
 		keyboard.set_focus(self, Some(KeyboardFocusTarget::from(window)), serial);
-		self.mayland.space.elements().for_each(|mapped| {
+		self.mayland.workspaces.elements().for_each(|mapped| {
 			mapped.window.toplevel().unwrap().send_pending_configure();
 		});
 	}
@@ -354,12 +359,12 @@ impl State {
 		&self,
 		location: Point<f64, Logical>,
 	) -> Option<(PointerFocusTarget, Point<i32, Logical>)> {
-		let output = self.mayland.space.outputs().find(|output| {
-			let geometry = self.mayland.space.output_geometry(output).unwrap();
+		let output = self.mayland.workspaces.outputs().find(|output| {
+			let geometry = self.mayland.workspaces.output_geometry(output).unwrap();
 			geometry.contains(location.to_i32_round())
 		})?;
 
-		let output_geo = self.mayland.space.output_geometry(output).unwrap();
+		let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
 		let layers = layer_map_for_output(output);
 
 		if let Some(layer) = layers
@@ -373,7 +378,7 @@ impl State {
 					WindowSurfaceType::ALL,
 				)
 				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc))
-		} else if let Some((window, loc)) = self.mayland.space.element_under(location) {
+		} else if let Some((window, loc)) = self.mayland.workspaces.element_under(location) {
 			Some((PointerFocusTarget::from(window), loc))
 		} else if let Some(layer) = layers
 			.layer_under(WlrLayer::Bottom, location)

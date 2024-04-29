@@ -23,7 +23,7 @@ impl XdgShellHandler for State {
 	fn new_toplevel(&mut self, surface: ToplevelSurface) {
 		let window = MappedWindowElement::new(Window::new_wayland_window(surface));
 		self.mayland
-			.space
+			.workspaces
 			.map_element(window.clone(), (0, 0), false);
 
 		let serial = SERIAL_COUNTER.next_serial();
@@ -63,7 +63,7 @@ impl Mayland {
 	pub fn handle_surface_commit(&mut self, surface: &WlSurface) {
 		// handle toplevel commits.
 		if let Some(element) = self
-			.space
+			.workspaces
 			.elements()
 			.find(|w| w.wl_surface().is_some_and(|w| w == *surface))
 			.cloned()

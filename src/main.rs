@@ -4,6 +4,7 @@ use state::State;
 mod action;
 mod backend;
 mod input;
+mod layout;
 mod render;
 mod shell;
 mod state;
@@ -33,7 +34,7 @@ fn main() {
 
 	event_loop
 		.run(None, &mut state, |state| {
-			state.mayland.space.refresh();
+			state.mayland.workspaces.refresh();
 			state.mayland.popups.cleanup();
 			state.mayland.display_handle.flush_clients().unwrap();
 		})

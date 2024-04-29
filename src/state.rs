@@ -1,7 +1,7 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
+	layout::workspace::WorkspaceManager,
 	render::{CursorBuffer, MaylandRenderElements},
-	shell::element::MappedWindowElement,
 };
 use smithay::{
 	backend::renderer::{
@@ -14,7 +14,7 @@ use smithay::{
 			surface_presentation_feedback_flags_from_states, surface_primary_scanout_output,
 			OutputPresentationFeedback,
 		},
-		PopupManager, Space,
+		PopupManager,
 	},
 	input::{
 		keyboard::{KeyboardHandle, XkbConfig},
@@ -93,8 +93,10 @@ pub struct Mayland {
 
 	pub seat: Seat<State>,
 	pub popups: PopupManager,
-	pub space: Space<MappedWindowElement>,
 	pub output_state: HashMap<Output, OutputState>,
+
+	// workspace
+	pub workspaces: WorkspaceManager,
 
 	pub start_time: std::time::Instant,
 	pub loop_signal: LoopSignal,
@@ -138,7 +140,8 @@ impl Mayland {
 		let mut seat = seat_state.new_wl_seat(&display_handle, "winit");
 
 		let popups = PopupManager::default();
-		let space = Space::default();
+
+		let workspaces = WorkspaceManager::new();
 
 		let start_time = Instant::now();
 		let loop_signal = event_loop.get_signal();
@@ -172,8 +175,9 @@ impl Mayland {
 
 			seat,
 			popups,
-			space,
 			output_state: HashMap::new(),
+
+			workspaces,
 
 			start_time,
 			loop_signal,
@@ -203,15 +207,7 @@ impl Mayland {
 
 impl Mayland {
 	pub fn add_output(&mut self, output: Output) {
-		let x = self
-			.space
-			.outputs()
-			.map(|output| self.space.output_geometry(output).unwrap())
-			.map(|geom| geom.loc.x + geom.size.w)
-			.max()
-			.unwrap_or(0);
-
-		self.space.map_output(&output, (x, 0));
+		self.workspaces.add_output(output.clone());
 
 		let state = OutputState {
 			global: output.create_global::<State>(&self.display_handle),
@@ -231,7 +227,7 @@ impl Mayland {
 			idle.cancel();
 		};
 
-		self.space.unmap_output(output);
+		self.workspaces.remove_output(output);
 	}
 
 	pub fn queue_redraw_all(&mut self) {
@@ -276,13 +272,8 @@ impl Mayland {
 		let pointer_element = self.pointer_element(renderer);
 		elements.push(pointer_element);
 
-		let space_elements = smithay::desktop::space::space_render_elements::<
-			_,
-			MappedWindowElement,
-			_,
-		>(renderer, [&self.space], output, 1.0)
-		.unwrap();
-		elements.extend(space_elements.into_iter().map(MaylandRenderElements::Space));
+		let space_elements = self.workspaces.space_elements(renderer, output);
+		elements.extend(space_elements);
 
 		elements
 	}
@@ -315,8 +306,8 @@ impl Mayland {
 	) -> OutputPresentationFeedback {
 		let mut output_presentation_feedback = OutputPresentationFeedback::new(output);
 
-		for element in self.space.elements() {
-			if self.space.outputs_for_element(element).contains(output) {
+		for element in self.workspaces.elements() {
+			if self.workspaces.outputs_for_element(element).contains(output) {
 				element.window.take_presentation_feedback(
 					&mut output_presentation_feedback,
 					surface_primary_scanout_output,
@@ -345,7 +336,7 @@ impl Mayland {
 	}
 
 	pub fn post_repaint(&self, output: &Output) {
-		for element in self.space.elements() {
+		for element in self.workspaces.elements() {
 			element.window.send_frame(
 				output,
 				self.start_time.elapsed(),
