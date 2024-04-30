@@ -3,10 +3,7 @@ use crate::{render::MaylandRenderElements, state::Mayland, State};
 use smithay::{
 	backend::{
 		allocator::dmabuf::Dmabuf,
-		renderer::{
-			damage::OutputDamageTracker, element::surface::WaylandSurfaceRenderElement,
-			glow::GlowRenderer, ImportDma, ImportEgl,
-		},
+		renderer::{damage::OutputDamageTracker, glow::GlowRenderer, ImportDma, ImportEgl},
 		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
 	output::{Mode, Output, PhysicalProperties, Subpixel},
@@ -82,10 +79,7 @@ impl Winit {
 		&mut self,
 		mayland: &mut Mayland,
 		output: &Output,
-		elements: &[MaylandRenderElements<
-			GlowRenderer,
-			WaylandSurfaceRenderElement<GlowRenderer>,
-		>],
+		elements: &[MaylandRenderElements],
 	) {
 		let size = self.backend.window_size();
 		let damage = Rectangle::from_loc_and_size((0, 0), size);

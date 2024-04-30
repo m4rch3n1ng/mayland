@@ -2,7 +2,12 @@ use smithay::{
 	backend::{
 		allocator::Fourcc,
 		renderer::{
-			element::memory::{MemoryRenderBuffer, MemoryRenderBufferRenderElement},
+			element::{
+				memory::{MemoryRenderBuffer, MemoryRenderBufferRenderElement},
+				surface::WaylandSurfaceRenderElement,
+				RenderElement,
+			},
+			glow::GlowRenderer,
 			ImportAll, ImportMem,
 		},
 	},
@@ -63,9 +68,24 @@ impl CursorBuffer {
 	}
 }
 
+pub type MaylandRenderElements =
+	OutputRenderElements<GlowRenderer, WaylandSurfaceRenderElement<GlowRenderer>>;
+
 render_elements! {
-	pub MaylandRenderElements<R, E> where
+	pub OutputRenderElements<R, E> where
 		R: ImportAll + ImportMem;
 	DefaultPointer = MemoryRenderBufferRenderElement<R>,
 	Space=SpaceRenderElements<R, E>,
+}
+
+impl<R: ImportAll + ImportMem, E: RenderElement<R>> Debug for OutputRenderElements<R, E> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			OutputRenderElements::Space(_) => f.debug_tuple("Space").field(&..).finish(),
+			OutputRenderElements::DefaultPointer(element) => {
+				f.debug_tuple("DefaultPointer").field(&element).finish()
+			}
+			OutputRenderElements::_GenericCatcher(_) => f.write_str("_GenericCatcher"),
+		}
+	}
 }

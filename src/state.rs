@@ -5,10 +5,7 @@ use crate::{
 };
 use smithay::{
 	backend::renderer::{
-		element::{
-			memory::MemoryRenderBufferRenderElement, surface::WaylandSurfaceRenderElement, Kind,
-			RenderElement, RenderElementStates,
-		},
+		element::{memory::MemoryRenderBufferRenderElement, Kind, RenderElementStates},
 		glow::GlowRenderer,
 	},
 	desktop::{
@@ -273,7 +270,7 @@ impl Mayland {
 		&mut self,
 		renderer: &mut GlowRenderer,
 		output: &Output,
-	) -> Vec<MaylandRenderElements<GlowRenderer, WaylandSurfaceRenderElement<GlowRenderer>>> {
+	) -> Vec<MaylandRenderElements> {
 		let mut elements = Vec::new();
 
 		let pointer_element = self.pointer_element(renderer);
@@ -291,10 +288,7 @@ impl Mayland {
 		elements
 	}
 
-	fn pointer_element<E: RenderElement<GlowRenderer>>(
-		&mut self,
-		renderer: &mut GlowRenderer,
-	) -> MaylandRenderElements<GlowRenderer, E> {
+	fn pointer_element(&mut self, renderer: &mut GlowRenderer) -> MaylandRenderElements {
 		let pointer_pos = self
 			.pointer
 			.current_location()

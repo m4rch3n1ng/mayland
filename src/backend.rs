@@ -1,10 +1,7 @@
 use self::{udev::Udev, winit::Winit};
 use crate::{render::MaylandRenderElements, state::Mayland};
 use smithay::{
-	backend::{
-		allocator::dmabuf::Dmabuf,
-		renderer::{element::surface::WaylandSurfaceRenderElement, glow::GlowRenderer},
-	},
+	backend::{allocator::dmabuf::Dmabuf, renderer::glow::GlowRenderer},
 	output::Output,
 };
 
@@ -24,10 +21,7 @@ impl Backend {
 		&mut self,
 		mayland: &mut Mayland,
 		output: &Output,
-		elements: &[MaylandRenderElements<
-			GlowRenderer,
-			WaylandSurfaceRenderElement<GlowRenderer>,
-		>],
+		elements: &[MaylandRenderElements],
 	) {
 		match self {
 			Backend::Udev(udev) => udev.render(mayland, output, elements),

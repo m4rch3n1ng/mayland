@@ -15,10 +15,7 @@ use smithay::{
 		egl::{EGLContext, EGLDisplay},
 		input::InputEvent,
 		libinput::{LibinputInputBackend, LibinputSessionInterface},
-		renderer::{
-			element::surface::WaylandSurfaceRenderElement, glow::GlowRenderer, Bind, ImportDma,
-			ImportEgl,
-		},
+		renderer::{glow::GlowRenderer, Bind, ImportDma, ImportEgl},
 		session::{libseat::LibSeatSession, Event as SessionEvent, Session},
 		udev::{self, UdevBackend, UdevEvent},
 	},
@@ -141,10 +138,7 @@ impl Udev {
 		&mut self,
 		mayland: &mut Mayland,
 		output: &Output,
-		elements: &[MaylandRenderElements<
-			GlowRenderer,
-			WaylandSurfaceRenderElement<GlowRenderer>,
-		>],
+		elements: &[MaylandRenderElements],
 	) {
 		let device = self.output_device.as_mut().unwrap();
 		let tty_state: &UdevOutputState = output.user_data().get().unwrap();
