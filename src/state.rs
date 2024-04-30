@@ -207,7 +207,7 @@ impl Mayland {
 
 impl Mayland {
 	pub fn add_output(&mut self, output: Output) {
-		self.workspaces.add_output(output.clone());
+		self.workspaces.add_output(&output);
 
 		let state = OutputState {
 			global: output.create_global::<State>(&self.display_handle),
@@ -272,8 +272,8 @@ impl Mayland {
 		let pointer_element = self.pointer_element(renderer);
 		elements.push(pointer_element);
 
-		let space_elements = self.workspaces.space_elements(renderer, output);
-		elements.extend(space_elements);
+		let workspace_elements = self.workspaces.render_elements(renderer, output);
+		elements.extend(workspace_elements);
 
 		elements
 	}
