@@ -5,12 +5,14 @@ use smithay::{
 	output::Output,
 	utils::{Logical, Point, Rectangle},
 };
+use std::collections::BTreeMap;
 
 #[derive(Debug)]
 pub struct WorkspaceManager {
 	space: Space<MappedWindowElement>,
 
-	workspace: Workspace,
+	workspaces: BTreeMap<usize, Workspace>,
+	current: usize,
 }
 
 impl WorkspaceManager {
@@ -18,8 +20,42 @@ impl WorkspaceManager {
 		let space = Space::default();
 
 		let workspace = Workspace::new();
+		let workspaces = BTreeMap::from([(0, workspace)]);
+		let current = 0;
 
-		WorkspaceManager { space, workspace }
+		WorkspaceManager {
+			space,
+			workspaces,
+			current,
+		}
+	}
+}
+
+impl WorkspaceManager {
+	pub fn switch_to_workspace(&mut self, idx: usize) {
+		if idx == self.current {
+			return;
+		}
+
+		// todo use current output
+		let output = self.space.outputs().next().unwrap();
+		self.workspaces
+			.get_mut(&self.current)
+			.unwrap()
+			.unmap_output(output);
+
+		// todo focus window
+		let workspace = self.workspaces.entry(idx).or_insert_with(Workspace::new);
+		workspace.map_output(output);
+		self.current = idx;
+	}
+
+	fn workspace(&self) -> &Workspace {
+		&self.workspaces[&self.current]
+	}
+
+	fn workspace_mut(&mut self) -> &mut Workspace {
+		self.workspaces.get_mut(&self.current).unwrap()
 	}
 }
 
@@ -34,17 +70,23 @@ impl WorkspaceManager {
 			.unwrap_or(0);
 
 		self.space.map_output(output, (x, 0));
-		self.workspace.map_output(output);
+
+		let workspace = self.workspace_mut();
+		workspace.map_output(output);
 	}
 
 	pub fn remove_output(&mut self, output: &Output) {
 		self.space.unmap_output(output);
-		self.workspace.unmap_output(output);
+
+		let workspace = self.workspace_mut();
+		workspace.unmap_output(output);
 	}
 
 	pub fn refresh(&mut self) {
 		self.space.refresh();
-		self.workspace.refresh();
+
+		let workspace = self.workspace_mut();
+		workspace.refresh();
 	}
 
 	pub fn render_elements(
@@ -52,7 +94,8 @@ impl WorkspaceManager {
 		renderer: &mut GlowRenderer,
 		output: &Output,
 	) -> impl Iterator<Item = MaylandRenderElements> {
-		self.workspace.space_elements(renderer, output)
+		let workspace = self.workspace();
+		workspace.space_elements(renderer, output)
 	}
 }
 
@@ -84,33 +127,39 @@ impl WorkspaceManager {
 		location: P,
 		activate: bool,
 	) {
-		self.workspace.map_element(element, location, activate);
+		let workspace = self.workspace_mut();
+		workspace.map_element(element, location, activate);
 	}
 
 	pub fn raise_element(&mut self, element: &MappedWindowElement, activate: bool) {
-		self.workspace.raise_element(element, activate);
+		let workspace = self.workspace_mut();
+		workspace.raise_element(element, activate);
 	}
 
 	pub fn elements(&self) -> impl DoubleEndedIterator<Item = &MappedWindowElement> {
-		self.workspace.elements()
+		let workspace = self.workspace();
+		workspace.elements()
 	}
 
 	pub fn element_location(&self, element: &MappedWindowElement) -> Option<Point<i32, Logical>> {
-		self.workspace.element_location(element)
+		let workspace = self.workspace();
+		workspace.element_location(element)
 	}
 
 	pub fn element_geometry(
 		&self,
 		element: &MappedWindowElement,
 	) -> Option<Rectangle<i32, Logical>> {
-		self.workspace.element_geometry(element)
+		let workspace = self.workspace();
+		workspace.element_geometry(element)
 	}
 
 	pub fn element_under<P: Into<Point<f64, Logical>>>(
 		&self,
 		point: P,
 	) -> Option<(&MappedWindowElement, Point<i32, Logical>)> {
-		self.workspace.element_under(point)
+		let workspace = self.workspace();
+		workspace.element_under(point)
 	}
 }
 

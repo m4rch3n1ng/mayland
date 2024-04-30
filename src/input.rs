@@ -264,6 +264,18 @@ impl State {
 			Some(Action::Spawn("kitty".to_owned()))
 		} else if mods.alt && raw_sym == Keysym::e {
 			Some(Action::Spawn("nautilus".to_owned()))
+		} else if mods.alt && raw_sym == Keysym::_0 {
+			Some(Action::Workspace(0))
+		} else if mods.alt && raw_sym == Keysym::_1 {
+			Some(Action::Workspace(1))
+		} else if mods.alt && raw_sym == Keysym::_2 {
+			Some(Action::Workspace(2))
+		} else if mods.alt && raw_sym == Keysym::_3 {
+			Some(Action::Workspace(3))
+		} else if mods.alt && raw_sym == Keysym::_4 {
+			Some(Action::Workspace(4))
+		} else if mods.alt && raw_sym == Keysym::_5 {
+			Some(Action::Workspace(5))
 		} else {
 			None
 		};

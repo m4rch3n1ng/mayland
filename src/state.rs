@@ -307,7 +307,11 @@ impl Mayland {
 		let mut output_presentation_feedback = OutputPresentationFeedback::new(output);
 
 		for element in self.workspaces.elements() {
-			if self.workspaces.outputs_for_element(element).contains(output) {
+			if self
+				.workspaces
+				.outputs_for_element(element)
+				.contains(output)
+			{
 				element.window.take_presentation_feedback(
 					&mut output_presentation_feedback,
 					surface_primary_scanout_output,

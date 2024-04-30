@@ -7,6 +7,8 @@ pub enum Action {
 	Quit,
 	CloseWindow,
 
+	Workspace(usize),
+
 	Spawn(String),
 }
 
@@ -38,6 +40,9 @@ impl State {
 					}
 					Err(err) => error!("error spawning child: {:?}", err),
 				});
+			}
+			Action::Workspace(idx) => {
+				self.mayland.workspaces.switch_to_workspace(idx);
 			}
 		}
 	}
