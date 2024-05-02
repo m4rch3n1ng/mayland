@@ -1,7 +1,7 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
 	render::{CursorBuffer, MaylandRenderElements},
-	shell::element::WindowElement,
+	shell::element::MappedWindowElement,
 };
 use smithay::{
 	backend::renderer::{
@@ -93,7 +93,7 @@ pub struct Mayland {
 
 	pub seat: Seat<State>,
 	pub popups: PopupManager,
-	pub space: Space<WindowElement>,
+	pub space: Space<MappedWindowElement>,
 	pub output_state: HashMap<Output, OutputState>,
 
 	pub start_time: std::time::Instant,
@@ -276,12 +276,11 @@ impl Mayland {
 		let pointer_element = self.pointer_element(renderer);
 		elements.push(pointer_element);
 
-		let space_elements = smithay::desktop::space::space_render_elements::<_, WindowElement, _>(
-			renderer,
-			[&self.space],
-			output,
-			1.0,
-		)
+		let space_elements = smithay::desktop::space::space_render_elements::<
+			_,
+			MappedWindowElement,
+			_,
+		>(renderer, [&self.space], output, 1.0)
 		.unwrap();
 		elements.extend(space_elements.into_iter().map(MaylandRenderElements::Space));
 
@@ -316,9 +315,9 @@ impl Mayland {
 	) -> OutputPresentationFeedback {
 		let mut output_presentation_feedback = OutputPresentationFeedback::new(output);
 
-		for window in self.space.elements() {
-			if self.space.outputs_for_element(window).contains(output) {
-				window.0.take_presentation_feedback(
+		for element in self.space.elements() {
+			if self.space.outputs_for_element(element).contains(output) {
+				element.window.take_presentation_feedback(
 					&mut output_presentation_feedback,
 					surface_primary_scanout_output,
 					|surface, _| {
@@ -346,8 +345,8 @@ impl Mayland {
 	}
 
 	pub fn post_repaint(&self, output: &Output) {
-		for window in self.space.elements() {
-			window.0.send_frame(
+		for element in self.space.elements() {
+			element.window.send_frame(
 				output,
 				self.start_time.elapsed(),
 				Some(Duration::ZERO),

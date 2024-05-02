@@ -1,4 +1,4 @@
-use self::{element::WindowElement, xdg::handle_commit};
+use self::{element::MappedWindowElement, xdg::handle_commit};
 use crate::state::{ClientState, State};
 use smithay::{
 	backend::renderer::utils::on_commit_buffer_handler,
@@ -53,8 +53,8 @@ impl CompositorHandler for State {
 				root = parent;
 			}
 
-			if let Some(window) = self.window_for_surface(surface) {
-				window.0.on_commit();
+			if let Some(element) = self.element_for_surface(surface) {
+				element.window.on_commit();
 				self.mayland.queue_redraw_all();
 			}
 		};
@@ -87,7 +87,7 @@ impl WlrLayerShellHandler for State {
 }
 
 impl State {
-	fn window_for_surface(&mut self, surface: &WlSurface) -> Option<WindowElement> {
+	fn element_for_surface(&mut self, surface: &WlSurface) -> Option<MappedWindowElement> {
 		self.mayland
 			.space
 			.elements()

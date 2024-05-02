@@ -1,4 +1,4 @@
-use crate::{shell::element::WindowElement, state::State};
+use crate::{shell::element::MappedWindowElement, state::State};
 use smithay::{
 	desktop::{space::SpaceElement, WindowSurface},
 	input::{
@@ -18,9 +18,11 @@ use smithay::{
 	wayland::seat::WaylandFocus,
 };
 
+use super::ResizeCorner;
+
 struct MoveGrab {
 	start_data: GrabStartData<State>,
-	window: WindowElement,
+	window: MappedWindowElement,
 	window_offset: Point<i32, Logical>,
 }
 
@@ -154,29 +156,11 @@ impl PointerGrab<State> for MoveGrab {
 	fn unset(&mut self, _data: &mut State) {}
 }
 
-#[derive(Debug)]
-enum ResizeCorner {
-	TopLeft,
-	TopRight,
-	BottomLeft,
-	BottomRight,
-}
-
-impl ResizeCorner {
-	fn new(is_top: bool, is_left: bool) -> Self {
-		match (is_top, is_left) {
-			(true, true) => ResizeCorner::TopLeft,
-			(true, false) => ResizeCorner::TopRight,
-			(false, true) => ResizeCorner::BottomLeft,
-			(false, false) => ResizeCorner::BottomRight,
-		}
-	}
-}
-
 struct ResizeGrab {
 	start_data: GrabStartData<State>,
 	corner: ResizeCorner,
-	window: WindowElement,
+	window: MappedWindowElement,
+	// todo remove
 	initial_window_location: Point<i32, Logical>,
 	initial_window_size: Size<i32, Logical>,
 	new_window_size: Size<i32, Logical>,
@@ -204,7 +188,7 @@ impl PointerGrab<State> for ResizeGrab {
 		let new_window_height = (self.initial_window_size.h as f64 + dy) as i32;
 
 		self.new_window_size = Size::from((new_window_width, new_window_height));
-		match self.window.0.underlying_surface() {
+		match self.window.window.underlying_surface() {
 			WindowSurface::Wayland(xdg) => {
 				xdg.with_pending_state(|state| {
 					state.states.set(TopLevelState::Resizing);
@@ -229,6 +213,7 @@ impl PointerGrab<State> for ResizeGrab {
 					ResizeCorner::BottomRight => (None, None),
 				};
 
+				// todo move
 				let mut location = data.mayland.space.element_location(&self.window).unwrap();
 				if let Some(dx) = dx {
 					location.x = self.initial_window_location.x + dx;
@@ -269,7 +254,7 @@ impl PointerGrab<State> for ResizeGrab {
 				return;
 			}
 
-			match self.window.0.underlying_surface() {
+			match self.window.window.underlying_surface() {
 				WindowSurface::Wayland(xdg) => {
 					xdg.with_pending_state(|state| {
 						state.states.unset(TopLevelState::Resizing);
@@ -292,6 +277,7 @@ impl PointerGrab<State> for ResizeGrab {
 						ResizeCorner::BottomRight => (None, None),
 					};
 
+					// todo move
 					let mut location = data.mayland.space.element_location(&self.window).unwrap();
 					if let Some(dx) = dx {
 						location.x = self.initial_window_location.x + dx;
@@ -401,7 +387,7 @@ impl PointerGrab<State> for ResizeGrab {
 }
 
 impl State {
-	pub fn xdg_floating_move(&mut self, window: WindowElement, serial: Serial) {
+	pub fn xdg_floating_move(&mut self, window: MappedWindowElement, serial: Serial) {
 		let pointer = self.mayland.pointer.clone();
 
 		if !pointer.has_grab(serial) {
@@ -436,7 +422,7 @@ impl State {
 		pointer.set_grab(self, grab, serial, Focus::Clear);
 	}
 
-	pub fn xdg_floating_resize(&mut self, window: WindowElement, serial: Serial) {
+	pub fn xdg_floating_resize(&mut self, window: MappedWindowElement, serial: Serial) {
 		let pointer = self.mayland.pointer.clone();
 
 		if !pointer.has_grab(serial) {

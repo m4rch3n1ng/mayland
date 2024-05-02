@@ -1,7 +1,7 @@
 use crate::{
 	action::Action,
 	shell::{
-		element::WindowElement,
+		element::MappedWindowElement,
 		focus::{KeyboardFocusTarget, PointerFocusTarget},
 	},
 	state::State,
@@ -339,14 +339,14 @@ impl State {
 
 	pub fn focus_window(
 		&mut self,
-		window: WindowElement,
+		window: MappedWindowElement,
 		keyboard: &KeyboardHandle<State>,
 		serial: Serial,
 	) {
 		self.mayland.space.raise_element(&window, true);
 		keyboard.set_focus(self, Some(KeyboardFocusTarget::from(window)), serial);
-		self.mayland.space.elements().for_each(|window| {
-			window.0.toplevel().unwrap().send_pending_configure();
+		self.mayland.space.elements().for_each(|mapped| {
+			mapped.window.toplevel().unwrap().send_pending_configure();
 		});
 	}
 

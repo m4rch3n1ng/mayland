@@ -21,61 +21,67 @@ use smithay::{
 };
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct WindowElement(pub Window);
+pub struct MappedWindowElement {
+	pub window: Window,
+}
 
-impl WindowElement {
+impl MappedWindowElement {
+	pub fn new(window: Window) -> Self {
+		MappedWindowElement { window }
+	}
+
 	pub fn close(&self) {
-		if let Some(toplevel) = self.0.toplevel() {
+		if let Some(toplevel) = self.window.toplevel() {
 			toplevel.send_close();
 		}
 	}
 
 	pub fn underlying_surface(&self) -> &WindowSurface {
-		self.0.underlying_surface()
+		self.window.underlying_surface()
 	}
 }
 
-impl IsAlive for WindowElement {
+impl IsAlive for MappedWindowElement {
 	fn alive(&self) -> bool {
-		self.0.alive()
+		self.window.alive()
 	}
 }
 
-impl SpaceElement for WindowElement {
+impl SpaceElement for MappedWindowElement {
 	fn geometry(&self) -> Rectangle<i32, Logical> {
-		self.0.geometry()
+		self.window.geometry()
 	}
 
 	fn bbox(&self) -> Rectangle<i32, Logical> {
-		self.0.bbox()
+		self.window.bbox()
 	}
 
 	fn is_in_input_region(&self, point: &smithay::utils::Point<f64, Logical>) -> bool {
-		self.0.is_in_input_region(point)
+		self.window.is_in_input_region(point)
 	}
 
 	fn z_index(&self) -> u8 {
-		self.0.z_index()
+		self.window.z_index()
 	}
 
 	fn set_activate(&self, activated: bool) {
-		self.0.set_activate(activated);
+		self.window.set_activate(activated);
 	}
 
 	fn output_enter(&self, output: &Output, overlap: Rectangle<i32, Logical>) {
-		self.0.output_enter(output, overlap);
+		self.window.output_enter(output, overlap);
 	}
 
 	fn output_leave(&self, output: &Output) {
-		self.0.output_leave(output);
+		self.window.output_leave(output);
 	}
 
 	fn refresh(&self) {
-		self.0.refresh();
+		self.window.refresh();
 	}
 }
 
-impl<R> AsRenderElements<R> for WindowElement
+impl<R> AsRenderElements<R> for MappedWindowElement
 where
 	R: Renderer + ImportAll + ImportMem,
 	<R as Renderer>::TextureId: Clone + Texture + 'static,
@@ -89,11 +95,12 @@ where
 		scale: Scale<f64>,
 		alpha: f32,
 	) -> Vec<C> {
-		self.0.render_elements(renderer, location, scale, alpha)
+		self.window
+			.render_elements(renderer, location, scale, alpha)
 	}
 }
 
-impl PointerTarget<State> for WindowElement {
+impl PointerTarget<State> for MappedWindowElement {
 	fn enter(&self, seat: &smithay::input::Seat<State>, data: &mut State, event: &MotionEvent) {
 		if let Some(w) = self.wl_surface() {
 			PointerTarget::enter(&w, seat, data, event);
@@ -253,8 +260,8 @@ impl PointerTarget<State> for WindowElement {
 	}
 }
 
-impl WaylandFocus for WindowElement {
+impl WaylandFocus for MappedWindowElement {
 	fn wl_surface(&self) -> Option<WlSurface> {
-		self.0.wl_surface()
+		self.window.wl_surface()
 	}
 }

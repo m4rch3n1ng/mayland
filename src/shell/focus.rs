@@ -1,4 +1,4 @@
-use super::element::WindowElement;
+use super::element::MappedWindowElement;
 use crate::state::State;
 use smithay::{
 	backend::input::KeyState,
@@ -20,7 +20,7 @@ use smithay::{
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum KeyboardFocusTarget {
-	Window(WindowElement),
+	Window(MappedWindowElement),
 	LayerSurface(LayerSurface),
 	Popup(PopupKind),
 }
@@ -28,7 +28,7 @@ pub enum KeyboardFocusTarget {
 #[derive(Debug, Clone, PartialEq)]
 pub enum PointerFocusTarget {
 	WlSurface(WlSurface),
-	Window(WindowElement),
+	Window(MappedWindowElement),
 }
 
 impl IsAlive for KeyboardFocusTarget {
@@ -331,7 +331,7 @@ impl WaylandFocus for KeyboardFocusTarget {
 
 	fn same_client_as(&self, object_id: &ObjectId) -> bool {
 		match self {
-			KeyboardFocusTarget::Window(w) => w.0.same_client_as(object_id),
+			KeyboardFocusTarget::Window(w) => w.window.same_client_as(object_id),
 			KeyboardFocusTarget::LayerSurface(l) => l.wl_surface().id().same_client_as(object_id),
 			KeyboardFocusTarget::Popup(p) => p.wl_surface().id().same_client_as(object_id),
 		}
@@ -372,8 +372,8 @@ impl From<PopupKind> for PointerFocusTarget {
 	}
 }
 
-impl From<&WindowElement> for PointerFocusTarget {
-	fn from(window: &WindowElement) -> Self {
+impl From<&MappedWindowElement> for PointerFocusTarget {
+	fn from(window: &MappedWindowElement) -> Self {
 		PointerFocusTarget::Window(window.clone())
 	}
 }
@@ -396,8 +396,8 @@ impl From<PopupKind> for KeyboardFocusTarget {
 	}
 }
 
-impl From<WindowElement> for KeyboardFocusTarget {
-	fn from(window: WindowElement) -> Self {
+impl From<MappedWindowElement> for KeyboardFocusTarget {
+	fn from(window: MappedWindowElement) -> Self {
 		KeyboardFocusTarget::Window(window)
 	}
 }
