@@ -1,6 +1,6 @@
 use crate::{shell::element::MappedWindowElement, state::State};
 use smithay::{
-	desktop::{space::SpaceElement, WindowSurface},
+	desktop::WindowSurface,
 	input::{
 		pointer::{
 			AxisFrame, ButtonEvent, Focus, GestureHoldBeginEvent, GestureHoldEndEvent,
@@ -18,7 +18,7 @@ use smithay::{
 	wayland::seat::WaylandFocus,
 };
 
-use super::ResizeCorner;
+use super::{ResizeCorner, ResizeData, ResizeState};
 
 struct MoveGrab {
 	start_data: GrabStartData<State>,
@@ -161,7 +161,6 @@ struct ResizeGrab {
 	corner: ResizeCorner,
 	window: MappedWindowElement,
 	// todo remove
-	initial_window_location: Point<i32, Logical>,
 	initial_window_size: Size<i32, Logical>,
 	new_window_size: Size<i32, Logical>,
 }
@@ -195,36 +194,6 @@ impl PointerGrab<State> for ResizeGrab {
 					state.size = Some(self.new_window_size);
 				});
 				xdg.send_pending_configure();
-
-				// todo this doesn't work properly
-
-				let geometry = self.window.geometry();
-				let (dx, dy) = match self.corner {
-					ResizeCorner::TopLeft => (
-						Some(self.initial_window_size.w - geometry.size.w),
-						Some(self.initial_window_size.h - geometry.size.h),
-					),
-					ResizeCorner::TopRight => {
-						(None, Some(self.initial_window_size.h - geometry.size.h))
-					}
-					ResizeCorner::BottomLeft => {
-						(Some(self.initial_window_size.w - geometry.size.w), None)
-					}
-					ResizeCorner::BottomRight => (None, None),
-				};
-
-				// todo move
-				let mut location = data.mayland.space.element_location(&self.window).unwrap();
-				if let Some(dx) = dx {
-					location.x = self.initial_window_location.x + dx;
-				}
-				if let Some(dy) = dy {
-					location.y = self.initial_window_location.y + dy;
-				}
-
-				data.mayland
-					.space
-					.map_element(self.window.clone(), location, true);
 			}
 		}
 	}
@@ -262,33 +231,10 @@ impl PointerGrab<State> for ResizeGrab {
 					});
 					xdg.send_pending_configure();
 
-					let geometry = self.window.geometry();
-					let (dx, dy) = match self.corner {
-						ResizeCorner::TopLeft => (
-							Some(self.initial_window_size.w - geometry.size.w),
-							Some(self.initial_window_size.h - geometry.size.h),
-						),
-						ResizeCorner::TopRight => {
-							(None, Some(self.initial_window_size.h - geometry.size.h))
-						}
-						ResizeCorner::BottomLeft => {
-							(Some(self.initial_window_size.w - geometry.size.w), None)
-						}
-						ResizeCorner::BottomRight => (None, None),
-					};
-
-					// todo move
-					let mut location = data.mayland.space.element_location(&self.window).unwrap();
-					if let Some(dx) = dx {
-						location.x = self.initial_window_location.x + dx;
+					let mut guard = self.window.resize_state.lock().unwrap();
+					if let Some(ResizeState::Resizing(data)) = *guard {
+						*guard = Some(ResizeState::WatingForCommit(data));
 					}
-					if let Some(dy) = dy {
-						location.y = self.initial_window_location.y + dy;
-					}
-
-					data.mayland
-						.space
-						.map_element(self.window.clone(), location, true);
 				}
 			}
 		}
@@ -454,11 +400,20 @@ impl State {
 
 		let corner = ResizeCorner::new(is_top, is_left);
 
+		let resize_data = ResizeData {
+			corner,
+			initial_window_location: window_geometry.loc,
+			initial_window_size: window_size,
+		};
+
+		let mut guard = window.resize_state.lock().unwrap();
+		*guard = Some(ResizeState::Resizing(resize_data));
+		drop(guard);
+
 		let grab = ResizeGrab {
 			start_data,
 			corner,
 			window,
-			initial_window_location: window_geometry.loc,
 			initial_window_size: window_size,
 			new_window_size: window_size,
 		};

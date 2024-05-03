@@ -59,7 +59,7 @@ delegate_xdg_shell!(State);
 delegate_layer_shell!(State);
 
 /// should be called on `WlSurface::commit`
-pub fn handle_commit(
+pub fn handle_surface_commit(
 	popups: &mut PopupManager,
 	space: &Space<MappedWindowElement>,
 	surface: &WlSurface,

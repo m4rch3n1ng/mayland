@@ -1,3 +1,4 @@
+use super::grab::ResizeState;
 use crate::state::State;
 use smithay::{
 	backend::renderer::{
@@ -19,15 +20,26 @@ use smithay::{
 	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial},
 	wayland::seat::WaylandFocus,
 };
+use std::sync::{Arc, Mutex};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct MappedWindowElement {
 	pub window: Window,
+	pub resize_state: Arc<Mutex<Option<ResizeState>>>,
+}
+
+impl PartialEq for MappedWindowElement {
+	fn eq(&self, other: &Self) -> bool {
+		self.window == other.window
+	}
 }
 
 impl MappedWindowElement {
 	pub fn new(window: Window) -> Self {
-		MappedWindowElement { window }
+		MappedWindowElement {
+			window,
+			resize_state: Arc::new(Mutex::new(None)),
+		}
 	}
 
 	pub fn close(&self) {
