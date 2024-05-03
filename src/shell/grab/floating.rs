@@ -1,3 +1,4 @@
+use super::{ResizeCorner, ResizeData, ResizeState};
 use crate::{shell::element::MappedWindowElement, state::State};
 use smithay::{
 	desktop::WindowSurface,
@@ -17,8 +18,6 @@ use smithay::{
 	utils::{IsAlive, Logical, Point, Serial, Size},
 	wayland::seat::WaylandFocus,
 };
-
-use super::{ResizeCorner, ResizeData, ResizeState};
 
 struct MoveGrab {
 	start_data: GrabStartData<State>,
@@ -160,7 +159,6 @@ struct ResizeGrab {
 	start_data: GrabStartData<State>,
 	corner: ResizeCorner,
 	window: MappedWindowElement,
-	// todo remove
 	initial_window_size: Size<i32, Logical>,
 	new_window_size: Size<i32, Logical>,
 }

@@ -1,4 +1,4 @@
-use self::{element::MappedWindowElement, xdg::handle_surface_commit};
+use self::element::MappedWindowElement;
 use crate::state::{ClientState, State};
 use smithay::{
 	backend::renderer::utils::on_commit_buffer_handler,
@@ -59,7 +59,7 @@ impl CompositorHandler for State {
 			}
 		};
 
-		handle_surface_commit(&mut self.mayland.popups, &self.mayland.space, surface);
+		self.mayland.handle_surface_commit(surface);
 
 		if let Some(window) = self.element_for_surface(surface) {
 			self.handle_resize(window);
