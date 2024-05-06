@@ -32,3 +32,7 @@ features = [
 [dependencies.smithay-drm-extras]
 git = "https://github.com/Smithay/smithay"
 default-features = false
+
+[features]
+default = []
+trace = []

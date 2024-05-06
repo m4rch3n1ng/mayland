@@ -15,13 +15,12 @@ fn main() {
 
 	let has_display = std::env::var("WAYLAND_DISPLAY").is_ok() || std::env::var("DISPLAY").is_ok();
 	let mut state = if has_display {
-		trace::stderr();
 		State::new_winit(&mut event_loop, display)
 	} else {
-		trace::with_file();
 		State::new_udev(&mut event_loop, display)
 	};
 
+	trace::setup();
 	std::panic::set_hook(Box::new(tracing_panic::panic_hook));
 
 	// todo
