@@ -44,17 +44,16 @@ impl WorkspaceManager {
 			.unwrap()
 			.unmap_output(output);
 
-		// todo focus window
 		let workspace = self.workspaces.entry(idx).or_insert_with(Workspace::new);
 		workspace.map_output(output);
 		self.current = idx;
 	}
 
-	fn workspace(&self) -> &Workspace {
+	pub fn workspace(&self) -> &Workspace {
 		&self.workspaces[&self.current]
 	}
 
-	fn workspace_mut(&mut self) -> &mut Workspace {
+	pub fn workspace_mut(&mut self) -> &mut Workspace {
 		self.workspaces.get_mut(&self.current).unwrap()
 	}
 }
@@ -164,7 +163,7 @@ impl WorkspaceManager {
 }
 
 #[derive(Debug)]
-struct Workspace {
+pub struct Workspace {
 	space: Space<MappedWindowElement>,
 }
 
@@ -187,6 +186,10 @@ impl Workspace {
 
 	fn refresh(&mut self) {
 		self.space.refresh();
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.elements().count() == 0
 	}
 }
 

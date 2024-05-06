@@ -288,7 +288,7 @@ impl State {
 		}
 	}
 
-	fn update_keyboard_focus(&mut self, location: Point<f64, Logical>, serial: Serial) {
+	pub fn update_keyboard_focus(&mut self, location: Point<f64, Logical>, serial: Serial) {
 		let keyboard = self.mayland.keyboard.clone();
 		let input_method = self.mayland.seat.input_method();
 
