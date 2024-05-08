@@ -14,6 +14,7 @@ use smithay::{
 		},
 	},
 };
+use tracing::info;
 
 impl XdgShellHandler for State {
 	fn xdg_shell_state(&mut self) -> &mut XdgShellState {
@@ -50,8 +51,17 @@ impl XdgShellHandler for State {
 		surface.send_repositioned(token);
 	}
 
-	fn grab(&mut self, _surface: PopupSurface, _seat: WlSeat, _serial: Serial) {
+	fn grab(&mut self, surface: PopupSurface, _seat: WlSeat, _serial: Serial) {
 		// todo
+		info!("XdgShellHandler::grab {:?}", surface);
+	}
+
+	fn toplevel_destroyed(&mut self, _surface: ToplevelSurface) {
+		self.mayland.queue_redraw_all();
+	}
+
+	fn popup_destroyed(&mut self, _surface: PopupSurface) {
+		self.mayland.queue_redraw_all();
 	}
 }
 
