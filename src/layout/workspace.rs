@@ -104,7 +104,8 @@ impl WorkspaceManager {
 	}
 
 	pub fn outputs_for_element(&self, element: &MappedWindowElement) -> Vec<Output> {
-		self.space.outputs_for_element(element)
+		let workspace = self.workspace();
+		workspace.outputs_for_element(element)
 	}
 
 	pub fn output_geometry(&self, output: &Output) -> Option<Rectangle<i32, Logical>> {
@@ -182,6 +183,10 @@ impl Workspace {
 
 	fn unmap_output(&mut self, output: &Output) {
 		self.space.unmap_output(output);
+	}
+
+	fn outputs_for_element(&self, element: &MappedWindowElement) -> Vec<Output> {
+		self.space.outputs_for_element(element)
 	}
 
 	fn refresh(&mut self) {
