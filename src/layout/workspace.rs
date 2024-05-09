@@ -13,61 +13,83 @@ use smithay::{
 	utils::{Logical, Physical, Point, Rectangle, Scale},
 	wayland::{seat::WaylandFocus, shell::wlr_layer::Layer},
 };
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Debug)]
 pub struct WorkspaceManager {
 	space: Space<MappedWindow>,
 
+	active_output: Option<Output>,
+	output_map: HashMap<Output, usize>,
+
 	workspaces: BTreeMap<usize, Workspace>,
-	current: usize,
 }
 
 impl WorkspaceManager {
 	pub fn new() -> Self {
 		let space = Space::default();
 
+		let active_output = None;
+		let output_map = HashMap::new();
+
 		let workspace = Workspace::new();
 		let workspaces = BTreeMap::from([(0, workspace)]);
-		let current = 0;
+		// let current = 0;
 
 		WorkspaceManager {
 			space,
+			active_output,
+			output_map,
 			workspaces,
-			current,
+			// current,
 		}
 	}
 }
 
 impl WorkspaceManager {
 	pub fn switch_to_workspace(&mut self, idx: usize) {
-		if idx == self.current {
+		let Some(active_output) = &self.active_output else {
+			return;
+		};
+
+		let current = self.output_map.get_mut(active_output).unwrap();
+		if &idx == current {
 			return;
 		}
 
-		// todo use current output
-		let output = self.space.outputs().next().unwrap();
-		self.workspaces
-			.get_mut(&self.current)
-			.unwrap()
-			.unmap_output(output);
+		if let Some(prev) = self.workspaces.get_mut(current) {
+			prev.unmap_output(active_output);
+		}
 
 		let workspace = self.workspaces.entry(idx).or_insert_with(Workspace::new);
-		workspace.map_output(output);
-		self.current = idx;
+		workspace.map_output(active_output);
+		*current = idx;
 	}
 
 	pub fn workspace(&self) -> &Workspace {
-		&self.workspaces[&self.current]
+		if let Some(output) = &self.active_output {
+			let idx = self.output_map[output];
+			self.workspaces.get(&idx).unwrap()
+		} else {
+			todo!()
+		}
 	}
 
 	pub fn workspace_mut(&mut self) -> &mut Workspace {
-		self.workspaces.get_mut(&self.current).unwrap()
+		if let Some(output) = &self.active_output {
+			let idx = self.output_map[output];
+			self.workspaces.get_mut(&idx).unwrap()
+		} else {
+			todo!()
+		}
 	}
 }
 
 impl WorkspaceManager {
 	pub fn add_output(&mut self, output: &Output) {
+		// todo multiple outputs
+		assert!(self.active_output.is_none());
+
 		let x = self
 			.space
 			.outputs()
@@ -78,7 +100,13 @@ impl WorkspaceManager {
 
 		self.space.map_output(output, (x, 0));
 
-		let workspace = self.workspace_mut();
+		// todo don't hard code
+		let idx = 0;
+
+		self.output_map.insert(output.clone(), idx);
+		self.active_output = Some(output.clone());
+
+		let workspace = self.workspaces.entry(idx).or_insert_with(Workspace::new);
 		workspace.map_output(output);
 	}
 
@@ -87,6 +115,11 @@ impl WorkspaceManager {
 
 		let workspace = self.workspace_mut();
 		workspace.unmap_output(output);
+
+		if self.active_output.as_ref() == Some(output) {
+			// todo
+			self.active_output = None;
+		}
 	}
 
 	pub fn refresh(&mut self) {
@@ -127,21 +160,9 @@ impl WorkspaceManager {
 
 impl WorkspaceManager {
 	pub fn window_for_surface(&self, surface: &WlSurface) -> Option<&MappedWindow> {
-		// try the current workspace first
-		let idx = self.current;
-		let workspace = &self.workspaces[&idx];
-		if let Some(window) = workspace
-			.windows()
-			.find(|&w| w.wl_surface().is_some_and(|w| *w == *surface))
-		{
-			return Some(window);
-		}
-
-		// try the other workspaces
 		let window = self
 			.workspaces
 			.iter()
-			.filter(|(i, _w)| *i != &idx)
 			.flat_map(|(_i, w)| w.windows())
 			.find(|&w| w.wl_surface().is_some_and(|w| *w == *surface));
 

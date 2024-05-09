@@ -1,0 +1,3 @@
+# smithay::output::Output hashes the Arc pointer,
+# which doesn't change over the lifetime of the Arc
+ignore-interior-mutability = ["smithay::output::Output"]
