@@ -34,14 +34,12 @@ impl WorkspaceManager {
 
 		let workspace = Workspace::new();
 		let workspaces = BTreeMap::from([(0, workspace)]);
-		// let current = 0;
 
 		WorkspaceManager {
 			space,
 			active_output,
 			output_map,
 			workspaces,
-			// current,
 		}
 	}
 }
@@ -71,7 +69,7 @@ impl WorkspaceManager {
 			let idx = self.output_map[output];
 			self.workspaces.get(&idx).unwrap()
 		} else {
-			todo!()
+			self.workspaces.values().next().unwrap()
 		}
 	}
 
@@ -80,7 +78,7 @@ impl WorkspaceManager {
 			let idx = self.output_map[output];
 			self.workspaces.get_mut(&idx).unwrap()
 		} else {
-			todo!()
+			self.workspaces.values_mut().next().unwrap()
 		}
 	}
 }
@@ -100,8 +98,9 @@ impl WorkspaceManager {
 
 		self.space.map_output(output, (x, 0));
 
-		// todo don't hard code
-		let idx = 0;
+		let idx = (0..)
+			.find(|n| self.output_map.values().all(|v| n != v))
+			.expect("if you have more than usize::MAX monitors you deserve this");
 
 		self.output_map.insert(output.clone(), idx);
 		self.active_output = Some(output.clone());
