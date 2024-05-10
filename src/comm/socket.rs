@@ -6,7 +6,7 @@ use std::{
 	io::{ErrorKind, Read},
 	os::{
 		fd::{AsFd, BorrowedFd},
-		unix::net::UnixListener,
+		unix::net::{UnixListener, UnixStream},
 	},
 };
 use tracing::instrument;
@@ -45,7 +45,7 @@ impl AsFd for MaySocket {
 
 impl EventSource for MaySocket {
 	type Event = Event;
-	type Metadata = ();
+	type Metadata = UnixStream;
 	type Ret = ();
 	type Error = std::io::Error;
 
@@ -78,7 +78,7 @@ impl EventSource for MaySocket {
 		stream.read_to_end(&mut buf).unwrap();
 		let event = postcard::from_bytes::<Event>(&buf).unwrap();
 
-		callback(event, &mut ());
+		callback(event, &mut stream);
 
 		Ok(PostAction::Continue)
 	}
