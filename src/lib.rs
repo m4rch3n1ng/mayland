@@ -6,5 +6,6 @@ mod cursor;
 mod input;
 mod layout;
 mod shell;
+pub mod socket;
 mod state;
 mod utils;
