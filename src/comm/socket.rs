@@ -1,3 +1,4 @@
+use super::Event;
 use smithay::reexports::calloop::{
 	self, EventSource, Interest, Mode, Poll, PostAction, Readiness, Token, TokenFactory,
 };
@@ -8,10 +9,9 @@ use std::{
 		unix::net::UnixListener,
 	},
 };
+use tracing::instrument;
 
-// todo rename
-pub struct Action {}
-
+#[derive(Debug)]
 pub struct MaySocket {
 	socket: UnixListener,
 	token: Option<Token>,
@@ -21,6 +21,12 @@ const SOCKET_PATH: &str = "/tmp/mayland.sock";
 
 impl MaySocket {
 	pub fn init() -> MaySocket {
+		// todo like nope
+		if std::fs::metadata(SOCKET_PATH).is_ok() {
+			tracing::warn!("socket file already exists");
+			std::fs::remove_file(SOCKET_PATH).unwrap();
+		}
+
 		let listener = UnixListener::bind(SOCKET_PATH).unwrap();
 		listener.set_nonblocking(true).unwrap();
 
@@ -38,16 +44,16 @@ impl AsFd for MaySocket {
 }
 
 impl EventSource for MaySocket {
-	type Event = Action;
+	type Event = Event;
 	type Metadata = ();
 	type Ret = ();
 	type Error = std::io::Error;
 
 	fn process_events<F>(
 		&mut self,
-		readiness: Readiness,
+		_: Readiness,
 		token: Token,
-		callback: F,
+		mut callback: F,
 	) -> Result<PostAction, Self::Error>
 	where
 		F: FnMut(Self::Event, &mut Self::Metadata) -> Self::Ret,
@@ -68,10 +74,11 @@ impl EventSource for MaySocket {
 			}
 		};
 
-		let mut buf = String::new();
-		stream.read_to_string(&mut buf).unwrap();
+		let mut buf = Vec::new();
+		stream.read_to_end(&mut buf).unwrap();
+		let event = postcard::from_bytes::<Event>(&buf).unwrap();
 
-		println!("buf {:?}", buf);
+		callback(event, &mut ());
 
 		Ok(PostAction::Continue)
 	}
@@ -102,6 +109,7 @@ impl EventSource for MaySocket {
 }
 
 impl Drop for MaySocket {
+	#[instrument]
 	fn drop(&mut self) {
 		// todo
 		let _ = std::fs::remove_file(SOCKET_PATH);

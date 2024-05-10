@@ -7,6 +7,8 @@ default-run = "mayland"
 [dependencies]
 chrono = { version = "0.4.38", features = ["clock", "std"] }
 libc = "0.2.155"
+postcard = { version = "1.0.8", default-features = false }
+serde = { version = "1.0.201", features = ["derive"] }
 tracing = "0.1.40"
 tracing-panic = "0.1.2"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
@@ -42,3 +44,8 @@ undocumented_unsafe_blocks = "warn"
 default = []
 debug = []
 trace = ["debug"]
+
+[workspace]
+members = [
+	"mayctl"
+]
