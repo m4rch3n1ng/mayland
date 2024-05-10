@@ -163,6 +163,12 @@ impl WorkspaceManager {
 	}
 }
 
+impl Default for WorkspaceManager {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 #[derive(Debug)]
 pub struct Workspace {
 	space: Space<MappedWindowElement>,

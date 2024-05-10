@@ -1,13 +1,6 @@
+use mayland::State;
 use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
-use state::State;
 
-mod action;
-mod backend;
-mod input;
-mod layout;
-mod render;
-mod shell;
-mod state;
 mod trace;
 
 fn main() {

@@ -48,12 +48,6 @@ fn load_default_cursor() -> (MemoryRenderBuffer, Point<i32, Physical>) {
 
 pub struct CursorBuffer(Option<(MemoryRenderBuffer, Point<i32, Physical>)>);
 
-impl Debug for CursorBuffer {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		f.debug_tuple("Cursor").field(&..).finish()
-	}
-}
-
 impl CursorBuffer {
 	pub const fn new() -> Self {
 		CursorBuffer(None)
@@ -65,6 +59,18 @@ impl CursorBuffer {
 
 	pub fn buffer(&mut self) -> MemoryRenderBuffer {
 		self.get().0.clone()
+	}
+}
+
+impl Debug for CursorBuffer {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.debug_tuple("Cursor").field(&..).finish()
+	}
+}
+
+impl Default for CursorBuffer {
+	fn default() -> Self {
+		Self::new()
 	}
 }
 
