@@ -26,7 +26,7 @@ pub struct WorkspaceManager {
 	active_output: Option<Output>,
 	output_map: HashMap<Output, usize>,
 
-	workspaces: BTreeMap<usize, Workspace>,
+	pub workspaces: BTreeMap<usize, Workspace>,
 }
 
 impl WorkspaceManager {
@@ -94,6 +94,12 @@ impl WorkspaceManager {
 		} else {
 			self.workspaces.values_mut().next().unwrap()
 		}
+	}
+}
+
+impl WorkspaceManager {
+	pub fn workspace_indices(&self) -> impl Iterator<Item = usize> + '_ {
+		self.workspaces.keys().copied()
 	}
 }
 
