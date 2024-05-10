@@ -1,4 +1,4 @@
-use mayland::{State, socket::MaySocket};
+use mayland::{comm, State};
 use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
 
 mod trace;
@@ -17,12 +17,7 @@ fn main() {
 		State::new_udev(&mut event_loop, display)
 	};
 
-	let socket = MaySocket::init();
-	state
-		.mayland
-		.loop_handle
-		.insert_source(socket, |_, _, _| {})
-		.unwrap();
+	comm::init(&mut state.mayland);
 
 	// todo
 	let xkb = state.mayland.keyboard.clone();

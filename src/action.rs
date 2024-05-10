@@ -1,8 +1,9 @@
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
+use serde::{Deserialize, Serialize};
 use std::process::{Command, Stdio};
 use tracing::error;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub enum Action {
 	Quit,
 	CloseWindow,

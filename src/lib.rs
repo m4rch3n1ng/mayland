@@ -1,11 +1,11 @@
 pub use state::State;
 
-mod action;
+pub mod action;
 mod backend;
 mod input;
 mod layout;
 mod render;
 mod shell;
-pub mod socket;
+pub mod comm;
 mod state;
 mod utils;
