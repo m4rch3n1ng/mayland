@@ -40,8 +40,8 @@ impl State {
 			Event::Dispatch(action) => self.handle_action(action),
 			Event::Info => {
 				let info = Info::new(self);
-				let vinfo = postcard::to_stdvec(&info).unwrap();
-				stream.write_all(&vinfo).unwrap();
+				let wire = postcard::to_stdvec(&info).unwrap();
+				stream.write_all(&wire).unwrap();
 			}
 		}
 	}
