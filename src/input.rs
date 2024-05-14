@@ -15,7 +15,7 @@ use smithay::{
 	input::{
 		keyboard::{
 			keysyms::{KEY_XF86Switch_VT_1, KEY_XF86Switch_VT_12},
-			FilterResult, KeyboardHandle, Keysym, KeysymHandle, ModifiersState,
+			FilterResult, KeyboardHandle, KeysymHandle, ModifiersState,
 		},
 		pointer::{AxisFrame, ButtonEvent, MotionEvent, RelativeMotionEvent},
 	},
@@ -256,29 +256,7 @@ impl State {
 			}
 		};
 
-		let action = if mods.alt && raw_sym == Keysym::Escape {
-			Some(Action::Quit)
-		} else if mods.alt && raw_sym == Keysym::q {
-			Some(Action::CloseWindow)
-		} else if mods.alt && raw_sym == Keysym::t {
-			Some(Action::Spawn("kitty".to_owned()))
-		} else if mods.alt && raw_sym == Keysym::e {
-			Some(Action::Spawn("nautilus".to_owned()))
-		} else if mods.alt && raw_sym == Keysym::_0 {
-			Some(Action::Workspace(0))
-		} else if mods.alt && raw_sym == Keysym::_1 {
-			Some(Action::Workspace(1))
-		} else if mods.alt && raw_sym == Keysym::_2 {
-			Some(Action::Workspace(2))
-		} else if mods.alt && raw_sym == Keysym::_3 {
-			Some(Action::Workspace(3))
-		} else if mods.alt && raw_sym == Keysym::_4 {
-			Some(Action::Workspace(4))
-		} else if mods.alt && raw_sym == Keysym::_5 {
-			Some(Action::Workspace(5))
-		} else {
-			None
-		};
+		let action = self.mayland.config.bind.find_action(mods, raw_sym);
 
 		if let Some(action) = action {
 			self.mayland.suppressed_keys.insert(code);
