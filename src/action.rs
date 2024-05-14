@@ -1,10 +1,13 @@
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
+use serde::Deserialize;
 use std::process::{Command, Stdio};
 use tracing::error;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Action {
 	Quit,
+	#[serde(alias = "close")]
 	CloseWindow,
 
 	Workspace(usize),
