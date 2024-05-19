@@ -75,7 +75,7 @@ impl Mayland {
 		if let Some(element) = self
 			.workspaces
 			.elements()
-			.find(|w| w.wl_surface().is_some_and(|w| w == *surface))
+			.find(|w| w.wl_surface().is_some_and(|w| *w == *surface))
 			.cloned()
 		{
 			if let Some(toplevel) = element.window.toplevel() {

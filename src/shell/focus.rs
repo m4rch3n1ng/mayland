@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use super::element::MappedWindowElement;
 use crate::state::State;
 use smithay::{
@@ -321,11 +323,11 @@ impl PointerTarget<State> for PointerFocusTarget {
 }
 
 impl WaylandFocus for KeyboardFocusTarget {
-	fn wl_surface(&self) -> Option<WlSurface> {
+	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
 		match self {
 			KeyboardFocusTarget::Window(w) => w.wl_surface(),
-			KeyboardFocusTarget::LayerSurface(l) => Some(l.wl_surface().clone()),
-			KeyboardFocusTarget::Popup(p) => Some(p.wl_surface().clone()),
+			KeyboardFocusTarget::LayerSurface(l) => Some(Cow::Borrowed(l.wl_surface())),
+			KeyboardFocusTarget::Popup(p) => Some(Cow::Borrowed(p.wl_surface())),
 		}
 	}
 
@@ -339,7 +341,7 @@ impl WaylandFocus for KeyboardFocusTarget {
 }
 
 impl WaylandFocus for PointerFocusTarget {
-	fn wl_surface(&self) -> Option<WlSurface> {
+	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
 		match self {
 			PointerFocusTarget::WlSurface(w) => w.wl_surface(),
 			PointerFocusTarget::Window(w) => w.wl_surface(),

@@ -96,7 +96,7 @@ impl State {
 		self.mayland
 			.workspaces
 			.elements()
-			.find(|&w| w.wl_surface().is_some_and(|w| w == *surface))
+			.find(|&w| w.wl_surface().is_some_and(|w| *w == *surface))
 			.cloned()
 	}
 }

@@ -20,7 +20,10 @@ use smithay::{
 	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial},
 	wayland::seat::WaylandFocus,
 };
-use std::sync::{Arc, Mutex};
+use std::{
+	borrow::Cow,
+	sync::{Arc, Mutex},
+};
 
 #[derive(Debug, Clone)]
 pub struct MappedWindowElement {
@@ -115,13 +118,13 @@ where
 impl PointerTarget<State> for MappedWindowElement {
 	fn enter(&self, seat: &smithay::input::Seat<State>, data: &mut State, event: &MotionEvent) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::enter(&w, seat, data, event);
+			PointerTarget::enter(&*w, seat, data, event);
 		}
 	}
 
 	fn motion(&self, seat: &smithay::input::Seat<State>, data: &mut State, event: &MotionEvent) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::motion(&w, seat, data, event);
+			PointerTarget::motion(&*w, seat, data, event);
 		}
 	}
 
@@ -132,7 +135,7 @@ impl PointerTarget<State> for MappedWindowElement {
 		event: &RelativeMotionEvent,
 	) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::relative_motion(&w, seat, data, event);
+			PointerTarget::relative_motion(&*w, seat, data, event);
 		}
 	}
 
@@ -155,19 +158,19 @@ impl PointerTarget<State> for MappedWindowElement {
 					.insert_idle(move |state| state.xdg_resize(window, serial));
 			}
 		} else if let Some(w) = self.wl_surface() {
-			PointerTarget::button(&w, seat, data, event);
+			PointerTarget::button(&*w, seat, data, event);
 		}
 	}
 
 	fn axis(&self, seat: &smithay::input::Seat<State>, data: &mut State, frame: AxisFrame) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::axis(&w, seat, data, frame);
+			PointerTarget::axis(&*w, seat, data, frame);
 		}
 	}
 
 	fn frame(&self, seat: &smithay::input::Seat<State>, data: &mut State) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::frame(&w, seat, data);
+			PointerTarget::frame(&*w, seat, data);
 		}
 	}
 
@@ -178,7 +181,7 @@ impl PointerTarget<State> for MappedWindowElement {
 		event: &GestureSwipeBeginEvent,
 	) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::gesture_swipe_begin(&w, seat, data, event);
+			PointerTarget::gesture_swipe_begin(&*w, seat, data, event);
 		}
 	}
 
@@ -189,7 +192,7 @@ impl PointerTarget<State> for MappedWindowElement {
 		event: &GestureSwipeUpdateEvent,
 	) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::gesture_swipe_update(&w, seat, data, event);
+			PointerTarget::gesture_swipe_update(&*w, seat, data, event);
 		}
 	}
 
@@ -200,7 +203,7 @@ impl PointerTarget<State> for MappedWindowElement {
 		event: &GestureSwipeEndEvent,
 	) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::gesture_swipe_end(&w, seat, data, event);
+			PointerTarget::gesture_swipe_end(&*w, seat, data, event);
 		}
 	}
 
@@ -211,7 +214,7 @@ impl PointerTarget<State> for MappedWindowElement {
 		event: &GesturePinchBeginEvent,
 	) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::gesture_pinch_begin(&w, seat, data, event);
+			PointerTarget::gesture_pinch_begin(&*w, seat, data, event);
 		}
 	}
 
@@ -222,7 +225,7 @@ impl PointerTarget<State> for MappedWindowElement {
 		event: &GesturePinchUpdateEvent,
 	) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::gesture_pinch_update(&w, seat, data, event);
+			PointerTarget::gesture_pinch_update(&*w, seat, data, event);
 		}
 	}
 
@@ -233,7 +236,7 @@ impl PointerTarget<State> for MappedWindowElement {
 		event: &GesturePinchEndEvent,
 	) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::gesture_pinch_end(&w, seat, data, event);
+			PointerTarget::gesture_pinch_end(&*w, seat, data, event);
 		}
 	}
 
@@ -244,7 +247,7 @@ impl PointerTarget<State> for MappedWindowElement {
 		event: &GestureHoldBeginEvent,
 	) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::gesture_hold_begin(&w, seat, data, event);
+			PointerTarget::gesture_hold_begin(&*w, seat, data, event);
 		}
 	}
 
@@ -255,7 +258,7 @@ impl PointerTarget<State> for MappedWindowElement {
 		event: &GestureHoldEndEvent,
 	) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::gesture_hold_end(&w, seat, data, event);
+			PointerTarget::gesture_hold_end(&*w, seat, data, event);
 		}
 	}
 
@@ -267,13 +270,13 @@ impl PointerTarget<State> for MappedWindowElement {
 		time: u32,
 	) {
 		if let Some(w) = self.wl_surface() {
-			PointerTarget::leave(&w, seat, data, serial, time);
+			PointerTarget::leave(&*w, seat, data, serial, time);
 		}
 	}
 }
 
 impl WaylandFocus for MappedWindowElement {
-	fn wl_surface(&self) -> Option<WlSurface> {
+	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
 		self.window.wl_surface()
 	}
 }
