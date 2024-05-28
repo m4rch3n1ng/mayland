@@ -182,7 +182,10 @@ impl PointerGrab<State> for ResizeGrab {
 		};
 
 		let new_window_width = (self.initial_window_size.w as f64 + dx) as i32;
+		let new_window_width = i32::max(new_window_width, 50);
+
 		let new_window_height = (self.initial_window_size.h as f64 + dy) as i32;
+		let new_window_height = i32::max(new_window_height, 50);
 
 		self.new_window_size = Size::from((new_window_width, new_window_height));
 		match self.window.window.underlying_surface() {
