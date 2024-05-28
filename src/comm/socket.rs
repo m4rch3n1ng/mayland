@@ -1,117 +1,65 @@
-use super::Event;
-use smithay::reexports::calloop::{
-	self, EventSource, Interest, Mode, Poll, PostAction, Readiness, Token, TokenFactory,
-};
+use super::{Event, Info};
+use crate::State;
+use smithay::reexports::calloop::{generic::Generic, Interest, LoopHandle, Mode, PostAction};
 use std::{
-	io::{ErrorKind, Read},
-	os::{
-		fd::{AsFd, BorrowedFd},
-		unix::net::{UnixListener, UnixStream},
-	},
+	io::{ErrorKind, Read, Write},
+	os::unix::net::{UnixListener, UnixStream},
+	path::PathBuf,
+	process,
 };
-use tracing::instrument;
 
 #[derive(Debug)]
 pub struct MaySocket {
-	socket: UnixListener,
-	token: Option<Token>,
+	socket_path: PathBuf,
 }
-
-const SOCKET_PATH: &str = "/tmp/mayland.sock";
 
 impl MaySocket {
-	pub fn init() -> MaySocket {
-		// todo like nope
-		if std::fs::metadata(SOCKET_PATH).is_ok() {
-			tracing::warn!("socket file already exists");
-			std::fs::remove_file(SOCKET_PATH).unwrap();
-		}
+	pub fn init(loop_handle: &LoopHandle<'static, State>, wayland_socket_name: &str) -> MaySocket {
+		let socket_name = format!("mayland.{}.{}.sock", wayland_socket_name, process::id());
+		let mut socket_path = std::env::temp_dir();
+		socket_path.push(socket_name);
 
-		let listener = UnixListener::bind(SOCKET_PATH).unwrap();
+		std::env::set_var("MAYLAND_SOCKET", &socket_path);
+
+		let listener = UnixListener::bind(&socket_path).unwrap();
 		listener.set_nonblocking(true).unwrap();
 
-		MaySocket {
-			socket: listener,
-			token: None,
-		}
-	}
-}
-
-impl AsFd for MaySocket {
-	fn as_fd(&self) -> BorrowedFd<'_> {
-		self.socket.as_fd()
-	}
-}
-
-impl EventSource for MaySocket {
-	type Event = Event;
-	type Metadata = UnixStream;
-	type Ret = ();
-	type Error = std::io::Error;
-
-	fn process_events<F>(
-		&mut self,
-		_: Readiness,
-		token: Token,
-		mut callback: F,
-	) -> Result<PostAction, Self::Error>
-	where
-		F: FnMut(Self::Event, &mut Self::Metadata) -> Self::Ret,
-	{
-		if Some(token) != self.token {
-			return Ok(PostAction::Continue);
-		}
-
-		let (mut stream, _addr) = match self.socket.accept() {
-			Ok(thing) => thing,
-			Err(io_err) => {
-				let kind = io_err.kind();
-				if kind == ErrorKind::WouldBlock {
-					return Ok(PostAction::Continue);
-				} else {
-					return Err(io_err);
+		let source = Generic::new(listener, Interest::READ, Mode::Level);
+		loop_handle
+			.insert_source(source, |_, socket, state| {
+				match socket.accept() {
+					Ok((stream, _)) => state.on_socket_accept(stream),
+					Err(e) if e.kind() == ErrorKind::WouldBlock => (),
+					Err(e) => return Err(e),
 				}
-			}
-		};
 
-		let mut buf = Vec::new();
-		stream.read_to_end(&mut buf).unwrap();
-		let event = postcard::from_bytes::<Event>(&buf).unwrap();
+				Ok(PostAction::Continue)
+			})
+			.unwrap();
 
-		callback(event, &mut stream);
-
-		Ok(PostAction::Continue)
-	}
-
-	fn register(&mut self, poll: &mut Poll, factory: &mut TokenFactory) -> calloop::Result<()> {
-		let token = factory.token();
-		self.token = Some(token);
-
-		// SAFETY: the fd is owned by MaySocket and cannot be dropped without unregistering
-		unsafe { poll.register(self.as_fd(), Interest::BOTH, Mode::Level, token) }
-	}
-
-	fn reregister(
-		&mut self,
-		poll: &mut Poll,
-		factory: &mut TokenFactory,
-	) -> smithay::reexports::calloop::Result<()> {
-		let token = factory.token();
-		self.token = Some(token);
-
-		poll.reregister(self.as_fd(), Interest::BOTH, Mode::Level, token)
-	}
-
-	fn unregister(&mut self, poll: &mut Poll) -> calloop::Result<()> {
-		self.token = None;
-		poll.unregister(self.as_fd())
+		MaySocket { socket_path }
 	}
 }
 
 impl Drop for MaySocket {
-	#[instrument]
 	fn drop(&mut self) {
-		// todo
-		let _ = std::fs::remove_file(SOCKET_PATH);
+		let _ = std::fs::remove_file(&self.socket_path);
+	}
+}
+
+impl State {
+	fn on_socket_accept(&mut self, mut stream: UnixStream) {
+		let mut buf = Vec::new();
+		stream.read_to_end(&mut buf).unwrap();
+		let event = postcard::from_bytes::<Event>(&buf).unwrap();
+
+		match event {
+			Event::Dispatch(action) => self.handle_action(action),
+			Event::Info => {
+				let info = Info::new(self);
+				let wire = postcard::to_stdvec(&info).unwrap();
+				stream.write_all(&wire).unwrap();
+			}
+		}
 	}
 }

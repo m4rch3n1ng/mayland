@@ -6,13 +6,12 @@ use std::{io::Write, net::Shutdown, os::unix::net::UnixStream};
 mod cli;
 mod event;
 
-const SOCKET_PATH: &str = "/tmp/mayland.sock";
-
 fn main() {
 	let cli = Cli::parse();
 	let event = Event::from(cli);
 
-	let mut stream = UnixStream::connect(SOCKET_PATH).unwrap();
+	let socket_path = std::env::var("MAYLAND_SOCKET").unwrap();
+	let mut stream = UnixStream::connect(socket_path).unwrap();
 
 	let wire = postcard::to_stdvec(&event).unwrap();
 	stream.write_all(&wire).unwrap();
