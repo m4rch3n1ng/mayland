@@ -2,6 +2,7 @@ use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
 	config::Config,
 	cursor::{Cursor, RenderCursor},
+	error::MaylandError,
 	layout::workspace::WorkspaceManager,
 	shell::window::UnmappedSurface,
 };
@@ -69,28 +70,34 @@ pub struct State {
 }
 
 impl State {
-	pub fn new_winit(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
-		let mut mayland = Mayland::new(event_loop, display);
+	pub fn new_winit(
+		event_loop: &mut EventLoop<'static, State>,
+		display: Display<State>,
+	) -> Result<Self, MaylandError> {
+		let mut mayland = Mayland::new(event_loop, display)?;
 
 		let winit = Winit::init(&mut mayland);
 		let winit = Backend::Winit(winit);
 
-		State {
+		Ok(State {
 			backend: winit,
 			mayland,
-		}
+		})
 	}
 
-	pub fn new_udev(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
-		let mut mayland = Mayland::new(event_loop, display);
+	pub fn new_udev(
+		event_loop: &mut EventLoop<'static, State>,
+		display: Display<State>,
+	) -> Result<Self, MaylandError> {
+		let mut mayland = Mayland::new(event_loop, display)?;
 
 		let udev = Udev::init(&mut mayland);
 		let udev = Backend::Udev(udev);
 
-		State {
+		Ok(State {
 			backend: udev,
 			mayland,
-		}
+		})
 	}
 }
 
@@ -147,8 +154,11 @@ pub struct OutputState {
 }
 
 impl Mayland {
-	fn new(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
-		let config = Config::read();
+	fn new(
+		event_loop: &mut EventLoop<'static, State>,
+		display: Display<State>,
+	) -> Result<Self, MaylandError> {
+		let config = Config::read()?;
 		let config = Rc::new(config);
 
 		let display_handle = display.handle();
@@ -192,7 +202,7 @@ impl Mayland {
 
 		let suppressed_keys = HashSet::new();
 
-		Mayland {
+		let mayland = Mayland {
 			config,
 
 			display_handle,
@@ -230,7 +240,9 @@ impl Mayland {
 			cursor,
 
 			suppressed_keys,
-		}
+		};
+
+		Ok(mayland)
 	}
 }
 
