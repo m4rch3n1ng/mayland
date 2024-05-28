@@ -1,4 +1,4 @@
-use mayland::{comm, State};
+use mayland::State;
 use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
 
 mod trace;
@@ -16,8 +16,6 @@ fn main() {
 	} else {
 		State::new_udev(&mut event_loop, display)
 	};
-
-	comm::init(&mut state.mayland);
 
 	// todo
 	let xkb = state.mayland.keyboard.clone();

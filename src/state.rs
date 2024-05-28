@@ -1,5 +1,6 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
+	comm::MaySocket,
 	cursor::{Cursor, RenderCursor},
 	layout::workspace::WorkspaceManager,
 	shell::window::UnmappedSurface,
@@ -132,6 +133,8 @@ pub struct Mayland {
 	pub keyboard: KeyboardHandle<State>,
 	pub cursor: Cursor,
 
+	pub may_socket: MaySocket,
+
 	pub suppressed_keys: HashSet<u32>,
 }
 
@@ -175,6 +178,8 @@ impl Mayland {
 		let pointer = seat.add_pointer();
 		let cursor = Cursor::new();
 
+		let may_socket = MaySocket::init(&loop_handle, &socket_name);
+
 		let suppressed_keys = HashSet::new();
 
 		Mayland {
@@ -209,6 +214,8 @@ impl Mayland {
 			pointer,
 			keyboard,
 			cursor,
+
+			may_socket,
 
 			suppressed_keys,
 		}
