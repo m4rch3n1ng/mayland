@@ -1,4 +1,4 @@
-use super::element::MappedWindowElement;
+use super::window::MappedWindow;
 use crate::state::State;
 use smithay::{
 	desktop::space::SpaceElement,
@@ -40,15 +40,15 @@ impl ResizeCorner {
 }
 
 impl State {
-	pub fn xdg_move(&mut self, window: MappedWindowElement, serial: Serial) {
+	pub fn xdg_move(&mut self, window: MappedWindow, serial: Serial) {
 		self.xdg_floating_move(window, serial);
 	}
 
-	pub fn xdg_resize(&mut self, window: MappedWindowElement, serial: Serial) {
+	pub fn xdg_resize(&mut self, window: MappedWindow, serial: Serial) {
 		self.xdg_floating_resize(window, serial);
 	}
 
-	pub fn handle_resize(&mut self, window: MappedWindowElement) {
+	pub fn handle_resize(&mut self, window: MappedWindow) {
 		let mut resize_state = window.resize_state.lock().unwrap();
 		if let Some(ResizeState::Resizing(data) | ResizeState::WatingForCommit(data)) =
 			*resize_state
@@ -72,7 +72,7 @@ impl State {
 			};
 
 			if let Some((dx, dy)) = delta {
-				let mut location = self.mayland.workspaces.element_location(&window).unwrap();
+				let mut location = self.mayland.workspaces.window_location(&window).unwrap();
 				location.x = initial_window_location.x + dx;
 				location.y = initial_window_location.y + dy;
 

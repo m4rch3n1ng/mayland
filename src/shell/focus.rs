@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use super::element::MappedWindowElement;
+use super::window::MappedWindow;
 use crate::state::State;
 use smithay::{
 	backend::input::KeyState,
@@ -22,7 +22,7 @@ use smithay::{
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum KeyboardFocusTarget {
-	Window(MappedWindowElement),
+	Window(MappedWindow),
 	LayerSurface(LayerSurface),
 	Popup(PopupKind),
 }
@@ -30,7 +30,7 @@ pub enum KeyboardFocusTarget {
 #[derive(Debug, Clone, PartialEq)]
 pub enum PointerFocusTarget {
 	WlSurface(WlSurface),
-	Window(MappedWindowElement),
+	Window(MappedWindow),
 }
 
 impl IsAlive for KeyboardFocusTarget {
@@ -374,8 +374,8 @@ impl From<PopupKind> for PointerFocusTarget {
 	}
 }
 
-impl From<&MappedWindowElement> for PointerFocusTarget {
-	fn from(window: &MappedWindowElement) -> Self {
+impl From<&MappedWindow> for PointerFocusTarget {
+	fn from(window: &MappedWindow) -> Self {
 		PointerFocusTarget::Window(window.clone())
 	}
 }
@@ -398,8 +398,8 @@ impl From<PopupKind> for KeyboardFocusTarget {
 	}
 }
 
-impl From<MappedWindowElement> for KeyboardFocusTarget {
-	fn from(window: MappedWindowElement) -> Self {
+impl From<MappedWindow> for KeyboardFocusTarget {
+	fn from(window: MappedWindow) -> Self {
 		KeyboardFocusTarget::Window(window)
 	}
 }

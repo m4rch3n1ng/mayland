@@ -1,4 +1,4 @@
-use super::element::MappedWindowElement;
+use super::window::MappedWindow;
 use crate::state::{Mayland, State};
 use smithay::{
 	delegate_layer_shell, delegate_xdg_shell,
@@ -22,8 +22,8 @@ impl XdgShellHandler for State {
 	}
 
 	fn new_toplevel(&mut self, surface: ToplevelSurface) {
-		let window = MappedWindowElement::new(Window::new_wayland_window(surface));
-		self.mayland.workspaces.add_element(window.clone());
+		let window = MappedWindow::new(Window::new_wayland_window(surface));
+		self.mayland.workspaces.add_window(window.clone());
 
 		let serial = SERIAL_COUNTER.next_serial();
 		let keyboard = self.mayland.keyboard.clone();
@@ -70,13 +70,13 @@ impl Mayland {
 	/// should be called on `WlSurface::commit`
 	pub fn handle_surface_commit(&mut self, surface: &WlSurface) {
 		// handle toplevel commits.
-		if let Some(element) = self
+		if let Some(window) = self
 			.workspaces
-			.elements()
+			.windows()
 			.find(|w| w.wl_surface().is_some_and(|w| *w == *surface))
 			.cloned()
 		{
-			if let Some(toplevel) = element.window.toplevel() {
+			if let Some(toplevel) = window.window.toplevel() {
 				let initial_configure_sent = with_states(surface, |states| {
 					states
 						.data_map

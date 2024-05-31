@@ -1,6 +1,6 @@
 use crate::{
 	render::{MaylandRenderElements, OutputRenderElements},
-	shell::element::MappedWindowElement,
+	shell::window::MappedWindow,
 };
 use smithay::{
 	backend::renderer::{
@@ -16,7 +16,7 @@ use std::collections::BTreeMap;
 
 #[derive(Debug)]
 pub struct WorkspaceManager {
-	space: Space<MappedWindowElement>,
+	space: Space<MappedWindow>,
 
 	workspaces: BTreeMap<usize, Workspace>,
 	current: usize,
@@ -110,9 +110,9 @@ impl WorkspaceManager {
 		self.space.outputs()
 	}
 
-	pub fn outputs_for_element(&self, element: &MappedWindowElement) -> Vec<Output> {
+	pub fn outputs_for_window(&self, window: &MappedWindow) -> Vec<Output> {
 		let workspace = self.workspace();
-		workspace.outputs_for_element(element)
+		workspace.outputs_for_window(window)
 	}
 
 	pub fn output_geometry(&self, output: &Output) -> Option<Rectangle<i32, Logical>> {
@@ -128,49 +128,46 @@ impl WorkspaceManager {
 }
 
 impl WorkspaceManager {
-	pub fn add_element(&mut self, element: MappedWindowElement) {
+	pub fn add_window(&mut self, window: MappedWindow) {
 		let workspace = self.workspace_mut();
-		workspace.add_element(element);
+		workspace.add_window(window);
 	}
 
 	pub fn floating_move<P: Into<Point<i32, Logical>>>(
 		&mut self,
-		element: MappedWindowElement,
+		window: MappedWindow,
 		location: P,
 	) {
 		let workspace = self.workspace_mut();
-		workspace.floating_move(element, location);
+		workspace.floating_move(window, location);
 	}
 
-	pub fn raise_element(&mut self, element: &MappedWindowElement, activate: bool) {
+	pub fn raise_window(&mut self, window: &MappedWindow, activate: bool) {
 		let workspace = self.workspace_mut();
-		workspace.raise_element(element, activate);
+		workspace.raise_window(window, activate);
 	}
 
-	pub fn elements(&self) -> impl DoubleEndedIterator<Item = &MappedWindowElement> {
+	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
 		let workspace = self.workspace();
-		workspace.elements()
+		workspace.windows()
 	}
 
-	pub fn element_location(&self, element: &MappedWindowElement) -> Option<Point<i32, Logical>> {
+	pub fn window_location(&self, window: &MappedWindow) -> Option<Point<i32, Logical>> {
 		let workspace = self.workspace();
-		workspace.element_location(element)
+		workspace.window_location(window)
 	}
 
-	pub fn element_geometry(
+	pub fn window_geometry(&self, window: &MappedWindow) -> Option<Rectangle<i32, Logical>> {
+		let workspace = self.workspace();
+		workspace.window_geometry(window)
+	}
+
+	pub fn window_under<P: Into<Point<f64, Logical>>>(
 		&self,
-		element: &MappedWindowElement,
-	) -> Option<Rectangle<i32, Logical>> {
+		location: P,
+	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
 		let workspace = self.workspace();
-		workspace.element_geometry(element)
-	}
-
-	pub fn element_under<P: Into<Point<f64, Logical>>>(
-		&self,
-		point: P,
-	) -> Option<(&MappedWindowElement, Point<i32, Logical>)> {
-		let workspace = self.workspace();
-		workspace.element_under(point)
+		workspace.window_under(location)
 	}
 }
 
@@ -182,7 +179,7 @@ impl Default for WorkspaceManager {
 
 #[derive(Debug)]
 pub struct Workspace {
-	space: Space<MappedWindowElement>,
+	space: Space<MappedWindow>,
 }
 
 impl Workspace {
@@ -202,8 +199,8 @@ impl Workspace {
 		self.space.unmap_output(output);
 	}
 
-	fn outputs_for_element(&self, element: &MappedWindowElement) -> Vec<Output> {
-		self.space.outputs_for_element(element)
+	fn outputs_for_window(&self, window: &MappedWindow) -> Vec<Output> {
+		self.space.outputs_for_element(window)
 	}
 
 	fn refresh(&mut self) {
@@ -211,7 +208,7 @@ impl Workspace {
 	}
 
 	pub fn is_empty(&self) -> bool {
-		self.elements().count() == 0
+		self.windows().count() == 0
 	}
 }
 
@@ -295,41 +292,38 @@ impl Workspace {
 }
 
 impl Workspace {
-	pub fn add_element(&mut self, element: MappedWindowElement) {
-		self.space.map_element(element, (0, 0), true);
+	pub fn add_window(&mut self, window: MappedWindow) {
+		self.space.map_element(window, (0, 0), true);
 	}
 
 	pub fn floating_move<P: Into<Point<i32, Logical>>>(
 		&mut self,
-		element: MappedWindowElement,
+		window: MappedWindow,
 		location: P,
 	) {
-		self.space.map_element(element, location, true);
+		self.space.map_element(window, location, true);
 	}
 
-	pub fn raise_element(&mut self, element: &MappedWindowElement, activate: bool) {
-		self.space.raise_element(element, activate);
+	pub fn raise_window(&mut self, window: &MappedWindow, activate: bool) {
+		self.space.raise_element(window, activate);
 	}
 
-	pub fn elements(&self) -> impl DoubleEndedIterator<Item = &MappedWindowElement> {
+	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
 		self.space.elements()
 	}
 
-	pub fn element_location(&self, element: &MappedWindowElement) -> Option<Point<i32, Logical>> {
-		self.space.element_location(element)
+	pub fn window_location(&self, window: &MappedWindow) -> Option<Point<i32, Logical>> {
+		self.space.element_location(window)
 	}
 
-	pub fn element_geometry(
-		&self,
-		element: &MappedWindowElement,
-	) -> Option<Rectangle<i32, Logical>> {
-		self.space.element_geometry(element)
+	pub fn window_geometry(&self, window: &MappedWindow) -> Option<Rectangle<i32, Logical>> {
+		self.space.element_geometry(window)
 	}
 
-	pub fn element_under<P: Into<Point<f64, Logical>>>(
+	pub fn window_under<P: Into<Point<f64, Logical>>>(
 		&self,
-		point: P,
-	) -> Option<(&MappedWindowElement, Point<i32, Logical>)> {
-		self.space.element_under(point)
+		location: P,
+	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
+		self.space.element_under(location)
 	}
 }

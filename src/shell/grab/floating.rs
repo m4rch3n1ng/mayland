@@ -1,5 +1,5 @@
 use super::{ResizeCorner, ResizeData, ResizeState};
-use crate::{shell::element::MappedWindowElement, state::State};
+use crate::{shell::window::MappedWindow, state::State};
 use smithay::{
 	desktop::WindowSurface,
 	input::{
@@ -21,7 +21,7 @@ use smithay::{
 
 struct MoveGrab {
 	start_data: GrabStartData<State>,
-	window: MappedWindowElement,
+	window: MappedWindow,
 	window_offset: Point<i32, Logical>,
 }
 
@@ -158,7 +158,7 @@ impl PointerGrab<State> for MoveGrab {
 struct ResizeGrab {
 	start_data: GrabStartData<State>,
 	corner: ResizeCorner,
-	window: MappedWindowElement,
+	window: MappedWindow,
 	initial_window_size: Size<i32, Logical>,
 	new_window_size: Size<i32, Logical>,
 }
@@ -334,7 +334,7 @@ impl PointerGrab<State> for ResizeGrab {
 }
 
 impl State {
-	pub fn xdg_floating_move(&mut self, window: MappedWindowElement, serial: Serial) {
+	pub fn xdg_floating_move(&mut self, window: MappedWindow, serial: Serial) {
 		let pointer = self.mayland.pointer.clone();
 
 		if !pointer.has_grab(serial) {
@@ -353,7 +353,7 @@ impl State {
 		}
 
 		let pointer_location = pointer.current_location().to_i32_round();
-		let window_geometry = self.mayland.workspaces.element_geometry(&window).unwrap();
+		let window_geometry = self.mayland.workspaces.window_geometry(&window).unwrap();
 		let window_offset = window_geometry.loc - pointer_location;
 
 		let grab = MoveGrab {
@@ -364,7 +364,7 @@ impl State {
 		pointer.set_grab(self, grab, serial, Focus::Clear);
 	}
 
-	pub fn xdg_floating_resize(&mut self, window: MappedWindowElement, serial: Serial) {
+	pub fn xdg_floating_resize(&mut self, window: MappedWindow, serial: Serial) {
 		let pointer = self.mayland.pointer.clone();
 
 		if !pointer.has_grab(serial) {
@@ -382,7 +382,7 @@ impl State {
 			return;
 		}
 
-		let window_geometry = self.mayland.workspaces.element_geometry(&window).unwrap();
+		let window_geometry = self.mayland.workspaces.window_geometry(&window).unwrap();
 		let pointer_location = pointer.current_location().to_i32_round();
 
 		let relative_position = pointer_location - window_geometry.loc;

@@ -26,20 +26,20 @@ use std::{
 };
 
 #[derive(Debug, Clone)]
-pub struct MappedWindowElement {
+pub struct MappedWindow {
 	pub window: Window,
 	pub resize_state: Arc<Mutex<Option<ResizeState>>>,
 }
 
-impl PartialEq for MappedWindowElement {
+impl PartialEq for MappedWindow {
 	fn eq(&self, other: &Self) -> bool {
 		self.window == other.window
 	}
 }
 
-impl MappedWindowElement {
+impl MappedWindow {
 	pub fn new(window: Window) -> Self {
-		MappedWindowElement {
+		MappedWindow {
 			window,
 			resize_state: Arc::new(Mutex::new(None)),
 		}
@@ -56,13 +56,13 @@ impl MappedWindowElement {
 	}
 }
 
-impl IsAlive for MappedWindowElement {
+impl IsAlive for MappedWindow {
 	fn alive(&self) -> bool {
 		self.window.alive()
 	}
 }
 
-impl SpaceElement for MappedWindowElement {
+impl SpaceElement for MappedWindow {
 	fn geometry(&self) -> Rectangle<i32, Logical> {
 		self.window.geometry()
 	}
@@ -96,7 +96,7 @@ impl SpaceElement for MappedWindowElement {
 	}
 }
 
-impl<R> AsRenderElements<R> for MappedWindowElement
+impl<R> AsRenderElements<R> for MappedWindow
 where
 	R: Renderer + ImportAll + ImportMem,
 	<R as Renderer>::TextureId: Clone + Texture + 'static,
@@ -115,7 +115,7 @@ where
 	}
 }
 
-impl PointerTarget<State> for MappedWindowElement {
+impl PointerTarget<State> for MappedWindow {
 	fn enter(&self, seat: &smithay::input::Seat<State>, data: &mut State, event: &MotionEvent) {
 		if let Some(w) = self.wl_surface() {
 			PointerTarget::enter(&*w, seat, data, event);
@@ -275,7 +275,7 @@ impl PointerTarget<State> for MappedWindowElement {
 	}
 }
 
-impl WaylandFocus for MappedWindowElement {
+impl WaylandFocus for MappedWindow {
 	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
 		self.window.wl_surface()
 	}

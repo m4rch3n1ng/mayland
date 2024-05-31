@@ -1,4 +1,4 @@
-use self::element::MappedWindowElement;
+use self::window::MappedWindow;
 use crate::state::{ClientState, State};
 use smithay::{
 	backend::renderer::utils::on_commit_buffer_handler,
@@ -23,9 +23,9 @@ use smithay::{
 	},
 };
 
-pub mod element;
 pub mod focus;
 pub mod grab;
+pub mod window;
 pub mod xdg;
 
 impl BufferHandler for State {
@@ -53,15 +53,15 @@ impl CompositorHandler for State {
 				root = parent;
 			}
 
-			if let Some(element) = self.element_for_surface(surface) {
-				element.window.on_commit();
+			if let Some(window) = self.window_for_surface(surface) {
+				window.window.on_commit();
 				self.mayland.queue_redraw_all();
 			}
 		};
 
 		self.mayland.handle_surface_commit(surface);
 
-		if let Some(window) = self.element_for_surface(surface) {
+		if let Some(window) = self.window_for_surface(surface) {
 			self.handle_resize(window);
 		}
 
@@ -92,10 +92,10 @@ impl WlrLayerShellHandler for State {
 }
 
 impl State {
-	fn element_for_surface(&mut self, surface: &WlSurface) -> Option<MappedWindowElement> {
+	fn window_for_surface(&mut self, surface: &WlSurface) -> Option<MappedWindow> {
 		self.mayland
 			.workspaces
-			.elements()
+			.windows()
 			.find(|&w| w.wl_surface().is_some_and(|w| *w == *surface))
 			.cloned()
 	}

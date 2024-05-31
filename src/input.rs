@@ -1,7 +1,7 @@
 use crate::{
 	action::Action,
 	shell::{
-		element::MappedWindowElement,
+		window::MappedWindow,
 		focus::{KeyboardFocusTarget, PointerFocusTarget},
 	},
 	state::State,
@@ -326,7 +326,7 @@ impl State {
 		if let Some((window, _)) = self
 			.mayland
 			.workspaces
-			.element_under(location)
+			.window_under(location)
 			.map(|(w, p)| (w.clone(), p))
 		{
 			self.focus_window(window, &keyboard, serial);
@@ -356,13 +356,13 @@ impl State {
 
 	pub fn focus_window(
 		&mut self,
-		window: MappedWindowElement,
+		window: MappedWindow,
 		keyboard: &KeyboardHandle<State>,
 		serial: Serial,
 	) {
-		self.mayland.workspaces.raise_element(&window, true);
+		self.mayland.workspaces.raise_window(&window, true);
 		keyboard.set_focus(self, Some(KeyboardFocusTarget::from(window)), serial);
-		self.mayland.workspaces.elements().for_each(|mapped| {
+		self.mayland.workspaces.windows().for_each(|mapped| {
 			mapped.window.toplevel().unwrap().send_pending_configure();
 		});
 	}
@@ -390,7 +390,7 @@ impl State {
 					WindowSurfaceType::ALL,
 				)
 				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc))
-		} else if let Some((window, loc)) = self.mayland.workspaces.element_under(location) {
+		} else if let Some((window, loc)) = self.mayland.workspaces.window_under(location) {
 			Some((PointerFocusTarget::from(window), loc))
 		} else if let Some(layer) = layers
 			.layer_under(WlrLayer::Bottom, location)
