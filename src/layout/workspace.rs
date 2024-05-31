@@ -268,21 +268,23 @@ impl Workspace {
 		impl Iterator<Item = (&'o LayerSurface, Point<i32, Physical>)>,
 		impl Iterator<Item = (&'o LayerSurface, Point<i32, Physical>)>,
 	) {
-		let (lower, upper) = layer_map.layers().rev().partition::<Vec<_>, _>(|surface| {
-			matches!(surface.layer(), Layer::Background | Layer::Bottom)
-		});
+		let upper = layer_map
+			.layers()
+			.filter(|surface| matches!(surface.layer(), Layer::Top | Layer::Overlay))
+			.filter_map(move |surface| {
+				layer_map
+					.layer_geometry(surface)
+					.map(|geo| (surface, geo.loc.to_physical_precise_round(output_scale)))
+			});
 
-		let upper = upper.into_iter().filter_map(move |surface| {
-			layer_map
-				.layer_geometry(surface)
-				.map(|geo| (surface, geo.loc.to_physical_precise_round(output_scale)))
-		});
-
-		let lower = lower.into_iter().filter_map(move |surface| {
-			layer_map
-				.layer_geometry(surface)
-				.map(|geo| (surface, geo.loc.to_physical_precise_round(output_scale)))
-		});
+		let lower = layer_map
+			.layers()
+			.filter(|surface| matches!(surface.layer(), Layer::Background | Layer::Bottom))
+			.filter_map(move |surface| {
+				layer_map
+					.layer_geometry(surface)
+					.map(|geo| (surface, geo.loc.to_physical_precise_round(output_scale)))
+			});
 
 		(lower, upper)
 	}
