@@ -7,9 +7,9 @@ use smithay::{
 		element::{surface::WaylandSurfaceRenderElement, AsRenderElements},
 		glow::GlowRenderer,
 	},
-	desktop::{layer_map_for_output, Space},
+	desktop::{layer_map_for_output, LayerMap, LayerSurface, Space},
 	output::Output,
-	utils::{Logical, Point, Rectangle, Scale},
+	utils::{Logical, Physical, Point, Rectangle, Scale},
 	wayland::shell::wlr_layer::Layer,
 };
 use std::collections::BTreeMap;
@@ -217,47 +217,24 @@ impl Workspace {
 		renderer: &mut GlowRenderer,
 		output: &Output,
 	) -> impl Iterator<Item = MaylandRenderElements> {
-		// let space_elements = smithay::desktop::space::space_render_elements::<
-		// 	_,
-		// 	MappedWindowElement,
-		// 	_,
-		// >(renderer, [&self.space], output, 1.0)
-		// .unwrap();
-
 		let mut render_elements = Vec::new();
 
 		let layer_map = layer_map_for_output(output);
-
 		let output_scale = output.current_scale().fractional_scale();
 
-		let lower = {
-			let (lower, upper) = layer_map.layers().rev().partition::<Vec<_>, _>(|surface| {
-				matches!(surface.layer(), Layer::Background | Layer::Bottom)
-			});
+		let (lower, upper) = self.layer_elements(&layer_map, output_scale);
 
-			render_elements.extend(
-				upper
-					.into_iter()
-					.filter_map(|surface| {
-						layer_map
-							.layer_geometry(surface)
-							.map(|geo| (surface, geo.loc))
-					})
-					.flat_map(|(surface, location)| {
-						AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(
-							surface,
-							renderer,
-							location.to_physical_precise_round(output_scale),
-							Scale::from(output_scale),
-							1.,
-						)
-						.into_iter()
-						.map(OutputRenderElements::Surface)
-					}),
-			);
-
-			lower
-		};
+		render_elements.extend(upper.flat_map(|(surface, location)| {
+			AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(
+				surface,
+				renderer,
+				location,
+				Scale::from(output_scale),
+				1.,
+			)
+			.into_iter()
+			.map(OutputRenderElements::Surface)
+		}));
 
 		if let Some(output_geo) = self.space.output_geometry(output) {
 			render_elements.extend(
@@ -268,28 +245,46 @@ impl Workspace {
 			);
 		}
 
-		render_elements.extend(
-			lower
-				.into_iter()
-				.filter_map(|surface| {
-					layer_map
-						.layer_geometry(surface)
-						.map(|geo| (geo.loc, surface))
-				})
-				.flat_map(|(loc, surface)| {
-					AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(
-						surface,
-						renderer,
-						loc.to_physical_precise_round(output_scale),
-						Scale::from(output_scale),
-						1.,
-					)
-					.into_iter()
-					.map(OutputRenderElements::Surface)
-				}),
-		);
+		render_elements.extend(lower.flat_map(|(surface, location)| {
+			AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(
+				surface,
+				renderer,
+				location,
+				Scale::from(output_scale),
+				1.,
+			)
+			.into_iter()
+			.map(OutputRenderElements::Surface)
+		}));
 
 		render_elements.into_iter()
+	}
+
+	fn layer_elements<'o>(
+		&self,
+		layer_map: &'o LayerMap,
+		output_scale: f64,
+	) -> (
+		impl Iterator<Item = (&'o LayerSurface, Point<i32, Physical>)>,
+		impl Iterator<Item = (&'o LayerSurface, Point<i32, Physical>)>,
+	) {
+		let (lower, upper) = layer_map.layers().rev().partition::<Vec<_>, _>(|surface| {
+			matches!(surface.layer(), Layer::Background | Layer::Bottom)
+		});
+
+		let upper = upper.into_iter().filter_map(move |surface| {
+			layer_map
+				.layer_geometry(surface)
+				.map(|geo| (surface, geo.loc.to_physical_precise_round(output_scale)))
+		});
+
+		let lower = lower.into_iter().filter_map(move |surface| {
+			layer_map
+				.layer_geometry(surface)
+				.map(|geo| (surface, geo.loc.to_physical_precise_round(output_scale)))
+		});
+
+		(lower, upper)
 	}
 }
 
