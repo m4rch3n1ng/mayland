@@ -38,7 +38,7 @@ impl PointerGrab<State> for MoveGrab {
 		let new_location = event.location.to_i32_round() + self.window_offset;
 		data.mayland
 			.workspaces
-			.map_element(self.window.clone(), new_location, true);
+			.floating_move(self.window.clone(), new_location);
 	}
 
 	fn relative_motion(
@@ -355,11 +355,6 @@ impl State {
 		let pointer_location = pointer.current_location().to_i32_round();
 		let window_geometry = self.mayland.workspaces.element_geometry(&window).unwrap();
 		let window_offset = window_geometry.loc - pointer_location;
-
-		let pointer_location = start_data.location.to_i32_round();
-		self.mayland
-			.workspaces
-			.map_element(window.clone(), pointer_location + window_offset, true);
 
 		let grab = MoveGrab {
 			start_data,

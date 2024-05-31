@@ -78,7 +78,7 @@ impl State {
 
 				self.mayland
 					.workspaces
-					.map_element(window.clone(), location, true);
+					.floating_move(window.clone(), location);
 			}
 		}
 

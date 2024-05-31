@@ -23,9 +23,7 @@ impl XdgShellHandler for State {
 
 	fn new_toplevel(&mut self, surface: ToplevelSurface) {
 		let window = MappedWindowElement::new(Window::new_wayland_window(surface));
-		self.mayland
-			.workspaces
-			.map_element(window.clone(), (0, 0), false);
+		self.mayland.workspaces.add_element(window.clone());
 
 		let serial = SERIAL_COUNTER.next_serial();
 		let keyboard = self.mayland.keyboard.clone();

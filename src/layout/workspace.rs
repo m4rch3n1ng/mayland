@@ -101,7 +101,7 @@ impl WorkspaceManager {
 		output: &Output,
 	) -> impl Iterator<Item = MaylandRenderElements> {
 		let workspace = self.workspace();
-		workspace.space_elements(renderer, output)
+		workspace.render_elements(renderer, output)
 	}
 }
 
@@ -128,14 +128,18 @@ impl WorkspaceManager {
 }
 
 impl WorkspaceManager {
-	pub fn map_element<P: Into<Point<i32, Logical>>>(
+	pub fn add_element(&mut self, element: MappedWindowElement) {
+		let workspace = self.workspace_mut();
+		workspace.add_element(element);
+	}
+
+	pub fn floating_move<P: Into<Point<i32, Logical>>>(
 		&mut self,
 		element: MappedWindowElement,
 		location: P,
-		activate: bool,
 	) {
 		let workspace = self.workspace_mut();
-		workspace.map_element(element, location, activate);
+		workspace.floating_move(element, location);
 	}
 
 	pub fn raise_element(&mut self, element: &MappedWindowElement, activate: bool) {
@@ -212,7 +216,7 @@ impl Workspace {
 }
 
 impl Workspace {
-	fn space_elements(
+	fn render_elements(
 		&self,
 		renderer: &mut GlowRenderer,
 		output: &Output,
@@ -291,13 +295,16 @@ impl Workspace {
 }
 
 impl Workspace {
-	pub fn map_element<P: Into<Point<i32, Logical>>>(
+	pub fn add_element(&mut self, element: MappedWindowElement) {
+		self.space.map_element(element, (0, 0), true);
+	}
+
+	pub fn floating_move<P: Into<Point<i32, Logical>>>(
 		&mut self,
 		element: MappedWindowElement,
 		location: P,
-		activate: bool,
 	) {
-		self.space.map_element(element, location, activate);
+		self.space.map_element(element, location, true);
 	}
 
 	pub fn raise_element(&mut self, element: &MappedWindowElement, activate: bool) {
