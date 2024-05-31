@@ -5,13 +5,11 @@ use smithay::{
 			element::{
 				memory::{MemoryRenderBuffer, MemoryRenderBufferRenderElement},
 				surface::WaylandSurfaceRenderElement,
-				RenderElement,
 			},
 			glow::GlowRenderer,
 			ImportAll, ImportMem,
 		},
 	},
-	desktop::space::SpaceRenderElements,
 	render_elements,
 	utils::{Physical, Point, Transform},
 };
@@ -74,22 +72,23 @@ impl Default for CursorBuffer {
 	}
 }
 
-pub type MaylandRenderElements =
-	OutputRenderElements<GlowRenderer, WaylandSurfaceRenderElement<GlowRenderer>>;
+pub type MaylandRenderElements = OutputRenderElements<GlowRenderer>;
 
 render_elements! {
-	pub OutputRenderElements<R, E> where
+	pub OutputRenderElements<R> where
 		R: ImportAll + ImportMem;
 	DefaultPointer = MemoryRenderBufferRenderElement<R>,
-	Space=SpaceRenderElements<R, E>,
+	Surface=WaylandSurfaceRenderElement<R>,
 }
 
-impl<R: ImportAll + ImportMem, E: RenderElement<R>> Debug for OutputRenderElements<R, E> {
+impl<R: ImportAll + ImportMem> Debug for OutputRenderElements<R> {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			OutputRenderElements::Space(_) => f.debug_tuple("Space").field(&..).finish(),
 			OutputRenderElements::DefaultPointer(element) => {
 				f.debug_tuple("DefaultPointer").field(&element).finish()
+			}
+			OutputRenderElements::Surface(surface) => {
+				f.debug_tuple("Surface").field(&surface).finish()
 			}
 			OutputRenderElements::_GenericCatcher(_) => f.write_str("_GenericCatcher"),
 		}

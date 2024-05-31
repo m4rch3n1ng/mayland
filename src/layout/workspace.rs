@@ -1,9 +1,16 @@
-use crate::{render::MaylandRenderElements, shell::element::MappedWindowElement};
+use crate::{
+	render::{MaylandRenderElements, OutputRenderElements},
+	shell::element::MappedWindowElement,
+};
 use smithay::{
-	backend::renderer::glow::GlowRenderer,
-	desktop::Space,
+	backend::renderer::{
+		element::{surface::WaylandSurfaceRenderElement, AsRenderElements},
+		glow::GlowRenderer,
+	},
+	desktop::{layer_map_for_output, Space},
 	output::Output,
-	utils::{Logical, Point, Rectangle},
+	utils::{Logical, Point, Rectangle, Scale},
+	wayland::shell::wlr_layer::Layer,
 };
 use std::collections::BTreeMap;
 
@@ -210,14 +217,79 @@ impl Workspace {
 		renderer: &mut GlowRenderer,
 		output: &Output,
 	) -> impl Iterator<Item = MaylandRenderElements> {
-		let space_elements = smithay::desktop::space::space_render_elements::<
-			_,
-			MappedWindowElement,
-			_,
-		>(renderer, [&self.space], output, 1.0)
-		.unwrap();
+		// let space_elements = smithay::desktop::space::space_render_elements::<
+		// 	_,
+		// 	MappedWindowElement,
+		// 	_,
+		// >(renderer, [&self.space], output, 1.0)
+		// .unwrap();
 
-		space_elements.into_iter().map(MaylandRenderElements::Space)
+		let mut render_elements = Vec::new();
+
+		let layer_map = layer_map_for_output(output);
+
+		let output_scale = output.current_scale().fractional_scale();
+
+		let lower = {
+			let (lower, upper) = layer_map.layers().rev().partition::<Vec<_>, _>(|surface| {
+				matches!(surface.layer(), Layer::Background | Layer::Bottom)
+			});
+
+			render_elements.extend(
+				upper
+					.into_iter()
+					.filter_map(|surface| {
+						layer_map
+							.layer_geometry(surface)
+							.map(|geo| (surface, geo.loc))
+					})
+					.flat_map(|(surface, location)| {
+						AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(
+							surface,
+							renderer,
+							location.to_physical_precise_round(output_scale),
+							Scale::from(output_scale),
+							1.,
+						)
+						.into_iter()
+						.map(OutputRenderElements::Surface)
+					}),
+			);
+
+			lower
+		};
+
+		if let Some(output_geo) = self.space.output_geometry(output) {
+			render_elements.extend(
+				self.space
+					.render_elements_for_region(renderer, &output_geo, output_scale, 1.)
+					.into_iter()
+					.map(OutputRenderElements::Surface),
+			);
+		}
+
+		render_elements.extend(
+			lower
+				.into_iter()
+				.filter_map(|surface| {
+					layer_map
+						.layer_geometry(surface)
+						.map(|geo| (geo.loc, surface))
+				})
+				.flat_map(|(loc, surface)| {
+					AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(
+						surface,
+						renderer,
+						loc.to_physical_precise_round(output_scale),
+						Scale::from(output_scale),
+						1.,
+					)
+					.into_iter()
+					.map(OutputRenderElements::Surface)
+				}),
+		);
+
+		render_elements.into_iter()
 	}
 }
 
