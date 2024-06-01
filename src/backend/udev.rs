@@ -416,7 +416,7 @@ impl Udev {
 		);
 
 		let wl_mode = Mode::from(*mode);
-		output.change_current_state(Some(wl_mode), None, None, Some((0, 0).into()));
+		output.change_current_state(Some(wl_mode), None, None, None);
 		output.set_preferred(wl_mode);
 
 		output.user_data().insert_if_missing(|| UdevOutputState {

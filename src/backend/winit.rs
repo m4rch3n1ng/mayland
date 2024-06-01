@@ -40,12 +40,7 @@ impl Winit {
 		mayland.add_output(output.clone());
 
 		let _global = output.create_global::<State>(&mayland.display_handle);
-		output.change_current_state(
-			Some(mode),
-			Some(Transform::Flipped180),
-			None,
-			Some((0, 0).into()),
-		);
+		output.change_current_state(Some(mode), Some(Transform::Flipped180), None, None);
 		output.set_preferred(mode);
 
 		if backend
