@@ -54,7 +54,16 @@ impl XdgShellHandler for State {
 		info!("XdgShellHandler::grab {:?}", surface);
 	}
 
-	fn toplevel_destroyed(&mut self, _surface: ToplevelSurface) {
+	fn toplevel_destroyed(&mut self, surface: ToplevelSurface) {
+		let surface = surface.wl_surface();
+		let window = self.mayland.workspaces.window_for_surface(surface).cloned();
+
+		let Some(window) = window else {
+			tracing::error!("couldn't find toplevel");
+			return;
+		};
+
+		self.mayland.workspaces.remove_window(&window);
 		self.mayland.queue_redraw_all();
 	}
 
@@ -70,13 +79,13 @@ impl Mayland {
 	/// should be called on `WlSurface::commit`
 	pub fn handle_surface_commit(&mut self, surface: &WlSurface) {
 		// handle toplevel commits.
-		if let Some(window) = self
+		if let Some(mapped) = self
 			.workspaces
 			.windows()
 			.find(|w| w.wl_surface().is_some_and(|w| *w == *surface))
 			.cloned()
 		{
-			if let Some(toplevel) = window.window.toplevel() {
+			if let Some(toplevel) = mapped.window.toplevel() {
 				let initial_configure_sent = with_states(surface, |states| {
 					states
 						.data_map

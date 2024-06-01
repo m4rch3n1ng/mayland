@@ -1,4 +1,3 @@
-use self::window::MappedWindow;
 use crate::state::{ClientState, State};
 use smithay::{
 	backend::renderer::utils::on_commit_buffer_handler,
@@ -15,7 +14,6 @@ use smithay::{
 			get_parent, is_sync_subsurface, CompositorClientState, CompositorHandler,
 			CompositorState,
 		},
-		seat::WaylandFocus,
 		shell::wlr_layer::{
 			Layer, LayerSurface as WlrLayerSurface, WlrLayerShellHandler, WlrLayerShellState,
 		},
@@ -53,16 +51,16 @@ impl CompositorHandler for State {
 				root = parent;
 			}
 
-			if let Some(window) = self.window_for_surface(surface) {
-				window.window.on_commit();
+			if let Some(mapped) = self.mayland.workspaces.window_for_surface(surface) {
+				mapped.window.on_commit();
 				self.mayland.queue_redraw_all();
 			}
 		};
 
 		self.mayland.handle_surface_commit(surface);
 
-		if let Some(window) = self.window_for_surface(surface) {
-			self.handle_resize(window);
+		if let Some(window) = self.mayland.workspaces.window_for_surface(surface) {
+			self.handle_resize(window.clone());
 		}
 
 		self.mayland.queue_redraw_all();
@@ -88,16 +86,6 @@ impl WlrLayerShellHandler for State {
 		let mut map = layer_map_for_output(&output);
 		map.map_layer(&LayerSurface::new(surface, namespace))
 			.unwrap();
-	}
-}
-
-impl State {
-	fn window_for_surface(&mut self, surface: &WlSurface) -> Option<MappedWindow> {
-		self.mayland
-			.workspaces
-			.windows()
-			.find(|&w| w.wl_surface().is_some_and(|w| *w == *surface))
-			.cloned()
 	}
 }
 

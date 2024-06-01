@@ -1,8 +1,8 @@
 use crate::{
 	action::Action,
 	shell::{
-		window::MappedWindow,
 		focus::{KeyboardFocusTarget, PointerFocusTarget},
+		window::MappedWindow,
 	},
 	state::State,
 };

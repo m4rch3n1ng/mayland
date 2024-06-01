@@ -9,8 +9,9 @@ use smithay::{
 	},
 	desktop::{layer_map_for_output, LayerMap, LayerSurface, Space},
 	output::Output,
+	reexports::wayland_server::protocol::wl_surface::WlSurface,
 	utils::{Logical, Physical, Point, Rectangle, Scale},
-	wayland::shell::wlr_layer::Layer,
+	wayland::{seat::WaylandFocus, shell::wlr_layer::Layer},
 };
 use std::collections::BTreeMap;
 
@@ -128,6 +129,30 @@ impl WorkspaceManager {
 }
 
 impl WorkspaceManager {
+	pub fn window_for_surface(&self, surface: &WlSurface) -> Option<&MappedWindow> {
+		// try the current workspace first
+		let idx = self.current;
+		let workspace = &self.workspaces[&idx];
+		if let Some(window) = workspace
+			.windows()
+			.find(|&w| w.wl_surface().is_some_and(|w| *w == *surface))
+		{
+			return Some(window);
+		}
+
+		// try the other workspaces
+		let window = self
+			.workspaces
+			.iter()
+			.filter(|(i, _w)| *i != &idx)
+			.flat_map(|(_i, w)| w.windows())
+			.find(|&w| w.wl_surface().is_some_and(|w| *w == *surface));
+
+		window
+	}
+}
+
+impl WorkspaceManager {
 	pub fn add_window(&mut self, window: MappedWindow) {
 		let workspace = self.workspace_mut();
 		workspace.add_window(window);
@@ -140,6 +165,15 @@ impl WorkspaceManager {
 	) {
 		let workspace = self.workspace_mut();
 		workspace.floating_move(window, location);
+	}
+
+	pub fn remove_window(&mut self, window: &MappedWindow) {
+		for workspace in self.workspaces.values_mut() {
+			if workspace.has_window(window) {
+				workspace.remove_window(window);
+				return;
+			}
+		}
 	}
 
 	pub fn raise_window(&mut self, window: &MappedWindow, activate: bool) {
@@ -296,6 +330,10 @@ impl Workspace {
 		self.space.map_element(window, (0, 0), true);
 	}
 
+	pub fn remove_window(&mut self, window: &MappedWindow) {
+		self.space.unmap_elem(window);
+	}
+
 	pub fn floating_move<P: Into<Point<i32, Logical>>>(
 		&mut self,
 		window: MappedWindow,
@@ -306,6 +344,10 @@ impl Workspace {
 
 	pub fn raise_window(&mut self, window: &MappedWindow, activate: bool) {
 		self.space.raise_element(window, activate);
+	}
+
+	pub fn has_window(&mut self, window: &MappedWindow) -> bool {
+		self.windows().any(|w| w == window)
 	}
 
 	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
