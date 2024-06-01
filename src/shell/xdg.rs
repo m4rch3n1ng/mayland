@@ -34,12 +34,7 @@ impl XdgShellHandler for State {
 		let _ = self.mayland.popups.track_popup(PopupKind::Xdg(surface));
 	}
 
-	fn reposition_request(
-		&mut self,
-		surface: PopupSurface,
-		positioner: PositionerState,
-		token: u32,
-	) {
+	fn reposition_request(&mut self, surface: PopupSurface, positioner: PositionerState, token: u32) {
 		surface.with_pending_state(|state| {
 			let geometry = positioner.get_geometry();
 			state.geometry = geometry;

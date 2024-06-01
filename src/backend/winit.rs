@@ -70,12 +70,7 @@ impl Winit {
 }
 
 impl Winit {
-	pub fn render(
-		&mut self,
-		mayland: &mut Mayland,
-		output: &Output,
-		elements: &[MaylandRenderElements],
-	) {
+	pub fn render(&mut self, mayland: &mut Mayland, output: &Output, elements: &[MaylandRenderElements]) {
 		let size = self.backend.window_size();
 		let damage = Rectangle::from_loc_and_size((0, 0), size);
 
@@ -121,16 +116,13 @@ impl State {
 					winit.output.delete_mode(prev);
 				}
 
-				winit
-					.output
-					.change_current_state(Some(mode), None, None, None);
+				winit.output.change_current_state(Some(mode), None, None, None);
 				winit.output.set_preferred(mode);
 
 				self.mayland.queue_redraw(winit.output.clone());
 			}
 			WinitEvent::Redraw => {
-				self.mayland
-					.queue_redraw(self.backend.winit().output.clone());
+				self.mayland.queue_redraw(self.backend.winit().output.clone());
 			}
 			WinitEvent::CloseRequested => self.mayland.loop_signal.stop(),
 			WinitEvent::Input(input) => self.handle_input_event(input),

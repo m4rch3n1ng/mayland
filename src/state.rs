@@ -23,9 +23,7 @@ use smithay::{
 	},
 	output::Output,
 	reexports::{
-		calloop::{
-			generic::Generic, EventLoop, Idle, Interest, LoopHandle, LoopSignal, Mode, PostAction,
-		},
+		calloop::{generic::Generic, EventLoop, Idle, Interest, LoopHandle, LoopSignal, Mode, PostAction},
 		wayland_server::{
 			backend::{ClientData, GlobalId},
 			Display, DisplayHandle,
@@ -151,14 +149,10 @@ impl Mayland {
 		let data_device_state = DataDeviceState::new::<State>(&display_handle);
 		let dmabuf_state = DmabufState::new();
 		let layer_shell_state = WlrLayerShellState::new::<State>(&display_handle);
-		let output_manager_state =
-			OutputManagerState::new_with_xdg_output::<State>(&display_handle);
+		let output_manager_state = OutputManagerState::new_with_xdg_output::<State>(&display_handle);
 		let primary_selection_state = PrimarySelectionState::new::<State>(&display_handle);
-		let data_control_state = DataControlState::new::<State, _>(
-			&display_handle,
-			Some(&primary_selection_state),
-			|_| true,
-		);
+		let data_control_state =
+			DataControlState::new::<State, _>(&display_handle, Some(&primary_selection_state), |_| true);
 		let xdg_decoration_state = XdgDecorationState::new::<State>(&display_handle);
 		let xdg_shell_state = XdgShellState::new::<State>(&display_handle);
 		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
@@ -262,11 +256,7 @@ impl Mayland {
 		backend.render(self, output, &elements);
 	}
 
-	fn elements(
-		&mut self,
-		renderer: &mut GlowRenderer,
-		output: &Output,
-	) -> Vec<MaylandRenderElements> {
+	fn elements(&mut self, renderer: &mut GlowRenderer, output: &Output) -> Vec<MaylandRenderElements> {
 		let mut elements = Vec::new();
 
 		let pointer_element = self.pointer_element(renderer);
@@ -312,10 +302,7 @@ impl Mayland {
 					&mut output_presentation_feedback,
 					surface_primary_scanout_output,
 					|surface, _| {
-						surface_presentation_feedback_flags_from_states(
-							surface,
-							render_element_states,
-						)
+						surface_presentation_feedback_flags_from_states(surface, render_element_states)
 					},
 				);
 			}
@@ -326,9 +313,7 @@ impl Mayland {
 			layer_surface.take_presentation_feedback(
 				&mut output_presentation_feedback,
 				surface_primary_scanout_output,
-				|surface, _| {
-					surface_presentation_feedback_flags_from_states(surface, render_element_states)
-				},
+				|surface, _| surface_presentation_feedback_flags_from_states(surface, render_element_states),
 			);
 		}
 
@@ -337,22 +322,18 @@ impl Mayland {
 
 	pub fn post_repaint(&self, output: &Output) {
 		for mapped in self.workspaces.windows() {
-			mapped.window.send_frame(
-				output,
-				self.start_time.elapsed(),
-				Some(Duration::ZERO),
-				|_, _| Some(output.clone()),
-			);
+			mapped
+				.window
+				.send_frame(output, self.start_time.elapsed(), Some(Duration::ZERO), |_, _| {
+					Some(output.clone())
+				});
 		}
 
 		let layer_map = layer_map_for_output(output);
 		for layer_surface in layer_map.layers() {
-			layer_surface.send_frame(
-				output,
-				self.start_time.elapsed(),
-				Some(Duration::ZERO),
-				|_, _| Some(output.clone()),
-			);
+			layer_surface.send_frame(output, self.start_time.elapsed(), Some(Duration::ZERO), |_, _| {
+				Some(output.clone())
+			});
 		}
 	}
 }

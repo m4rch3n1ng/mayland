@@ -41,12 +41,8 @@ use std::{
 };
 use tracing::{error, info};
 
-type GbmDrmCompositor = DrmCompositor<
-	GbmAllocator<DrmDeviceFd>,
-	GbmDevice<DrmDeviceFd>,
-	OutputPresentationFeedback,
-	DrmDeviceFd,
->;
+type GbmDrmCompositor =
+	DrmCompositor<GbmAllocator<DrmDeviceFd>, GbmDevice<DrmDeviceFd>, OutputPresentationFeedback, DrmDeviceFd>;
 
 const SUPPORTED_COLOR_FORMATS: &[Fourcc] = &[Fourcc::Argb8888, Fourcc::Abgr8888];
 
@@ -134,12 +130,7 @@ impl Udev {
 }
 
 impl Udev {
-	pub fn render(
-		&mut self,
-		mayland: &mut Mayland,
-		output: &Output,
-		elements: &[MaylandRenderElements],
-	) {
+	pub fn render(&mut self, mayland: &mut Mayland, output: &Output, elements: &[MaylandRenderElements]) {
 		let device = self.output_device.as_mut().unwrap();
 		let tty_state: &UdevOutputState = output.user_data().get().unwrap();
 		let drm_compositor = device.surfaces.get_mut(&tty_state.crtc).unwrap();
@@ -263,9 +254,7 @@ impl Udev {
 								let output = feedback.output().unwrap();
 								let refresh = output
 									.current_mode()
-									.map(|mode| {
-										Duration::from_secs_f64(1_000f64 / f64::from(mode.refresh))
-									})
+									.map(|mode| Duration::from_secs_f64(1_000f64 / f64::from(mode.refresh)))
 									.unwrap_or_default();
 
 								feedback.presented::<_, Monotonic>(
@@ -286,9 +275,8 @@ impl Udev {
 							.workspaces
 							.outputs()
 							.find(|output| {
-								let tty_state =
-									output.user_data().get::<UdevOutputState>().unwrap();
-								tty_state.device_id == device.id && tty_state.crtc == crtc
+								let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
+								udev_state.device_id == device.id && udev_state.crtc == crtc
 							})
 							.unwrap()
 							.clone();
@@ -369,17 +357,8 @@ impl Udev {
 		mayland.loop_handle.remove(device.token);
 	}
 
-	fn connector_connected(
-		&mut self,
-		connector: connector::Info,
-		crtc: crtc::Handle,
-		mayland: &mut Mayland,
-	) {
-		let output_name = format!(
-			"{}-{}",
-			connector.interface().as_str(),
-			connector.interface_id(),
-		);
+	fn connector_connected(&mut self, connector: connector::Info, crtc: crtc::Handle, mayland: &mut Mayland) {
+		let output_name = format!("{}-{}", connector.interface().as_str(), connector.interface_id(),);
 		info!("connecting connector: {output_name}");
 
 		let device = self.output_device.as_mut().unwrap();

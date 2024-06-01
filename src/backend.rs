@@ -17,12 +17,7 @@ pub enum Backend {
 }
 
 impl Backend {
-	pub fn render(
-		&mut self,
-		mayland: &mut Mayland,
-		output: &Output,
-		elements: &[MaylandRenderElements],
-	) {
+	pub fn render(&mut self, mayland: &mut Mayland, output: &Output, elements: &[MaylandRenderElements]) {
 		match self {
 			Backend::Udev(udev) => udev.render(mayland, output, elements),
 			Backend::Winit(winit) => winit.render(mayland, output, elements),

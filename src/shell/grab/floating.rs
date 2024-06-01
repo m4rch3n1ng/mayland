@@ -5,15 +5,14 @@ use smithay::{
 	input::{
 		pointer::{
 			AxisFrame, ButtonEvent, Focus, GestureHoldBeginEvent, GestureHoldEndEvent,
-			GesturePinchBeginEvent, GesturePinchEndEvent, GesturePinchUpdateEvent,
-			GestureSwipeBeginEvent, GestureSwipeEndEvent, GestureSwipeUpdateEvent, GrabStartData,
-			MotionEvent, PointerGrab, PointerInnerHandle, RelativeMotionEvent,
+			GesturePinchBeginEvent, GesturePinchEndEvent, GesturePinchUpdateEvent, GestureSwipeBeginEvent,
+			GestureSwipeEndEvent, GestureSwipeUpdateEvent, GrabStartData, MotionEvent, PointerGrab,
+			PointerInnerHandle, RelativeMotionEvent,
 		},
 		SeatHandler,
 	},
 	reexports::{
-		wayland_protocols::xdg::shell::server::xdg_toplevel::State as TopLevelState,
-		wayland_server::Resource,
+		wayland_protocols::xdg::shell::server::xdg_toplevel::State as TopLevelState, wayland_server::Resource,
 	},
 	utils::{IsAlive, Logical, Point, Serial, Size},
 	wayland::seat::WaylandFocus,
@@ -51,24 +50,14 @@ impl PointerGrab<State> for MoveGrab {
 		handle.relative_motion(data, focus, event);
 	}
 
-	fn button(
-		&mut self,
-		data: &mut State,
-		handle: &mut PointerInnerHandle<'_, State>,
-		event: &ButtonEvent,
-	) {
+	fn button(&mut self, data: &mut State, handle: &mut PointerInnerHandle<'_, State>, event: &ButtonEvent) {
 		handle.button(data, event);
 		if !handle.current_pressed().contains(&272) {
 			handle.unset_grab(self, data, event.serial, event.time, true);
 		}
 	}
 
-	fn axis(
-		&mut self,
-		data: &mut State,
-		handle: &mut PointerInnerHandle<'_, State>,
-		details: AxisFrame,
-	) {
+	fn axis(&mut self, data: &mut State, handle: &mut PointerInnerHandle<'_, State>, details: AxisFrame) {
 		handle.axis(data, details);
 	}
 
@@ -209,12 +198,7 @@ impl PointerGrab<State> for ResizeGrab {
 		handle.relative_motion(data, focus, event);
 	}
 
-	fn button(
-		&mut self,
-		data: &mut State,
-		handle: &mut PointerInnerHandle<'_, State>,
-		event: &ButtonEvent,
-	) {
+	fn button(&mut self, data: &mut State, handle: &mut PointerInnerHandle<'_, State>, event: &ButtonEvent) {
 		handle.button(data, event);
 
 		if !handle.current_pressed().contains(&273) {
@@ -241,12 +225,7 @@ impl PointerGrab<State> for ResizeGrab {
 		}
 	}
 
-	fn axis(
-		&mut self,
-		data: &mut State,
-		handle: &mut PointerInnerHandle<'_, State>,
-		details: AxisFrame,
-	) {
+	fn axis(&mut self, data: &mut State, handle: &mut PointerInnerHandle<'_, State>, details: AxisFrame) {
 		handle.axis(data, details);
 	}
 

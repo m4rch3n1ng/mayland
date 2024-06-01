@@ -91,12 +91,7 @@ impl DmabufHandler for State {
 		&mut self.mayland.dmabuf_state
 	}
 
-	fn dmabuf_imported(
-		&mut self,
-		_global: &DmabufGlobal,
-		dmabuf: Dmabuf,
-		notifier: ImportNotifier,
-	) {
+	fn dmabuf_imported(&mut self, _global: &DmabufGlobal, dmabuf: Dmabuf, notifier: ImportNotifier) {
 		if self.backend.import_dmabuf(&dmabuf) {
 			let _ = notifier.successful::<State>();
 		} else {

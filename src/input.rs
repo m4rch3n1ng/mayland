@@ -8,8 +8,8 @@ use crate::{
 };
 use smithay::{
 	backend::input::{
-		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState,
-		KeyboardKeyEvent, PointerAxisEvent, PointerButtonEvent, PointerMotionEvent,
+		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState, KeyboardKeyEvent,
+		PointerAxisEvent, PointerButtonEvent, PointerMotionEvent,
 	},
 	desktop::{layer_map_for_output, WindowSurfaceType},
 	input::{
@@ -71,14 +71,11 @@ impl State {
 		let serial = SERIAL_COUNTER.next_serial();
 		let time = event.time_msec();
 
-		let Some(Some(action)) = keyboard.input(
-			self,
-			code,
-			key_state,
-			serial,
-			time,
-			|state, mods, keysym| state.handle_key(code, key_state, mods, keysym),
-		) else {
+		let Some(Some(action)) =
+			keyboard.input(self, code, key_state, serial, time, |state, mods, keysym| {
+				state.handle_key(code, key_state, mods, keysym)
+			})
+		else {
 			return;
 		};
 
@@ -97,20 +94,10 @@ impl State {
 		for output in self.mayland.workspaces.outputs() {
 			let geom = self.mayland.workspaces.output_geometry(output).unwrap();
 			min_max_y = min_max_y
-				.map(|(min, max)| {
-					(
-						i32::min(min, geom.loc.y),
-						i32::max(max, geom.loc.y + geom.size.h),
-					)
-				})
+				.map(|(min, max)| (i32::min(min, geom.loc.y), i32::max(max, geom.loc.y + geom.size.h)))
 				.or(Some((geom.loc.y, geom.loc.y + geom.size.h)));
 			min_max_x = min_max_x
-				.map(|(min, max)| {
-					(
-						i32::min(min, geom.loc.x),
-						i32::max(max, geom.loc.x + geom.size.w),
-					)
-				})
+				.map(|(min, max)| (i32::min(min, geom.loc.x), i32::max(max, geom.loc.x + geom.size.w)))
 				.or(Some((geom.loc.x, geom.loc.x + geom.size.w)));
 		}
 
@@ -208,16 +195,14 @@ impl State {
 
 		let mut frame = AxisFrame::new(event.time_msec()).source(event.source());
 		if horizontal_amount != 0.0 {
-			frame = frame
-				.relative_direction(Axis::Horizontal, event.relative_direction(Axis::Horizontal));
+			frame = frame.relative_direction(Axis::Horizontal, event.relative_direction(Axis::Horizontal));
 			frame = frame.value(Axis::Horizontal, horizontal_amount);
 			if let Some(amount_v120) = horizontal_amount_v120 {
 				frame = frame.v120(Axis::Horizontal, amount_v120 as i32);
 			}
 		}
 		if vertical_amount != 0.0 {
-			frame =
-				frame.relative_direction(Axis::Vertical, event.relative_direction(Axis::Vertical));
+			frame = frame.relative_direction(Axis::Vertical, event.relative_direction(Axis::Vertical));
 			frame = frame.value(Axis::Vertical, vertical_amount);
 			if let Some(amount_v120) = vertical_amount_v120 {
 				frame = frame.v120(Axis::Vertical, amount_v120 as i32);
@@ -292,18 +277,11 @@ impl State {
 		let keyboard = self.mayland.keyboard.clone();
 		let input_method = self.mayland.seat.input_method();
 
-		if self.mayland.pointer.is_grabbed()
-			|| keyboard.is_grabbed() && !input_method.keyboard_grabbed()
-		{
+		if self.mayland.pointer.is_grabbed() || keyboard.is_grabbed() && !input_method.keyboard_grabbed() {
 			return;
 		}
 
-		let output = self
-			.mayland
-			.workspaces
-			.output_under(location)
-			.next()
-			.cloned();
+		let output = self.mayland.workspaces.output_under(location).next().cloned();
 		if let Some(output) = output.as_ref() {
 			let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
 			let layers = layer_map_for_output(output);
@@ -354,12 +332,7 @@ impl State {
 		self.mayland.queue_redraw_all();
 	}
 
-	pub fn focus_window(
-		&mut self,
-		window: MappedWindow,
-		keyboard: &KeyboardHandle<State>,
-		serial: Serial,
-	) {
+	pub fn focus_window(&mut self, window: MappedWindow, keyboard: &KeyboardHandle<State>, serial: Serial) {
 		self.mayland.workspaces.raise_window(&window, true);
 		keyboard.set_focus(self, Some(KeyboardFocusTarget::from(window)), serial);
 		self.mayland.workspaces.windows().for_each(|mapped| {

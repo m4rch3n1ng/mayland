@@ -120,10 +120,7 @@ impl WorkspaceManager {
 		self.space.output_geometry(output)
 	}
 
-	pub fn output_under<P: Into<Point<f64, Logical>>>(
-		&self,
-		point: P,
-	) -> impl Iterator<Item = &Output> {
+	pub fn output_under<P: Into<Point<f64, Logical>>>(&self, point: P) -> impl Iterator<Item = &Output> {
 		self.space.output_under(point)
 	}
 }
@@ -158,11 +155,7 @@ impl WorkspaceManager {
 		workspace.add_window(window);
 	}
 
-	pub fn floating_move<P: Into<Point<i32, Logical>>>(
-		&mut self,
-		window: MappedWindow,
-		location: P,
-	) {
+	pub fn floating_move<P: Into<Point<i32, Logical>>>(&mut self, window: MappedWindow, location: P) {
 		let workspace = self.workspace_mut();
 		workspace.floating_move(window, location);
 	}
@@ -334,11 +327,7 @@ impl Workspace {
 		self.space.unmap_elem(window);
 	}
 
-	pub fn floating_move<P: Into<Point<i32, Logical>>>(
-		&mut self,
-		window: MappedWindow,
-		location: P,
-	) {
+	pub fn floating_move<P: Into<Point<i32, Logical>>>(&mut self, window: MappedWindow, location: P) {
 		self.space.map_element(window, location, true);
 	}
 

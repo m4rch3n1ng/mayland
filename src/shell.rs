@@ -11,8 +11,7 @@ use smithay::{
 	wayland::{
 		buffer::BufferHandler,
 		compositor::{
-			get_parent, is_sync_subsurface, CompositorClientState, CompositorHandler,
-			CompositorState,
+			get_parent, is_sync_subsurface, CompositorClientState, CompositorHandler, CompositorState,
 		},
 		shell::wlr_layer::{
 			Layer, LayerSurface as WlrLayerSurface, WlrLayerShellHandler, WlrLayerShellState,
@@ -84,8 +83,7 @@ impl WlrLayerShellHandler for State {
 			.and_then(Output::from_resource)
 			.unwrap_or_else(|| self.mayland.workspaces.outputs().next().unwrap().clone());
 		let mut map = layer_map_for_output(&output);
-		map.map_layer(&LayerSurface::new(surface, namespace))
-			.unwrap();
+		map.map_layer(&LayerSurface::new(surface, namespace)).unwrap();
 	}
 }
 

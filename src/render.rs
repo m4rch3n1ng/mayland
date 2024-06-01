@@ -87,9 +87,7 @@ impl<R: ImportAll + ImportMem> Debug for OutputRenderElements<R> {
 			OutputRenderElements::DefaultPointer(element) => {
 				f.debug_tuple("DefaultPointer").field(&element).finish()
 			}
-			OutputRenderElements::Surface(surface) => {
-				f.debug_tuple("Surface").field(&surface).finish()
-			}
+			OutputRenderElements::Surface(surface) => f.debug_tuple("Surface").field(&surface).finish(),
 			OutputRenderElements::_GenericCatcher(_) => f.write_str("_GenericCatcher"),
 		}
 	}

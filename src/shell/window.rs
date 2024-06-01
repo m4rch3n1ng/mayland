@@ -8,10 +8,9 @@ use smithay::{
 	desktop::{space::SpaceElement, Window, WindowSurface},
 	input::{
 		pointer::{
-			AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent,
-			GesturePinchBeginEvent, GesturePinchEndEvent, GesturePinchUpdateEvent,
-			GestureSwipeBeginEvent, GestureSwipeEndEvent, GestureSwipeUpdateEvent, MotionEvent,
-			PointerTarget, RelativeMotionEvent,
+			AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent, GesturePinchBeginEvent,
+			GesturePinchEndEvent, GesturePinchUpdateEvent, GestureSwipeBeginEvent, GestureSwipeEndEvent,
+			GestureSwipeUpdateEvent, MotionEvent, PointerTarget, RelativeMotionEvent,
 		},
 		Seat,
 	},
@@ -110,8 +109,7 @@ where
 		scale: Scale<f64>,
 		alpha: f32,
 	) -> Vec<C> {
-		self.window
-			.render_elements(renderer, location, scale, alpha)
+		self.window.render_elements(renderer, location, scale, alpha)
 	}
 }
 
@@ -262,13 +260,7 @@ impl PointerTarget<State> for MappedWindow {
 		}
 	}
 
-	fn leave(
-		&self,
-		seat: &smithay::input::Seat<State>,
-		data: &mut State,
-		serial: Serial,
-		time: u32,
-	) {
+	fn leave(&self, seat: &smithay::input::Seat<State>, data: &mut State, serial: Serial, time: u32) {
 		if let Some(w) = self.wl_surface() {
 			PointerTarget::leave(&*w, seat, data, serial, time);
 		}

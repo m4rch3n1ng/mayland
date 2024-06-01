@@ -50,9 +50,7 @@ impl State {
 
 	pub fn handle_resize(&mut self, window: MappedWindow) {
 		let mut resize_state = window.resize_state.lock().unwrap();
-		if let Some(ResizeState::Resizing(data) | ResizeState::WatingForCommit(data)) =
-			*resize_state
-		{
+		if let Some(ResizeState::Resizing(data) | ResizeState::WatingForCommit(data)) = *resize_state {
 			let ResizeData {
 				corner,
 				initial_window_location,
@@ -76,9 +74,7 @@ impl State {
 				location.x = initial_window_location.x + dx;
 				location.y = initial_window_location.y + dy;
 
-				self.mayland
-					.workspaces
-					.floating_move(window.clone(), location);
+				self.mayland.workspaces.floating_move(window.clone(), location);
 			}
 		}
 

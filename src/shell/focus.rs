@@ -8,10 +8,9 @@ use smithay::{
 	input::{
 		keyboard::{KeyboardTarget, KeysymHandle, ModifiersState},
 		pointer::{
-			AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent,
-			GesturePinchBeginEvent, GesturePinchEndEvent, GesturePinchUpdateEvent,
-			GestureSwipeBeginEvent, GestureSwipeEndEvent, GestureSwipeUpdateEvent, MotionEvent,
-			PointerTarget, RelativeMotionEvent,
+			AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent, GesturePinchBeginEvent,
+			GesturePinchEndEvent, GesturePinchUpdateEvent, GestureSwipeBeginEvent, GestureSwipeEndEvent,
+			GestureSwipeUpdateEvent, MotionEvent, PointerTarget, RelativeMotionEvent,
 		},
 		Seat,
 	},
@@ -53,13 +52,7 @@ impl IsAlive for PointerFocusTarget {
 }
 
 impl KeyboardTarget<State> for KeyboardFocusTarget {
-	fn enter(
-		&self,
-		seat: &Seat<State>,
-		data: &mut State,
-		keys: Vec<KeysymHandle<'_>>,
-		serial: Serial,
-	) {
+	fn enter(&self, seat: &Seat<State>, data: &mut State, keys: Vec<KeysymHandle<'_>>, serial: Serial) {
 		match self {
 			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
 				WindowSurface::Wayland(w) => {
@@ -115,13 +108,7 @@ impl KeyboardTarget<State> for KeyboardFocusTarget {
 		}
 	}
 
-	fn modifiers(
-		&self,
-		seat: &Seat<State>,
-		data: &mut State,
-		modifiers: ModifiersState,
-		serial: Serial,
-	) {
+	fn modifiers(&self, seat: &Seat<State>, data: &mut State, modifiers: ModifiersState, serial: Serial) {
 		match self {
 			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
 				WindowSurface::Wayland(w) => {
@@ -185,12 +172,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 		}
 	}
 
-	fn gesture_swipe_begin(
-		&self,
-		seat: &Seat<State>,
-		data: &mut State,
-		event: &GestureSwipeBeginEvent,
-	) {
+	fn gesture_swipe_begin(&self, seat: &Seat<State>, data: &mut State, event: &GestureSwipeBeginEvent) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
 				PointerTarget::gesture_swipe_begin(w, seat, data, event);
@@ -201,12 +183,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 		}
 	}
 
-	fn gesture_swipe_update(
-		&self,
-		seat: &Seat<State>,
-		data: &mut State,
-		event: &GestureSwipeUpdateEvent,
-	) {
+	fn gesture_swipe_update(&self, seat: &Seat<State>, data: &mut State, event: &GestureSwipeUpdateEvent) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
 				PointerTarget::gesture_swipe_update(w, seat, data, event);
@@ -217,12 +194,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 		}
 	}
 
-	fn gesture_swipe_end(
-		&self,
-		seat: &Seat<State>,
-		data: &mut State,
-		event: &GestureSwipeEndEvent,
-	) {
+	fn gesture_swipe_end(&self, seat: &Seat<State>, data: &mut State, event: &GestureSwipeEndEvent) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
 				PointerTarget::gesture_swipe_end(w, seat, data, event);
@@ -233,12 +205,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 		}
 	}
 
-	fn gesture_pinch_begin(
-		&self,
-		seat: &Seat<State>,
-		data: &mut State,
-		event: &GesturePinchBeginEvent,
-	) {
+	fn gesture_pinch_begin(&self, seat: &Seat<State>, data: &mut State, event: &GesturePinchBeginEvent) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
 				PointerTarget::gesture_pinch_begin(w, seat, data, event);
@@ -249,12 +216,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 		}
 	}
 
-	fn gesture_pinch_update(
-		&self,
-		seat: &Seat<State>,
-		data: &mut State,
-		event: &GesturePinchUpdateEvent,
-	) {
+	fn gesture_pinch_update(&self, seat: &Seat<State>, data: &mut State, event: &GesturePinchUpdateEvent) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
 				PointerTarget::gesture_pinch_update(w, seat, data, event);
@@ -265,12 +227,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 		}
 	}
 
-	fn gesture_pinch_end(
-		&self,
-		seat: &Seat<State>,
-		data: &mut State,
-		event: &GesturePinchEndEvent,
-	) {
+	fn gesture_pinch_end(&self, seat: &Seat<State>, data: &mut State, event: &GesturePinchEndEvent) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
 				PointerTarget::gesture_pinch_end(w, seat, data, event);
@@ -281,12 +238,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 		}
 	}
 
-	fn gesture_hold_begin(
-		&self,
-		seat: &Seat<State>,
-		data: &mut State,
-		event: &GestureHoldBeginEvent,
-	) {
+	fn gesture_hold_begin(&self, seat: &Seat<State>, data: &mut State, event: &GestureHoldBeginEvent) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => {
 				PointerTarget::gesture_hold_begin(w, seat, data, event);
@@ -308,13 +260,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 		}
 	}
 
-	fn leave(
-		&self,
-		seat: &Seat<State>,
-		data: &mut State,
-		serial: smithay::utils::Serial,
-		time: u32,
-	) {
+	fn leave(&self, seat: &Seat<State>, data: &mut State, serial: smithay::utils::Serial, time: u32) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => PointerTarget::leave(w, seat, data, serial, time),
 			PointerFocusTarget::Window(w) => PointerTarget::leave(w, seat, data, serial, time),
