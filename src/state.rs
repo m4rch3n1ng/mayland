@@ -233,6 +233,11 @@ impl Mayland {
 		self.workspaces.remove_output(output);
 	}
 
+	pub fn output_resized(&mut self, output: &Output) {
+		layer_map_for_output(output).arrange();
+		self.workspaces.resize_output(output);
+	}
+
 	pub fn queue_redraw_all(&mut self) {
 		let outputs = self.output_state.keys().cloned().collect::<Vec<_>>();
 		for output in outputs {

@@ -1,6 +1,7 @@
 use smithay::{
+	output::Output,
 	reexports::rustix::time::{clock_gettime, ClockId},
-	utils::{Point, Rectangle},
+	utils::{Logical, Point, Rectangle, Size},
 };
 use std::time::Duration;
 
@@ -16,6 +17,16 @@ impl<Kind> RectExt<i32, Kind> for Rectangle<i32, Kind> {
 
 		location
 	}
+}
+
+pub fn output_size(output: &Output) -> Size<i32, Logical> {
+	let output_scale = output.current_scale().integer_scale();
+	let output_mode = output.current_mode().unwrap();
+	let output_transform = output.current_transform();
+
+	output_transform
+		.transform_size(output_mode.size)
+		.to_logical(output_scale)
 }
 
 pub fn get_monotonic_time() -> Duration {

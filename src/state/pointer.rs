@@ -21,7 +21,7 @@ impl State {
 				serial,
 				time,
 			},
-		)
+		);
 	}
 
 	pub fn reset_keyboard_focus(&mut self) {

@@ -41,11 +41,19 @@ impl ResizeCorner {
 
 impl State {
 	pub fn xdg_move(&mut self, window: MappedWindow, serial: Serial) {
-		self.xdg_floating_move(window, serial);
+		if self.mayland.workspaces.is_floating(&window) {
+			self.xdg_floating_move(window, serial);
+		} else {
+			tracing::debug!("todo! tiling move");
+		}
 	}
 
 	pub fn xdg_resize(&mut self, window: MappedWindow, serial: Serial) {
-		self.xdg_floating_resize(window, serial);
+		if self.mayland.workspaces.is_floating(&window) {
+			self.xdg_floating_resize(window, serial);
+		} else {
+			tracing::debug!("todo! tiling resize");
+		}
 	}
 
 	pub fn handle_resize(&mut self, window: MappedWindow) {

@@ -1,7 +1,8 @@
+use super::tiling::Tiling;
 use crate::{
 	render::{MaylandRenderElements, OutputRenderElements},
 	shell::window::MappedWindow,
-	utils::RectExt,
+	utils::{output_size, RectExt},
 	State,
 };
 use smithay::{
@@ -13,7 +14,7 @@ use smithay::{
 	input::pointer::PointerHandle,
 	output::Output,
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
-	utils::{Logical, Physical, Point, Rectangle, Scale},
+	utils::{Logical, Physical, Point, Rectangle, Scale, Size},
 	wayland::{seat::WaylandFocus, shell::wlr_layer::Layer},
 };
 use std::collections::{BTreeMap, HashMap};
@@ -134,6 +135,14 @@ impl WorkspaceManager {
 		}
 	}
 
+	pub fn resize_output(&mut self, output: &Output) {
+		let output_size = output_size(output);
+
+		let idx = &self.output_map[output];
+		let workspace = self.workspaces.get_mut(idx).unwrap();
+		workspace.resize_output(output_size);
+	}
+
 	pub fn refresh(&mut self) {
 		self.space.refresh();
 
@@ -163,6 +172,11 @@ impl WorkspaceManager {
 				self.active_output = Some(output.clone());
 			}
 		}
+	}
+
+	pub fn is_floating(&mut self, window: &MappedWindow) -> bool {
+		let workspace = self.workspace();
+		workspace.is_floating(window)
 	}
 
 	pub fn is_active_output(&self, output: &Output) -> bool {
@@ -278,32 +292,40 @@ impl Default for WorkspaceManager {
 
 #[derive(Debug)]
 pub struct Workspace {
-	space: Space<MappedWindow>,
+	tiling: Tiling,
+	floating: Space<MappedWindow>,
 }
 
 impl Workspace {
 	fn new() -> Self {
-		let space = Space::default();
+		let tiling = Tiling::new();
+		let floating = Space::default();
 
-		Workspace { space }
+		Workspace { tiling, floating }
 	}
 }
 
 impl Workspace {
 	fn map_output(&mut self, output: &Output) {
-		self.space.map_output(output, (0, 0));
+		self.tiling.map_output(output);
+		self.floating.map_output(output, (0, 0));
 	}
 
 	fn unmap_output(&mut self, output: &Output) {
-		self.space.unmap_output(output);
+		self.tiling.unmap_output();
+		self.floating.unmap_output(output);
+	}
+
+	fn resize_output(&mut self, size: Size<i32, Logical>) {
+		self.tiling.resize_output(size);
 	}
 
 	fn outputs_for_window(&self, window: &MappedWindow) -> Vec<Output> {
-		self.space.outputs_for_element(window)
+		self.floating.outputs_for_element(window)
 	}
 
 	fn refresh(&mut self) {
-		self.space.refresh();
+		self.floating.refresh();
 	}
 
 	pub fn is_empty(&self) -> bool {
@@ -336,14 +358,16 @@ impl Workspace {
 			.map(OutputRenderElements::Surface)
 		}));
 
-		if let Some(output_geo) = self.space.output_geometry(output) {
+		if let Some(output_geo) = self.floating.output_geometry(output) {
 			render_elements.extend(
-				self.space
+				self.floating
 					.render_elements_for_region(renderer, &output_geo, output_scale, 1.)
 					.into_iter()
 					.map(OutputRenderElements::Surface),
 			);
 		}
+
+		render_elements.extend(self.tiling.render(renderer, output_scale));
 
 		render_elements.extend(lower.flat_map(|(surface, location)| {
 			AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(
@@ -392,19 +416,32 @@ impl Workspace {
 
 impl Workspace {
 	pub fn add_window(&mut self, window: MappedWindow) {
-		self.space.map_element(window, (0, 0), true);
+		if let Some(window) = self.tiling.add_window(window) {
+			self.floating.map_element(window, (0, 0), true);
+		}
 	}
 
 	pub fn remove_window(&mut self, window: &MappedWindow) {
-		self.space.unmap_elem(window);
+		if !self.tiling.remove_window(window) {
+			self.floating.unmap_elem(window);
+		}
+	}
+
+	/// is the [`MappedWindow`] in the floating space?
+	pub fn is_floating(&self, window: &MappedWindow) -> bool {
+		self.floating.elements().any(|w| w == window)
 	}
 
 	pub fn floating_move<P: Into<Point<i32, Logical>>>(&mut self, window: MappedWindow, location: P) {
-		self.space.map_element(window, location, true);
+		if self.is_floating(&window) {
+			self.floating.map_element(window, location, true);
+		}
 	}
 
 	pub fn raise_window(&mut self, window: &MappedWindow, activate: bool) {
-		self.space.raise_element(window, activate);
+		if !self.tiling.has_window(window) {
+			self.floating.raise_element(window, activate);
+		}
 	}
 
 	pub fn has_window(&mut self, window: &MappedWindow) -> bool {
@@ -412,21 +449,23 @@ impl Workspace {
 	}
 
 	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
-		self.space.elements()
+		self.floating.elements().chain(self.tiling.windows())
 	}
 
 	pub fn window_location(&self, window: &MappedWindow) -> Option<Point<i32, Logical>> {
-		self.space.element_location(window)
+		self.floating.element_location(window)
 	}
 
 	pub fn window_geometry(&self, window: &MappedWindow) -> Option<Rectangle<i32, Logical>> {
-		self.space.element_geometry(window)
+		self.floating.element_geometry(window)
 	}
 
-	pub fn window_under<P: Into<Point<f64, Logical>>>(
+	pub fn window_under(
 		&self,
-		location: P,
+		location: Point<f64, Logical>,
 	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
-		self.space.element_under(location)
+		self.floating
+			.element_under(location)
+			.or_else(|| self.tiling.window_under(location))
 	}
 }
