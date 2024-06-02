@@ -14,7 +14,7 @@ use smithay::{
 			surface_presentation_feedback_flags_from_states, surface_primary_scanout_output,
 			OutputPresentationFeedback,
 		},
-		PopupManager,
+		PopupManager, Window,
 	},
 	input::{
 		keyboard::{KeyboardHandle, XkbConfig},
@@ -26,6 +26,7 @@ use smithay::{
 		calloop::{generic::Generic, EventLoop, Idle, Interest, LoopHandle, LoopSignal, Mode, PostAction},
 		wayland_server::{
 			backend::{ClientData, GlobalId},
+			protocol::wl_surface::WlSurface,
 			Display, DisplayHandle,
 		},
 	},
@@ -95,6 +96,9 @@ pub struct Mayland {
 
 	// workspace
 	pub workspaces: WorkspaceManager,
+
+	// unmapped_windows
+	pub unmapped_windows: HashMap<WlSurface, Window>,
 
 	pub start_time: std::time::Instant,
 	pub loop_signal: LoopSignal,
@@ -172,6 +176,8 @@ impl Mayland {
 			output_state: HashMap::new(),
 
 			workspaces,
+
+			unmapped_windows: HashMap::new(),
 
 			start_time,
 			loop_signal,

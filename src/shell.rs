@@ -1,6 +1,7 @@
+use self::window::MappedWindow;
 use crate::state::{ClientState, State};
 use smithay::{
-	backend::renderer::utils::on_commit_buffer_handler,
+	backend::renderer::utils::{on_commit_buffer_handler, with_renderer_surface_state},
 	delegate_compositor, delegate_shm,
 	desktop::{layer_map_for_output, LayerSurface},
 	output::Output,
@@ -19,6 +20,7 @@ use smithay::{
 		shm::{ShmHandler, ShmState},
 	},
 };
+use std::collections::hash_map::Entry;
 
 pub mod focus;
 pub mod grab;
@@ -44,17 +46,49 @@ impl CompositorHandler for State {
 
 	fn commit(&mut self, surface: &WlSurface) {
 		on_commit_buffer_handler::<Self>(surface);
-		if !is_sync_subsurface(surface) {
-			let mut root = surface.clone();
-			while let Some(parent) = get_parent(&root) {
-				root = parent;
+
+		if is_sync_subsurface(surface) {
+			return;
+		}
+
+		let mut root = surface.clone();
+		while let Some(parent) = get_parent(&root) {
+			root = parent;
+		}
+
+		if surface == &root {
+			if let Entry::Occupied(unmapped) = self.mayland.unmapped_windows.entry(surface.clone()) {
+				let is_mapped =
+					with_renderer_surface_state(surface, |state| state.buffer().is_some()).unwrap_or(false);
+
+				if is_mapped {
+					let unmapped = unmapped.remove();
+					let mapped = MappedWindow::new(unmapped);
+
+					mapped.window.on_commit();
+
+					// add window to workspace
+					self.mayland.workspaces.add_window(mapped.clone());
+
+					// automaticall focus new windows
+					self.focus_window(mapped);
+
+					return;
+				}
+
+				let window = unmapped.get();
+				if let Some(toplevel) = window.toplevel() {
+					if !xdg::initial_configure_sent(toplevel) {
+						toplevel.send_configure();
+					}
+				}
 			}
 
 			if let Some(mapped) = self.mayland.workspaces.window_for_surface(surface) {
 				mapped.window.on_commit();
 				self.mayland.queue_redraw_all();
 			}
-		};
+		}
 
 		self.mayland.handle_surface_commit(surface);
 

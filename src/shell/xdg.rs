@@ -1,10 +1,9 @@
-use super::window::MappedWindow;
 use crate::state::{Mayland, State};
 use smithay::{
 	delegate_layer_shell, delegate_xdg_shell,
 	desktop::{PopupKind, Window},
 	reexports::wayland_server::protocol::{wl_seat::WlSeat, wl_surface::WlSurface},
-	utils::{Serial, SERIAL_COUNTER},
+	utils::Serial,
 	wayland::{
 		compositor::with_states,
 		seat::WaylandFocus,
@@ -22,12 +21,11 @@ impl XdgShellHandler for State {
 	}
 
 	fn new_toplevel(&mut self, surface: ToplevelSurface) {
-		let window = MappedWindow::new(Window::new_wayland_window(surface));
-		self.mayland.workspaces.add_window(window.clone());
+		let wl_surface = surface.wl_surface().clone();
+		let window = Window::new_wayland_window(surface);
 
-		let serial = SERIAL_COUNTER.next_serial();
-		let keyboard = self.mayland.keyboard.clone();
-		self.focus_window(window, &keyboard, serial);
+		let prev = self.mayland.unmapped_windows.insert(wl_surface, window);
+		assert!(prev.is_none());
 	}
 
 	fn new_popup(&mut self, surface: PopupSurface, _positioner: PositionerState) {
@@ -51,8 +49,13 @@ impl XdgShellHandler for State {
 
 	fn toplevel_destroyed(&mut self, surface: ToplevelSurface) {
 		let surface = surface.wl_surface();
-		let window = self.mayland.workspaces.window_for_surface(surface).cloned();
 
+		if self.mayland.unmapped_windows.remove(surface).is_some() {
+			// an unmapped window got destroyed
+			return;
+		}
+
+		let window = self.mayland.workspaces.window_for_surface(surface).cloned();
 		let Some(window) = window else {
 			tracing::error!("couldn't find toplevel");
 			return;
@@ -70,6 +73,18 @@ impl XdgShellHandler for State {
 delegate_xdg_shell!(State);
 delegate_layer_shell!(State);
 
+pub fn initial_configure_sent(toplevel: &ToplevelSurface) -> bool {
+	with_states(toplevel.wl_surface(), |states| {
+		states
+			.data_map
+			.get::<XdgToplevelSurfaceData>()
+			.unwrap()
+			.lock()
+			.unwrap()
+			.initial_configure_sent
+	})
+}
+
 impl Mayland {
 	/// should be called on `WlSurface::commit`
 	pub fn handle_surface_commit(&mut self, surface: &WlSurface) {
@@ -81,17 +96,7 @@ impl Mayland {
 			.cloned()
 		{
 			if let Some(toplevel) = mapped.window.toplevel() {
-				let initial_configure_sent = with_states(surface, |states| {
-					states
-						.data_map
-						.get::<XdgToplevelSurfaceData>()
-						.unwrap()
-						.lock()
-						.unwrap()
-						.initial_configure_sent
-				});
-
-				if !initial_configure_sent {
+				if !initial_configure_sent(toplevel) {
 					toplevel.send_configure();
 				}
 			}

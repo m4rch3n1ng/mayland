@@ -307,7 +307,7 @@ impl State {
 			.window_under(location)
 			.map(|(w, p)| (w.clone(), p))
 		{
-			self.focus_window(window, &keyboard, serial);
+			self.set_window_focus(window, &keyboard, serial);
 		}
 
 		if let Some(output) = output.as_ref() {
@@ -332,12 +332,18 @@ impl State {
 		self.mayland.queue_redraw_all();
 	}
 
-	pub fn focus_window(&mut self, window: MappedWindow, keyboard: &KeyboardHandle<State>, serial: Serial) {
+	fn set_window_focus(&mut self, window: MappedWindow, keyboard: &KeyboardHandle<State>, serial: Serial) {
 		self.mayland.workspaces.raise_window(&window, true);
 		keyboard.set_focus(self, Some(KeyboardFocusTarget::from(window)), serial);
 		self.mayland.workspaces.windows().for_each(|mapped| {
 			mapped.window.toplevel().unwrap().send_pending_configure();
 		});
+	}
+
+	pub fn focus_window(&mut self, window: MappedWindow) {
+		let serial = SERIAL_COUNTER.next_serial();
+		let keyboard = self.mayland.keyboard.clone();
+		self.set_window_focus(window, &keyboard, serial);
 	}
 
 	pub fn surface_under(
