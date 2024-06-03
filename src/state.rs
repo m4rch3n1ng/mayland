@@ -207,6 +207,8 @@ impl Mayland {
 
 impl Mayland {
 	pub fn add_output(&mut self, output: Output) {
+		tracing::debug!("add output {:?}", output.description());
+
 		self.workspaces.add_output(&output);
 
 		let state = OutputState {
@@ -265,8 +267,10 @@ impl Mayland {
 	fn elements(&mut self, renderer: &mut GlowRenderer, output: &Output) -> Vec<MaylandRenderElements> {
 		let mut elements = Vec::new();
 
-		let pointer_element = self.pointer_element(renderer);
-		elements.push(pointer_element);
+		if self.workspaces.is_active_output(output) {
+			let pointer_element = self.pointer_element(renderer);
+			elements.push(pointer_element);
+		}
 
 		let workspace_elements = self.workspaces.render_elements(renderer, output);
 		elements.extend(workspace_elements);
@@ -275,10 +279,7 @@ impl Mayland {
 	}
 
 	fn pointer_element(&mut self, renderer: &mut GlowRenderer) -> MaylandRenderElements {
-		let pointer_pos = self
-			.pointer
-			.current_location()
-			.to_physical_precise_round::<_, i32>(1.);
+		let pointer_pos = self.workspaces.relative_cursor_location(&self.pointer);
 
 		let buffer = self.cursor_buffer.buffer();
 		let texture = MemoryRenderBufferRenderElement::from_buffer(

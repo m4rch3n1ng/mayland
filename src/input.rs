@@ -109,6 +109,7 @@ impl State {
 		let under = self.surface_under(location);
 		let serial = SERIAL_COUNTER.next_serial();
 
+		self.mayland.workspaces.update_active_output(location);
 		self.update_keyboard_focus(location, serial);
 
 		pointer.motion(

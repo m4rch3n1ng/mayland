@@ -1,6 +1,7 @@
 use crate::{
 	render::{MaylandRenderElements, OutputRenderElements},
 	shell::window::MappedWindow,
+	State,
 };
 use smithay::{
 	backend::renderer::{
@@ -8,6 +9,7 @@ use smithay::{
 		glow::GlowRenderer,
 	},
 	desktop::{layer_map_for_output, LayerMap, LayerSurface, Space},
+	input::pointer::PointerHandle,
 	output::Output,
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
 	utils::{Logical, Physical, Point, Rectangle, Scale},
@@ -85,9 +87,6 @@ impl WorkspaceManager {
 
 impl WorkspaceManager {
 	pub fn add_output(&mut self, output: &Output) {
-		// todo multiple outputs
-		assert!(self.active_output.is_none());
-
 		let x = self
 			.space
 			.outputs()
@@ -103,7 +102,10 @@ impl WorkspaceManager {
 			.expect("if you have more than usize::MAX monitors you deserve this");
 
 		self.output_map.insert(output.clone(), idx);
-		self.active_output = Some(output.clone());
+
+		if self.active_output.is_none() {
+			self.active_output = Some(output.clone());
+		}
 
 		let workspace = self.workspaces.entry(idx).or_insert_with(Workspace::new);
 		workspace.map_output(output);
@@ -112,12 +114,12 @@ impl WorkspaceManager {
 	pub fn remove_output(&mut self, output: &Output) {
 		self.space.unmap_output(output);
 
-		let workspace = self.workspace_mut();
+		let idx = self.output_map.remove(output).unwrap();
+		let workspace = self.workspaces.get_mut(&idx).unwrap();
 		workspace.unmap_output(output);
 
 		if self.active_output.as_ref() == Some(output) {
-			// todo
-			self.active_output = None;
+			self.active_output = self.output_map.keys().next().cloned();
 		}
 	}
 
@@ -133,8 +135,39 @@ impl WorkspaceManager {
 		renderer: &mut GlowRenderer,
 		output: &Output,
 	) -> impl Iterator<Item = MaylandRenderElements> {
-		let workspace = self.workspace();
+		let idx = &self.output_map[output];
+		let workspace = &self.workspaces[idx];
 		workspace.render_elements(renderer, output)
+	}
+}
+
+impl WorkspaceManager {
+	pub fn update_active_output(&mut self, location: Point<f64, Logical>) {
+		if let Some(output) = self.space.output_under(location).next() {
+			if self
+				.active_output
+				.as_ref()
+				.map_or(true, |active| active != output)
+			{
+				self.active_output = Some(output.clone());
+			}
+		}
+	}
+
+	pub fn is_active_output(&self, output: &Output) -> bool {
+		self.active_output.as_ref().is_some_and(|active| active == output)
+	}
+
+	pub fn relative_cursor_location(&mut self, pointer: &PointerHandle<State>) -> Point<i32, Physical> {
+		let absolute_location = pointer.current_location();
+		let location = if let Some(active) = &self.active_output {
+			let geometry = self.space.output_geometry(active).unwrap();
+			absolute_location - geometry.loc.to_f64()
+		} else {
+			absolute_location
+		};
+
+		location.to_physical_precise_round::<_, i32>(1.)
 	}
 }
 
@@ -209,12 +242,20 @@ impl WorkspaceManager {
 		workspace.window_geometry(window)
 	}
 
-	pub fn window_under<P: Into<Point<f64, Logical>>>(
+	pub fn window_under(
 		&self,
-		location: P,
+		location: Point<f64, Logical>,
 	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
-		let workspace = self.workspace();
-		workspace.window_under(location)
+		if let Some(active) = &self.active_output {
+			let output_geo = self.space.output_geometry(active).unwrap();
+			let location = location - output_geo.loc.to_f64();
+
+			let workspace = self.workspace();
+			workspace.window_under(location)
+		} else {
+			let workspace = self.workspace();
+			workspace.window_under(location)
+		}
 	}
 }
 
