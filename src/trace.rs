@@ -3,12 +3,11 @@ use std::{
 	fs::{self, File},
 };
 use time::{macros::format_description, OffsetDateTime};
-use tracing::Level;
 use tracing_subscriber::{
-	filter, fmt,
+	fmt,
 	layer::{Filter, SubscriberExt},
 	util::SubscriberInitExt,
-	Layer,
+	EnvFilter, Layer,
 };
 
 fn iso8601() -> String {
@@ -17,19 +16,19 @@ fn iso8601() -> String {
 	offset.format(&format).unwrap()
 }
 
+#[cfg(not(feature = "debug"))]
+const DEFAULT_LOG_FILTER: &str = "warn,mayland=debug,tracing_panic";
+#[cfg(feature = "debug")]
+const DEFAULT_LOG_FILTER: &str = "debug";
+
 fn exclude_trace<F>() -> impl Filter<F> {
-	filter::filter_fn(|meta| {
-		if cfg!(feature = "debug") {
-			meta.level() != &Level::TRACE
-		} else {
-			meta.level() != &Level::TRACE && meta.target().starts_with("mayland::")
-		}
-	})
+	let directives = std::env::var("RUST_LOG").unwrap_or_else(|_| DEFAULT_LOG_FILTER.to_owned());
+	EnvFilter::builder().parse_lossy(directives)
 }
 
 #[cfg(feature = "trace")]
 fn only_trace<F>() -> impl Filter<F> {
-	filter::filter_fn(|meta| meta.level() == &Level::TRACE)
+	tracing_subscriber::filter::filter_fn(|meta| meta.level() == &tracing::Level::TRACE)
 }
 
 pub fn setup() {
