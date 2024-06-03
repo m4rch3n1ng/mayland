@@ -1,6 +1,6 @@
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
 use smithay::utils::SERIAL_COUNTER;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use tracing::error;
 
 #[derive(Debug)]
@@ -32,6 +32,9 @@ impl State {
 			Action::Spawn(spawn) => {
 				let mut cmd = Command::new("/bin/sh");
 				cmd.arg("-c")
+					.stdin(Stdio::null())
+					.stdout(Stdio::null())
+					.stderr(Stdio::null())
 					.arg(&spawn)
 					.env("WAYLAND_DISPLAY", &self.mayland.socket_name);
 
