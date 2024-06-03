@@ -18,7 +18,13 @@ fn iso8601() -> String {
 }
 
 fn exclude_trace<F>() -> impl Filter<F> {
-	filter::filter_fn(|meta| meta.level() != &Level::TRACE)
+	filter::filter_fn(|meta| {
+		if cfg!(feature = "debug") {
+			meta.level() != &Level::TRACE
+		} else {
+			meta.level() != &Level::TRACE && meta.target().starts_with("mayland::")
+		}
+	})
 }
 
 #[cfg(feature = "trace")]

@@ -35,4 +35,5 @@ default-features = false
 
 [features]
 default = []
-trace = []
+debug = []
+trace = ["debug"]
