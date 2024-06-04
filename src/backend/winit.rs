@@ -37,11 +37,11 @@ impl Winit {
 			},
 		);
 
-		mayland.add_output(output.clone());
-
 		let _global = output.create_global::<State>(&mayland.display_handle);
 		output.change_current_state(Some(mode), Some(Transform::Flipped180), None, None);
 		output.set_preferred(mode);
+
+		mayland.add_output(output.clone());
 
 		if backend
 			.renderer()
@@ -104,7 +104,7 @@ impl Winit {
 impl State {
 	fn handle_winit_event(&mut self, event: WinitEvent) {
 		match event {
-			focus @ WinitEvent::Focus(_) => info!("event {:?}", focus),
+			WinitEvent::Focus(_) => (),
 			WinitEvent::Resized { size, .. } => {
 				let winit = self.backend.winit();
 				let mode = Mode {
