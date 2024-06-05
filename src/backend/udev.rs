@@ -516,11 +516,21 @@ impl Udev {
 impl State {
 	fn handle_libinput_event(&mut self, event: &mut InputEvent<LibinputInputBackend>) {
 		if let InputEvent::DeviceAdded { device } = event {
+			let config = &*self.mayland.config;
+
 			let is_touchpad = device.config_tap_finger_count() > 0;
 			if is_touchpad {
-				let _ = device.config_tap_set_enabled(true);
+				let conf = &config.input.touchpad;
+
+				let _ = device.config_tap_set_enabled(conf.tap);
+				let _ = device.config_tap_set_drag_enabled(conf.tap_drag);
+
+				let _ = device.config_click_set_method(conf.click_method.into());
+
 				let _ = device.config_accel_set_profile(AccelProfile::Flat);
-				let _ = device.config_scroll_set_natural_scroll_enabled(true);
+
+				let _ = device.config_scroll_set_natural_scroll_enabled(conf.natural_scroll);
+				let _ = device.config_scroll_set_method(conf.scroll_method.into());
 			}
 		}
 	}
