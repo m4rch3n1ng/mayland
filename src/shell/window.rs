@@ -45,8 +45,8 @@ impl MappedWindow {
 	}
 
 	pub fn close(&self) {
-		if let Some(toplevel) = self.window.toplevel() {
-			toplevel.send_close();
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => xdg.send_close(),
 		}
 	}
 
