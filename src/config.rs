@@ -20,12 +20,8 @@ impl Config {
 	}
 }
 
-impl State {
-	pub fn init_conf(&mut self) {
-		if let Some(xkb_file) = self.mayland.config.input.xkb.file.as_deref() {
-			let xkb = self.mayland.seat.get_keyboard().unwrap();
-			let keymap = std::fs::read_to_string(xkb_file).unwrap();
-			xkb.set_keymap_from_string(self, keymap).unwrap();
-		}
+impl Config {
+	pub fn init(&self, state: &mut State) {
+		self.input.xkb.load_file(state);
 	}
 }
