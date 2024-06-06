@@ -16,7 +16,9 @@ fn main() {
 	} else {
 		State::new_udev(&mut event_loop, display)
 	};
-	state.init_conf();
+
+	let config = state.mayland.config.clone();
+	config.init(&mut state);
 
 	std::env::set_var("WAYLAND_DISPLAY", &state.mayland.socket_name);
 	std::env::set_var("GDK_BACKEND", "wayland");

@@ -50,6 +50,7 @@ use smithay::{
 };
 use std::{
 	collections::{HashMap, HashSet},
+	rc::Rc,
 	sync::Arc,
 	time::{Duration, Instant},
 };
@@ -90,7 +91,7 @@ impl State {
 
 #[derive(Debug)]
 pub struct Mayland {
-	pub config: Config,
+	pub config: Rc<Config>,
 
 	pub display_handle: DisplayHandle,
 	pub socket_name: String,
@@ -142,6 +143,7 @@ pub struct OutputState {
 impl Mayland {
 	fn new(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
 		let config = Config::read();
+		let config = Rc::new(config);
 
 		let display_handle = display.handle();
 		let socket_name = init_wayland_display(display, event_loop);
