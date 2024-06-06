@@ -6,6 +6,7 @@ mod bind;
 mod input;
 
 #[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct Config {
 	pub input: Input,
 	pub bind: Binds,
@@ -22,6 +23,6 @@ impl Config {
 
 impl Config {
 	pub fn init(&self, state: &mut State) {
-		self.input.xkb.load_file(state);
+		self.input.keyboard.load_file(state);
 	}
 }
