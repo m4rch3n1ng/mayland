@@ -18,7 +18,7 @@ use smithay::{
 		PopupManager, Window,
 	},
 	input::{
-		keyboard::{KeyboardHandle, XkbConfig},
+		keyboard::KeyboardHandle,
 		pointer::{CursorImageStatus, PointerHandle},
 		Seat, SeatState,
 	},
@@ -172,7 +172,13 @@ impl Mayland {
 		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
 		let cursor_shape_manager_state = CursorShapeManagerState::new::<State>(&display_handle);
 
-		let keyboard = seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
+		let keyboard = seat
+			.add_keyboard(
+				config.input.keyboard.xkb_config(),
+				config.input.keyboard.repeat_delay,
+				config.input.keyboard.repeat_rate,
+			)
+			.unwrap();
 		let pointer = seat.add_pointer();
 		let cursor_buffer = CursorBuffer::new();
 
