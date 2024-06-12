@@ -309,9 +309,7 @@ impl Udev {
 	}
 
 	fn device_changed(&mut self, device_id: dev_t, mayland: &mut Mayland) {
-		let Some(device) = &mut self.output_device else {
-			return;
-		};
+		let Some(device) = &mut self.output_device else { return };
 		if device.id != device_id {
 			return;
 		}
@@ -336,9 +334,7 @@ impl Udev {
 	}
 
 	fn device_removed(&mut self, device_id: dev_t, mayland: &mut Mayland) {
-		let Some(device) = &mut self.output_device else {
-			return;
-		};
+		let Some(device) = &mut self.output_device else { return };
 		if device_id != device.id {
 			return;
 		}
