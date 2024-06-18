@@ -1,5 +1,4 @@
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
-use smithay::utils::SERIAL_COUNTER;
 use std::process::{Command, Stdio};
 use tracing::error;
 
@@ -46,17 +45,15 @@ impl State {
 				});
 			}
 			Action::Workspace(idx) => {
-				self.mayland.workspaces.switch_to_workspace(idx);
+				let location = self.mayland.workspaces.switch_to_workspace(idx);
 
-				let serial = SERIAL_COUNTER.next_serial();
-				let workspace = self.mayland.workspaces.workspace();
-				if workspace.is_empty() {
-					let keyboard = self.mayland.keyboard.clone();
-					keyboard.set_focus(self, None, serial);
-				} else {
-					let location = self.mayland.pointer.current_location();
-					self.update_keyboard_focus(location, serial);
+				// todo serious refactor
+				if let Some(location) = location {
+					self.mayland.queue_redraw_all();
+					self.move_cursor(location.to_f64());
 				}
+
+				self.reset_keyboard_focus();
 			}
 		}
 	}

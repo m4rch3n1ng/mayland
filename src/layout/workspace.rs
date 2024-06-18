@@ -1,6 +1,7 @@
 use crate::{
 	render::{MaylandRenderElements, OutputRenderElements},
 	shell::window::MappedWindow,
+	utils::RectExt,
 	State,
 };
 use smithay::{
@@ -47,23 +48,33 @@ impl WorkspaceManager {
 }
 
 impl WorkspaceManager {
-	pub fn switch_to_workspace(&mut self, idx: usize) {
+	pub fn switch_to_workspace(&mut self, idx: usize) -> Option<Point<i32, Logical>> {
 		let Some(active_output) = &self.active_output else {
-			return;
+			return None;
 		};
 
-		let current = self.output_map.get_mut(active_output).unwrap();
-		if &idx == current {
-			return;
+		let current = self.output_map[active_output];
+		if idx == current {
+			return None;
 		}
 
-		if let Some(prev) = self.workspaces.get_mut(current) {
-			prev.unmap_output(active_output);
-		}
+		if let Some(output) = self.output_map.iter().find(|(_, &w)| w == idx).map(|(o, _)| o) {
+			self.active_output = Some(output.clone());
 
-		let workspace = self.workspaces.entry(idx).or_insert_with(Workspace::new);
-		workspace.map_output(active_output);
-		*current = idx;
+			let rect = self.space.output_geometry(output).unwrap();
+			let center = rect.center();
+			Some(center)
+		} else {
+			if let Some(prev) = self.workspaces.get_mut(&current) {
+				prev.unmap_output(active_output);
+			}
+
+			let workspace = self.workspaces.entry(idx).or_insert_with(Workspace::new);
+			workspace.map_output(active_output);
+			*self.output_map.get_mut(active_output).unwrap() = idx;
+
+			None
+		}
 	}
 
 	pub fn workspace(&self) -> &Workspace {

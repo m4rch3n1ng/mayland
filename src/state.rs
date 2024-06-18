@@ -53,6 +53,7 @@ use std::{
 };
 
 mod handlers;
+mod pointer;
 
 pub struct State {
 	pub backend: Backend,

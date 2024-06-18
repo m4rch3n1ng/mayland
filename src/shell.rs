@@ -70,7 +70,7 @@ impl CompositorHandler for State {
 					// add window to workspace
 					self.mayland.workspaces.add_window(mapped.clone());
 
-					// automaticall focus new windows
+					// automatically focus new windows
 					self.focus_window(mapped);
 
 					return;
