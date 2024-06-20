@@ -173,15 +173,25 @@ impl Layout {
 }
 
 impl Layout {
-	fn add_window(&mut self, mapped: MappedWindow) -> Option<MappedWindow> {
+	fn add_window(&mut self, mapped: MappedWindow, pointer: Point<f64, Logical>) -> Option<MappedWindow> {
 		if let Some(window) = &self.one {
 			if self.two.is_none() {
 				let (one, two) = self.layout.double;
 
-				window.resize(one.size);
-				mapped.resize(two.size);
+				let position = self.layout.position(pointer);
+				if let Position::Left = position {
+					window.resize(two.size);
+					mapped.resize(one.size);
 
-				self.two = Some(mapped);
+					let prev = self.one.replace(mapped);
+					self.two = prev;
+				} else {
+					window.resize(one.size);
+					mapped.resize(two.size);
+
+					self.two = Some(mapped);
+				}
+
 				None
 			} else {
 				Some(mapped)
@@ -328,8 +338,8 @@ impl Tiling {
 
 impl Tiling {
 	/// add [`MappedWindow`] if the tiling space isn't full, otherwise return it again
-	pub fn add_window(&mut self, mapped: MappedWindow) -> Option<MappedWindow> {
-		self.layout.add_window(mapped)
+	pub fn add_window(&mut self, mapped: MappedWindow, pointer: Point<f64, Logical>) -> Option<MappedWindow> {
+		self.layout.add_window(mapped, pointer)
 	}
 
 	/// removes a [`MappedWindow`] from the tiling space if it exists

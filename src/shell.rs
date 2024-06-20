@@ -68,7 +68,8 @@ impl CompositorHandler for State {
 					mapped.window.on_commit();
 
 					// add window to workspace
-					self.mayland.workspaces.add_window(mapped.clone());
+					let location = self.mayland.pointer.current_location();
+					self.mayland.workspaces.add_window(mapped.clone(), location);
 
 					// automatically focus new windows
 					self.focus_window(mapped);

@@ -228,9 +228,9 @@ impl WorkspaceManager {
 }
 
 impl WorkspaceManager {
-	pub fn add_window(&mut self, window: MappedWindow) {
+	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
 		let workspace = self.workspace_mut();
-		workspace.add_window(window);
+		workspace.add_window(window, pointer);
 	}
 
 	pub fn floating_move<P: Into<Point<i32, Logical>>>(&mut self, window: MappedWindow, location: P) {
@@ -415,8 +415,8 @@ impl Workspace {
 }
 
 impl Workspace {
-	pub fn add_window(&mut self, window: MappedWindow) {
-		if let Some(window) = self.tiling.add_window(window) {
+	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
+		if let Some(window) = self.tiling.add_window(window, pointer) {
 			self.floating.map_element(window, (0, 0), true);
 		}
 	}
