@@ -9,6 +9,11 @@ use smithay::{
 	utils::{Logical, Point, Rectangle, Size},
 };
 
+enum Position {
+	Left,
+	Right,
+}
+
 #[derive(Debug)]
 struct LayoutSize {
 	loc: Point<i32, Logical>,
@@ -99,6 +104,17 @@ impl LayoutSize {
 	}
 }
 
+impl LayoutSize {
+	fn position(&self, location: Point<f64, Logical>) -> Position {
+		let split = self.split.to_f64();
+		if location.x <= split.x {
+			Position::Left
+		} else {
+			Position::Right
+		}
+	}
+}
+
 #[derive(Debug)]
 struct Layout {
 	layout: LayoutSize,
@@ -157,20 +173,6 @@ impl Layout {
 }
 
 impl Layout {
-	fn window_location(&self, window: &MappedWindow) -> Point<i32, Logical> {
-		if self.one.as_ref().is_some_and(|w| w == window) {
-			let window_location = self.layout.single.loc;
-			window.render_location(window_location)
-		} else if self.two.as_ref().is_some_and(|w| w == window) {
-			let window_location = self.layout.double.1.loc;
-			window.render_location(window_location)
-		} else {
-			unreachable!()
-		}
-	}
-}
-
-impl Layout {
 	fn add_window(&mut self, mapped: MappedWindow) -> Option<MappedWindow> {
 		if let Some(window) = &self.one {
 			if self.two.is_none() {
@@ -219,10 +221,31 @@ impl Layout {
 		self.one.iter().chain(self.two.iter())
 	}
 
-	fn window_under(&self, _location: Point<f64, Logical>) -> Option<(&MappedWindow, Point<i32, Logical>)> {
-		self.one
-			.as_ref()
-			.map(|window| (window, self.window_location(window)))
+	fn window_under(&self, location: Point<f64, Logical>) -> Option<(&MappedWindow, Point<i32, Logical>)> {
+		match (&self.one, &self.two) {
+			(Some(window1), Some(window2)) => {
+				let position = self.layout.position(location);
+				match position {
+					Position::Left => {
+						let window_location = self.layout.double.0.loc;
+						let window_location = window1.render_location(window_location);
+						Some((window1, window_location))
+					}
+					Position::Right => {
+						let window_location = self.layout.double.1.loc;
+						let window_location = window2.render_location(window_location);
+						Some((window2, window_location))
+					}
+				}
+			}
+			(Some(window), None) => {
+				let window_location = self.layout.single.loc;
+				let window_location = window.render_location(window_location);
+				Some((window, window_location))
+			}
+			(None, Some(_)) => unreachable!(),
+			(None, None) => None,
+		}
 	}
 }
 
