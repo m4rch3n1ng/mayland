@@ -168,7 +168,19 @@ impl Layout {
 
 impl Layout {
 	fn add_window(&mut self, mapped: MappedWindow) -> Option<MappedWindow> {
-		if self.one.is_none() {
+		if let Some(window) = &self.one {
+			if self.two.is_none() {
+				let (one, two) = self.layout.double;
+
+				window.resize(one.size);
+				mapped.resize(two.size);
+
+				self.two = Some(mapped);
+				None
+			} else {
+				Some(mapped)
+			}
+		} else {
 			tracing::debug!("add tiling window");
 
 			let size = self.layout.single.size;
@@ -176,18 +188,6 @@ impl Layout {
 
 			self.one = Some(mapped);
 			None
-		} else if self.two.is_none() {
-			let (one, two) = self.layout.double;
-
-			let window = self.one.as_ref().unwrap();
-			window.resize(one.size);
-
-			mapped.resize(two.size);
-
-			self.two = Some(mapped);
-			None
-		} else {
-			Some(mapped)
 		}
 	}
 
