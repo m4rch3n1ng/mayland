@@ -235,16 +235,43 @@ impl Layout {
 
 impl Layout {
 	fn render(&self, renderer: &mut GlowRenderer, scale: f64) -> Vec<OutputRenderElements<GlowRenderer>> {
-		if let Some(window) = &self.one {
-			let window_location = Point::from((self.border, self.border));
+		match (&self.one, &self.two) {
+			(Some(window1), Some(window2)) => {
+				let window_layout = self.layout.double;
 
-			let window_render_location = window
-				.render_location(window_location)
-				.to_physical_precise_round(scale);
+				let mut render = {
+					let window_location = window_layout.0.loc;
 
-			window.render_elements(renderer, window_render_location, scale.into(), 1.)
-		} else {
-			vec![]
+					let window_render_location = window1
+						.render_location(window_location)
+						.to_physical_precise_round(scale);
+
+					window1.render_elements(renderer, window_render_location, scale.into(), 1.)
+				};
+
+				render.extend({
+					let window_location = window_layout.1.loc;
+
+					let window_render_location = window2
+						.render_location(window_location)
+						.to_physical_precise_round(scale);
+
+					window2.render_elements(renderer, window_render_location, scale.into(), 1.)
+				});
+
+				render
+			}
+			(Some(window), None) => {
+				let window_location = self.layout.single.loc;
+
+				let window_render_location = window
+					.render_location(window_location)
+					.to_physical_precise_round(scale);
+
+				window.render_elements(renderer, window_render_location, scale.into(), 1.)
+			}
+			(None, Some(_)) => unreachable!(),
+			(None, None) => vec![],
 		}
 	}
 }
