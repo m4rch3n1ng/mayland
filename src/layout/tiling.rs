@@ -129,12 +129,7 @@ impl Layout {
 		self.layout.resize(size);
 	}
 
-	fn resize_output(&mut self, output_size: Size<i32, Logical>) {
-		let layout_size = output_size.borderless(self.border);
-		self.layout.resize(layout_size);
-
-		tracing::debug!("tiling window resize {:?}", layout_size);
-
+	fn resize_windows(&self) {
 		match (&self.one, &self.two) {
 			(Some(window1), Some(window2)) => {
 				let (one, two) = self.layout.double;
@@ -149,6 +144,15 @@ impl Layout {
 			(None, Some(_)) => unreachable!(),
 			(None, None) => {}
 		}
+	}
+
+	fn resize_output(&mut self, output_size: Size<i32, Logical>) {
+		let layout_size = output_size.borderless(self.border);
+
+		tracing::debug!("tiling window resize {:?}", layout_size);
+
+		self.layout.resize(layout_size);
+		self.resize_windows();
 	}
 }
 
@@ -193,7 +197,14 @@ impl Layout {
 
 	fn remove_window(&mut self, window: &MappedWindow) -> bool {
 		if self.one.as_ref().is_some_and(|current| current == window) {
-			self.one = None;
+			self.one = self.two.take();
+			self.resize_windows();
+
+			true
+		} else if self.two.as_ref().is_some_and(|current| current == window) {
+			self.two = None;
+			self.resize_windows();
+
 			true
 		} else {
 			false
