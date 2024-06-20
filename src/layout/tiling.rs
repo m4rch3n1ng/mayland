@@ -8,60 +8,91 @@ use smithay::{
 
 #[derive(Debug)]
 struct LayoutSize {
-	rect: Rectangle<i32, Logical>,
-	ratio: f64,
+	loc: Point<i32, Logical>,
+	size: Size<i32, Logical>,
 
 	gaps: i32,
+
+	ratio: f64,
+
+	split: Point<i32, Logical>,
+	single: Rectangle<i32, Logical>,
+	double: (Rectangle<i32, Logical>, Rectangle<i32, Logical>),
 }
 
 impl LayoutSize {
 	fn new() -> Self {
-		let size = Size::from((0, 0));
+		let border = 25;
+		let gaps = 20;
 
-		// todo border
-		let loc = Point::from((25, 25));
-		let rect = Rectangle { loc, size };
+		let loc = Point::from((border, border));
+		let size = Size::from((0, 0));
 
 		let ratio = 0.5;
 
-		let gaps = 20;
+		let split = loc;
+		let single = Rectangle { loc, size };
+		let double = (single, single);
 
-		LayoutSize { rect, ratio, gaps }
+		LayoutSize {
+			loc,
+			size,
+
+			gaps,
+
+			ratio,
+
+			split,
+			single,
+			double,
+		}
 	}
 
 	fn resize(&mut self, size: Size<i32, Logical>) {
-		self.rect.size = size;
+		self.size = size;
+
+		// todo maybe inline
+		self.set_split();
+		self.set_single();
+		self.set_double();
 	}
 
-	fn split(&self) -> Point<i32, Logical> {
-		let x = self.rect.size.w as f64 * self.ratio;
+	fn set_split(&mut self) {
+		let x = self.size.w as f64 * self.ratio;
 		let x = x.round() as i32;
 
-		// todo border
-		Point::from((x, 25))
+		let rel = Point::from((x, 0));
+		let split = self.loc + rel;
+		self.split = split;
 	}
 
-	fn single(&self) -> Rectangle<i32, Logical> {
-		self.rect
+	fn set_single(&mut self) {
+		self.single = Rectangle {
+			loc: self.loc,
+			size: self.size,
+		};
 	}
 
-	fn double(&self) -> (Rectangle<i32, Logical>, Rectangle<i32, Logical>) {
-		let split = self.split();
-		let size = self.rect.size;
+	fn set_double(&mut self) {
+		let split = self.split;
+		let rel_split = split - self.loc;
+		let size = self.size;
+
+		let gap = self.gaps / 2;
 
 		let one = {
-			let size = Size::from((size.w - split.x - self.gaps / 2, size.h));
-			let loc = self.rect.loc;
+			let size = Size::from((rel_split.x - gap, size.h));
+			let loc = self.loc;
 			Rectangle { loc, size }
 		};
 
 		let two = {
-			let size = Size::from((size.w - one.size.w, size.h));
-			let loc = Point::from((split.x + self.gaps / 2, split.y));
+			let size = Size::from((size.w - one.size.w - self.gaps, size.h));
+			let loc = Point::from((split.x + gap, split.y));
 			Rectangle { loc, size }
 		};
 
-		(one, two)
+		self.double = (one, two);
 	}
 }
 
@@ -99,8 +130,6 @@ impl Layout {
 		let layout_size = layout_size(output_size, self.border);
 		self.layout.resize(layout_size);
 
-		self.layout.double();
-
 		tracing::debug!("tiling window resize {:?}", layout_size);
 
 		if let Some(one) = &self.one {
@@ -119,10 +148,10 @@ impl Layout {
 impl Layout {
 	fn window_location(&self, window: &MappedWindow) -> Point<i32, Logical> {
 		if self.one.as_ref().is_some_and(|w| w == window) {
-			let window_location = self.layout.single().loc;
+			let window_location = self.layout.single.loc;
 			window.render_location(window_location)
 		} else if self.two.as_ref().is_some_and(|w| w == window) {
-			let window_location = self.layout.double().1.loc;
+			let window_location = self.layout.double.1.loc;
 			window.render_location(window_location)
 		} else {
 			unreachable!()
@@ -135,7 +164,7 @@ impl Layout {
 		if self.one.is_none() {
 			tracing::debug!("add tiling window");
 
-			let size = self.layout.single().size;
+			let size = self.layout.single.size;
 			match mapped.window.underlying_surface() {
 				WindowSurface::Wayland(xdg) => {
 					xdg.with_pending_state(|state| {
@@ -148,7 +177,7 @@ impl Layout {
 			self.one = Some(mapped);
 			None
 		} else if self.two.is_none() {
-			let (one, two) = self.layout.double();
+			let (one, two) = self.layout.double;
 
 			let window = self.one.as_ref().unwrap();
 			match window.window.underlying_surface() {
