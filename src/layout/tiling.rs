@@ -5,7 +5,6 @@ use crate::{
 };
 use smithay::{
 	backend::renderer::{element::AsRenderElements, glow::GlowRenderer},
-	desktop::WindowSurface,
 	output::Output,
 	utils::{Logical, Point, Rectangle, Size},
 };
@@ -136,15 +135,19 @@ impl Layout {
 
 		tracing::debug!("tiling window resize {:?}", layout_size);
 
-		if let Some(one) = &self.one {
-			match one.underlying_surface() {
-				WindowSurface::Wayland(xdg) => {
-					xdg.with_pending_state(|state| {
-						state.size = Some(layout_size);
-					});
-					xdg.send_pending_configure();
-				}
+		match (&self.one, &self.two) {
+			(Some(window1), Some(window2)) => {
+				let (one, two) = self.layout.double;
+
+				window1.resize(one.size);
+				window2.resize(two.size);
 			}
+			(Some(window), None) => {
+				let layout = self.layout.single;
+				window.resize(layout.size);
+			}
+			(None, Some(_)) => unreachable!(),
+			(None, None) => {}
 		}
 	}
 }
@@ -169,14 +172,7 @@ impl Layout {
 			tracing::debug!("add tiling window");
 
 			let size = self.layout.single.size;
-			match mapped.window.underlying_surface() {
-				WindowSurface::Wayland(xdg) => {
-					xdg.with_pending_state(|state| {
-						state.size = Some(size);
-					});
-					xdg.send_pending_configure();
-				}
-			}
+			mapped.resize(size);
 
 			self.one = Some(mapped);
 			None
@@ -184,23 +180,9 @@ impl Layout {
 			let (one, two) = self.layout.double;
 
 			let window = self.one.as_ref().unwrap();
-			match window.window.underlying_surface() {
-				WindowSurface::Wayland(xdg) => {
-					xdg.with_pending_state(|state| {
-						state.size = Some(one.size);
-					});
-					xdg.send_pending_configure();
-				}
-			}
+			window.resize(one.size);
 
-			match mapped.window.underlying_surface() {
-				WindowSurface::Wayland(xdg) => {
-					xdg.with_pending_state(|state| {
-						state.size = Some(two.size);
-					});
-					xdg.send_pending_configure();
-				}
-			}
+			mapped.resize(two.size);
 
 			self.two = Some(mapped);
 			None

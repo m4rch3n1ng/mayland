@@ -16,7 +16,7 @@ use smithay::{
 	},
 	output::Output,
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
-	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial},
+	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial, Size},
 	wayland::seat::WaylandFocus,
 };
 use std::{
@@ -33,6 +33,19 @@ pub struct MappedWindow {
 impl PartialEq for MappedWindow {
 	fn eq(&self, other: &Self) -> bool {
 		self.window == other.window
+	}
+}
+
+impl MappedWindow {
+	pub fn resize(&self, size: Size<i32, Logical>) {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => {
+				xdg.with_pending_state(|state| {
+					state.size = Some(size);
+				});
+				xdg.send_pending_configure();
+			}
+		}
 	}
 }
 
