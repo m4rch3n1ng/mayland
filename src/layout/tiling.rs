@@ -15,7 +15,7 @@ enum Position {
 }
 
 #[derive(Debug)]
-struct LayoutSize {
+struct Layout {
 	loc: Point<i32, Logical>,
 	size: Size<i32, Logical>,
 
@@ -28,7 +28,7 @@ struct LayoutSize {
 	double: (Rectangle<i32, Logical>, Rectangle<i32, Logical>),
 }
 
-impl LayoutSize {
+impl Layout {
 	fn new() -> Self {
 		let border = 25;
 		let gaps = 20;
@@ -42,7 +42,7 @@ impl LayoutSize {
 		let single = Rectangle { loc, size };
 		let double = (single, single);
 
-		LayoutSize {
+		Layout {
 			loc,
 			size,
 
@@ -104,7 +104,7 @@ impl LayoutSize {
 	}
 }
 
-impl LayoutSize {
+impl Layout {
 	fn position(&self, location: Point<f64, Logical>) -> Position {
 		let split = self.split.to_f64();
 		if location.x <= split.x {
@@ -116,8 +116,9 @@ impl LayoutSize {
 }
 
 #[derive(Debug)]
-struct Layout {
-	layout: LayoutSize,
+pub struct Tiling {
+	size: Option<Size<i32, Logical>>,
+	layout: Layout,
 
 	border: i32,
 
@@ -125,12 +126,15 @@ struct Layout {
 	two: Option<MappedWindow>,
 }
 
-impl Layout {
-	fn new() -> Self {
-		let size = LayoutSize::new();
+impl Tiling {
+	#[allow(clippy::new_without_default)]
+	pub fn new() -> Self {
+		let layout = Layout::new();
 
-		Layout {
-			layout: size,
+		Tiling {
+			size: None,
+			layout,
+
 			border: 25,
 
 			one: None,
@@ -139,10 +143,17 @@ impl Layout {
 	}
 }
 
-impl Layout {
-	fn map_output(&mut self, size: Size<i32, Logical>) {
-		let size = size.borderless(self.border);
-		self.layout.resize(size);
+impl Tiling {
+	pub fn map_output(&mut self, output: &Output) {
+		let output_size = output_size(output);
+		self.size = Some(output_size);
+
+		let layout_size = output_size.borderless(self.border);
+		self.layout.resize(layout_size);
+	}
+
+	pub fn unmap_output(&mut self) {
+		self.size = None;
 	}
 
 	fn resize_windows(&self) {
@@ -162,18 +173,18 @@ impl Layout {
 		}
 	}
 
-	fn resize_output(&mut self, output_size: Size<i32, Logical>) {
+	pub fn resize_output(&mut self, output_size: Size<i32, Logical>) {
+		self.size = Some(output_size);
+
 		let layout_size = output_size.borderless(self.border);
-
-		tracing::debug!("tiling window resize {:?}", layout_size);
-
 		self.layout.resize(layout_size);
 		self.resize_windows();
 	}
 }
 
-impl Layout {
-	fn add_window(&mut self, mapped: MappedWindow, pointer: Point<f64, Logical>) -> Option<MappedWindow> {
+impl Tiling {
+	/// add [`MappedWindow`] if the tiling space isn't full, otherwise return it again
+	pub fn add_window(&mut self, mapped: MappedWindow, pointer: Point<f64, Logical>) -> Option<MappedWindow> {
 		if let Some(window) = &self.one {
 			if self.two.is_none() {
 				let (one, two) = self.layout.double;
@@ -207,7 +218,10 @@ impl Layout {
 		}
 	}
 
-	fn remove_window(&mut self, window: &MappedWindow) -> bool {
+	/// removes a [`MappedWindow`] from the tiling space if it exists
+	///
+	/// returns `true` if a window was removed, `false` otherwise
+	pub fn remove_window(&mut self, window: &MappedWindow) -> bool {
 		if self.one.as_ref().is_some_and(|current| current == window) {
 			self.one = self.two.take();
 			self.resize_windows();
@@ -223,15 +237,18 @@ impl Layout {
 		}
 	}
 
-	fn has_window(&self, window: &MappedWindow) -> bool {
+	pub fn has_window(&self, window: &MappedWindow) -> bool {
 		self.windows().any(|w| w == window)
 	}
 
-	fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
+	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
 		self.one.iter().chain(self.two.iter())
 	}
 
-	fn window_under(&self, location: Point<f64, Logical>) -> Option<(&MappedWindow, Point<i32, Logical>)> {
+	pub fn window_under(
+		&self,
+		location: Point<f64, Logical>,
+	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
 		match (&self.one, &self.two) {
 			(Some(window1), Some(window2)) => {
 				let position = self.layout.position(location);
@@ -259,8 +276,8 @@ impl Layout {
 	}
 }
 
-impl Layout {
-	fn render(&self, renderer: &mut GlowRenderer, scale: f64) -> Vec<OutputRenderElements<GlowRenderer>> {
+impl Tiling {
+	pub fn render(&self, renderer: &mut GlowRenderer, scale: f64) -> Vec<OutputRenderElements<GlowRenderer>> {
 		match (&self.one, &self.two) {
 			(Some(window1), Some(window2)) => {
 				let window_layout = self.layout.double;
@@ -299,74 +316,5 @@ impl Layout {
 			(None, Some(_)) => unreachable!(),
 			(None, None) => vec![],
 		}
-	}
-}
-
-#[derive(Debug)]
-pub struct Tiling {
-	size: Option<Size<i32, Logical>>,
-
-	layout: Layout,
-}
-
-impl Tiling {
-	#[allow(clippy::new_without_default)]
-	pub fn new() -> Self {
-		let layout = Layout::new();
-
-		Tiling { size: None, layout }
-	}
-}
-
-impl Tiling {
-	pub fn map_output(&mut self, output: &Output) {
-		let output_size = output_size(output);
-
-		self.size = Some(output_size);
-		self.layout.map_output(output_size);
-	}
-
-	pub fn unmap_output(&mut self) {
-		self.size = None;
-	}
-
-	pub fn resize_output(&mut self, size: Size<i32, Logical>) {
-		self.size = Some(size);
-		self.layout.resize_output(size);
-	}
-}
-
-impl Tiling {
-	/// add [`MappedWindow`] if the tiling space isn't full, otherwise return it again
-	pub fn add_window(&mut self, mapped: MappedWindow, pointer: Point<f64, Logical>) -> Option<MappedWindow> {
-		self.layout.add_window(mapped, pointer)
-	}
-
-	/// removes a [`MappedWindow`] from the tiling space if it exists
-	///
-	/// returns `true` if a window was removed, `false` otherwise
-	pub fn remove_window(&mut self, window: &MappedWindow) -> bool {
-		self.layout.remove_window(window)
-	}
-
-	pub fn has_window(&self, window: &MappedWindow) -> bool {
-		self.layout.has_window(window)
-	}
-
-	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
-		self.layout.windows()
-	}
-
-	pub fn window_under(
-		&self,
-		location: Point<f64, Logical>,
-	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
-		self.layout.window_under(location)
-	}
-}
-
-impl Tiling {
-	pub fn render(&self, renderer: &mut GlowRenderer, scale: f64) -> Vec<OutputRenderElements<GlowRenderer>> {
-		self.layout.render(renderer, scale)
 	}
 }
