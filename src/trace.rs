@@ -1,8 +1,8 @@
+use chrono::Utc;
 use std::{
 	env,
 	fs::{self, File},
 };
-use time::{macros::format_description, OffsetDateTime};
 use tracing_subscriber::{
 	fmt,
 	layer::{Filter, SubscriberExt},
@@ -11,9 +11,8 @@ use tracing_subscriber::{
 };
 
 fn iso8601() -> String {
-	let format = format_description!("[year]-[month]-[day] [hour]-[minute]-[second]");
-	let offset = OffsetDateTime::now_utc();
-	offset.format(&format).unwrap()
+	let time = Utc::now();
+	time.format("%Y-%m-%d %H-%M-%S").to_string()
 }
 
 #[cfg(not(feature = "debug"))]

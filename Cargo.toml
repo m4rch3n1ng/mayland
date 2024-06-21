@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+chrono = { version = "0.4.38", features = ["clock", "std"] }
 libc = "0.2.155"
-time = { version = "0.3.36", features = ["formatting", "macros"] }
 tracing = "0.1.40"
 tracing-panic = "0.1.2"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
