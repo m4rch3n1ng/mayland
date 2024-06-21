@@ -1,4 +1,8 @@
-use crate::{render::OutputRenderElements, shell::window::MappedWindow, utils::output_size};
+use crate::{
+	render::OutputRenderElements,
+	shell::window::MappedWindow,
+	utils::{output_size, SizeExt},
+};
 use smithay::{
 	backend::renderer::{element::AsRenderElements, glow::GlowRenderer},
 	desktop::WindowSurface,
@@ -122,12 +126,12 @@ impl Layout {
 
 impl Layout {
 	fn map_output(&mut self, size: Size<i32, Logical>) {
-		let size = layout_size(size, self.border);
+		let size = size.borderless(self.border);
 		self.layout.resize(size);
 	}
 
 	fn resize_output(&mut self, output_size: Size<i32, Logical>) {
-		let layout_size = layout_size(output_size, self.border);
+		let layout_size = output_size.borderless(self.border);
 		self.layout.resize(layout_size);
 
 		tracing::debug!("tiling window resize {:?}", layout_size);
@@ -259,13 +263,6 @@ impl Tiling {
 
 		Tiling { size: None, layout }
 	}
-}
-
-fn layout_size(size: Size<i32, Logical>, border: i32) -> Size<i32, Logical> {
-	Size::from((
-		size.w.saturating_sub(border * 2),
-		size.h.saturating_sub(border * 2),
-	))
 }
 
 impl Tiling {

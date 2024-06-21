@@ -1,7 +1,7 @@
 use smithay::{
 	output::Output,
 	reexports::rustix::time::{clock_gettime, ClockId},
-	utils::{Logical, Point, Rectangle, Size},
+	utils::{Coordinate, Logical, Point, Rectangle, Size},
 };
 use std::time::Duration;
 
@@ -16,6 +16,17 @@ impl<Kind> RectExt<i32, Kind> for Rectangle<i32, Kind> {
 		location.y += self.size.h / 2;
 
 		location
+	}
+}
+
+pub trait SizeExt<N: Coordinate, Kind> {
+	fn borderless(&self, border: N) -> Size<N, Kind>;
+}
+
+impl<N: Coordinate, Kind> SizeExt<N, Kind> for Size<N, Kind> {
+	fn borderless(&self, border: N) -> Size<N, Kind> {
+		let border = border + border;
+		Size::from((self.w.saturating_sub(border), self.h.saturating_sub(border)))
 	}
 }
 
