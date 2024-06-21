@@ -350,7 +350,7 @@ impl State {
 	pub fn surface_under(
 		&self,
 		location: Point<f64, Logical>,
-	) -> Option<(PointerFocusTarget, Point<i32, Logical>)> {
+	) -> Option<(PointerFocusTarget, Point<f64, Logical>)> {
 		let output = self.mayland.workspaces.outputs().find(|output| {
 			let geometry = self.mayland.workspaces.output_geometry(output).unwrap();
 			geometry.contains(location.to_i32_round())
@@ -369,9 +369,9 @@ impl State {
 					location - output_geo.loc.to_f64() - layer_loc.loc.to_f64(),
 					WindowSurfaceType::ALL,
 				)
-				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc))
+				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc.to_f64()))
 		} else if let Some((window, loc)) = self.mayland.workspaces.window_under(location) {
-			Some((PointerFocusTarget::from(window), loc))
+			Some((PointerFocusTarget::from(window), loc.to_f64()))
 		} else if let Some(layer) = layers
 			.layer_under(WlrLayer::Bottom, location)
 			.or_else(|| layers.layer_under(WlrLayer::Background, location))
@@ -382,7 +382,7 @@ impl State {
 					location - output_geo.loc.to_f64() - layer_loc.loc.to_f64(),
 					WindowSurfaceType::ALL,
 				)
-				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc))
+				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc.to_f64()))
 		} else {
 			None
 		}

@@ -8,8 +8,9 @@ use smithay::{
 	backend::{
 		allocator::{
 			dmabuf::Dmabuf,
+			format::FormatSet,
 			gbm::{GbmAllocator, GbmBufferFlags, GbmDevice},
-			Format as DrmFormat, Fourcc,
+			Fourcc,
 		},
 		drm::{compositor::DrmCompositor, DrmDevice, DrmDeviceFd, DrmEvent, DrmEventTime},
 		egl::{EGLContext, EGLDisplay},
@@ -35,7 +36,7 @@ use smithay_drm_extras::{
 	edid::EdidInfo,
 };
 use std::{
-	collections::{HashMap, HashSet},
+	collections::HashMap,
 	path::{Path, PathBuf},
 	time::Duration,
 };
@@ -53,7 +54,7 @@ pub struct OutputDevice {
 	drm: DrmDevice,
 	gbm: GbmDevice<DrmDeviceFd>,
 	glow: GlowRenderer,
-	formats: HashSet<DrmFormat>,
+	formats: FormatSet,
 	drm_scanner: DrmScanner,
 	surfaces: HashMap<crtc::Handle, GbmDrmCompositor>,
 }

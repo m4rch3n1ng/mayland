@@ -29,7 +29,7 @@ impl PointerGrab<State> for MoveGrab {
 		&mut self,
 		data: &mut State,
 		handle: &mut PointerInnerHandle<'_, State>,
-		focus: Option<(<State as SeatHandler>::PointerFocus, Point<i32, Logical>)>,
+		focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
 		event: &MotionEvent,
 	) {
 		handle.motion(data, focus, event);
@@ -44,7 +44,7 @@ impl PointerGrab<State> for MoveGrab {
 		&mut self,
 		data: &mut State,
 		handle: &mut PointerInnerHandle<'_, State>,
-		focus: Option<(<State as SeatHandler>::PointerFocus, Point<i32, Logical>)>,
+		focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
 		event: &RelativeMotionEvent,
 	) {
 		handle.relative_motion(data, focus, event);
@@ -157,7 +157,7 @@ impl PointerGrab<State> for ResizeGrab {
 		&mut self,
 		data: &mut State,
 		handle: &mut PointerInnerHandle<'_, State>,
-		focus: Option<(<State as SeatHandler>::PointerFocus, Point<i32, Logical>)>,
+		focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
 		event: &MotionEvent,
 	) {
 		handle.motion(data, focus, event);
@@ -192,7 +192,7 @@ impl PointerGrab<State> for ResizeGrab {
 		&mut self,
 		data: &mut State,
 		handle: &mut PointerInnerHandle<'_, State>,
-		focus: Option<(<State as SeatHandler>::PointerFocus, Point<i32, Logical>)>,
+		focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
 		event: &RelativeMotionEvent,
 	) {
 		handle.relative_motion(data, focus, event);
