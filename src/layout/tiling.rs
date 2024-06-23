@@ -32,8 +32,9 @@ impl Tiling {
 		))
 	}
 
-	fn window_location(&self, _window: &MappedWindow) -> Point<i32, Logical> {
-		Point::from((self.border, self.border))
+	fn window_location(&self, window: &MappedWindow) -> Point<i32, Logical> {
+		let window_location = Point::from((self.border, self.border));
+		window.render_location(window_location)
 	}
 }
 
@@ -126,13 +127,13 @@ impl Tiling {
 impl Tiling {
 	pub fn render(&self, renderer: &mut GlowRenderer, scale: f64) -> Vec<OutputRenderElements<GlowRenderer>> {
 		if let Some(window) = &self.window {
-			let location = self.window_location(window);
-			window.render_elements(
-				renderer,
-				location.to_physical_precise_round(scale),
-				scale.into(),
-				1.,
-			)
+			let window_location = Point::from((self.border, self.border));
+
+			let window_render_location = window
+				.render_location(window_location)
+				.to_physical_precise_round(scale);
+
+			window.render_elements(renderer, window_render_location, scale.into(), 1.)
 		} else {
 			vec![]
 		}

@@ -53,6 +53,11 @@ impl MappedWindow {
 	pub fn underlying_surface(&self) -> &WindowSurface {
 		self.window.underlying_surface()
 	}
+
+	pub fn render_location(&self, location: Point<i32, Logical>) -> Point<i32, Logical> {
+		let geometry = self.geometry();
+		location - geometry.loc
+	}
 }
 
 impl IsAlive for MappedWindow {
