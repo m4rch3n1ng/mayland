@@ -516,7 +516,7 @@ impl Udev {
 impl State {
 	fn handle_libinput_event(&mut self, event: &mut InputEvent<LibinputInputBackend>) {
 		if let InputEvent::DeviceAdded { device } = event {
-			let config = &*self.mayland.config;
+			let config = &self.mayland.config;
 
 			let is_touchpad = device.config_tap_finger_count() > 0;
 			if is_touchpad {

@@ -1,0 +1,20 @@
+[package]
+name = "mayland-config"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+annotate-snippets = "0.11.2"
+anstream = "0.6.14"
+serde = { version = "1.0.197", features = ["derive"] }
+smithay = { workspace = true, features = ["backend_libinput"] }
+thiserror = { workspace = true }
+
+[dependencies.mayfig]
+git = "ssh://git@github.com/m4rch3n1ng/mayfig.git"
+branch = "main"
+version = "0.1.0"
+
+[lints]
+workspace = true

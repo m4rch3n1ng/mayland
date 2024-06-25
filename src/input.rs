@@ -1,11 +1,11 @@
 use crate::{
-	action::Action,
 	shell::{
 		focus::{KeyboardFocusTarget, PointerFocusTarget},
 		window::MappedWindow,
 	},
 	state::State,
 };
+use mayland_config::Action;
 use smithay::{
 	backend::input::{
 		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState, KeyboardKeyEvent,
