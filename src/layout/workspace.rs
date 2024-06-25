@@ -28,17 +28,20 @@ pub struct WorkspaceManager {
 	output_map: HashMap<Output, usize>,
 	pub workspaces: BTreeMap<usize, Workspace>,
 
+	/// layout config
+	layout: mayland_config::layout::Layout,
+	/// decoration config
 	decoration: mayland_config::Decoration,
 }
 
 impl WorkspaceManager {
-	pub fn new(decoration: &mayland_config::Decoration) -> Self {
+	pub fn new(config: &mayland_config::Config) -> Self {
 		let output_space = Space::default();
 
 		let active_output = None;
 		let output_map = HashMap::new();
 
-		let workspace = Workspace::new(0, decoration);
+		let workspace = Workspace::new(0, &config.layout, &config.decoration);
 		let workspaces = BTreeMap::from([(0, workspace)]);
 
 		WorkspaceManager {
@@ -48,7 +51,8 @@ impl WorkspaceManager {
 			output_map,
 			workspaces,
 
-			decoration: *decoration,
+			decoration: config.decoration,
+			layout: config.layout,
 		}
 	}
 }
@@ -100,7 +104,7 @@ impl WorkspaceManager {
 				self.workspaces.remove(&current);
 			}
 
-			let mut workspace = Workspace::new(idx, &self.decoration);
+			let mut workspace = Workspace::new(idx, &self.layout, &self.decoration);
 			workspace.map_output(active_output);
 
 			self.workspaces.insert(idx, workspace);
@@ -156,7 +160,7 @@ impl WorkspaceManager {
 				.expect("if you have more than usize::MAX monitors you deserve this");
 			self.output_map.insert(output.clone(), idx);
 
-			let mut workspace = Workspace::new(idx, &self.decoration);
+			let mut workspace = Workspace::new(idx, &self.layout, &self.decoration);
 			workspace.map_output(output);
 
 			self.workspaces.insert(idx, workspace);
@@ -337,8 +341,8 @@ pub struct Workspace {
 }
 
 impl Workspace {
-	fn new(idx: usize, decoration: &mayland_config::Decoration) -> Self {
-		let tiling = Tiling::new(decoration);
+	fn new(idx: usize, layout: &mayland_config::Layout, decoration: &mayland_config::Decoration) -> Self {
+		let tiling = Tiling::new(&layout.tiling, decoration);
 		let floating = Space::default();
 
 		Workspace {

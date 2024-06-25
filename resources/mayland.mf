@@ -62,6 +62,13 @@ decoration {
 	}
 }
 
+layout {
+	tiling {
+		gaps = 10
+		border = 20
+	}
+}
+
 bind {
 	"mod escape" = "quit"
 	"mod q" = "close"

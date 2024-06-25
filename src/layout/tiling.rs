@@ -33,10 +33,10 @@ struct Layout {
 }
 
 impl Layout {
-	fn new(border: i32, gaps: i32, decoration: &mayland_config::Decoration) -> Self {
+	fn new(tiling: &mayland_config::layout::Tiling, decoration: &mayland_config::Decoration) -> Self {
 		let working_area = Rectangle::default();
 		let useable_area = Rectangle {
-			loc: Point::from((border, border)),
+			loc: Point::from((i32::from(tiling.border), i32::from(tiling.border))),
 			size: Size::from((0, 0)),
 		};
 
@@ -44,8 +44,8 @@ impl Layout {
 			working_area,
 			useable_area,
 
-			border,
-			gaps,
+			border: i32::from(tiling.border),
+			gaps: i32::from(tiling.gaps),
 			ring: i32::from(decoration.focus.thickness),
 
 			ratio: 0.5,
@@ -117,11 +117,8 @@ pub struct Tiling {
 }
 
 impl Tiling {
-	pub fn new(decoration: &mayland_config::Decoration) -> Self {
-		let border = 20;
-		let gaps = 10;
-
-		let layout = Layout::new(border, gaps, decoration);
+	pub fn new(config: &mayland_config::layout::Tiling, decoration: &mayland_config::Decoration) -> Self {
+		let layout = Layout::new(config, decoration);
 
 		Tiling {
 			layout,

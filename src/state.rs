@@ -216,7 +216,7 @@ impl Mayland {
 
 		let popups = PopupManager::default();
 
-		let workspaces = WorkspaceManager::new(&config.decoration);
+		let workspaces = WorkspaceManager::new(&config);
 
 		let start_time = Instant::now();
 		let loop_signal = event_loop.get_signal();
