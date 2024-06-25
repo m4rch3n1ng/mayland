@@ -1,4 +1,3 @@
-use crate::State;
 use serde::Deserialize;
 use smithay::input::keyboard::XkbConfig;
 use smithay::reexports::input as libinput;
@@ -26,15 +25,6 @@ pub struct Keyboard {
 }
 
 impl Keyboard {
-	pub fn load_file(&self, state: &mut State) {
-		if let Some(xkb_file) = self.xkb_file.as_deref() {
-			let keymap = std::fs::read_to_string(xkb_file).unwrap();
-
-			let xkb = state.mayland.seat.get_keyboard().unwrap();
-			xkb.set_keymap_from_string(state, keymap).unwrap();
-		}
-	}
-
 	pub fn xkb_config(&self) -> XkbConfig {
 		XkbConfig {
 			rules: &self.xkb_rules,

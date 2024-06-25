@@ -1,19 +1,7 @@
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
-use serde::Deserialize;
+use mayland_config::Action;
 use std::process::{Command, Stdio};
 use tracing::error;
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Action {
-	Quit,
-	#[serde(alias = "close")]
-	CloseWindow,
-
-	Workspace(usize),
-
-	Spawn(String),
-}
 
 impl State {
 	pub fn handle_action(&mut self, action: Action) {

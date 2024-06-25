@@ -1,10 +1,14 @@
-use self::{bind::Binds, input::Input};
-use crate::{error::MaylandError, state::State};
+use self::{bind::Binds, error::Error, input::Input};
 use annotate_snippets::{Level, Renderer, Snippet};
 use serde::Deserialize;
 
-mod bind;
-mod input;
+pub mod error;
+
+pub mod action;
+pub mod bind;
+pub mod input;
+
+pub use action::Action;
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
@@ -16,9 +20,9 @@ pub struct Config {
 const CONFIG_PATH: &str = "/home/may/.config/mayland.mf";
 
 impl Config {
-	pub fn read() -> Result<Self, MaylandError> {
-		let file = std::fs::read_to_string(CONFIG_PATH)
-			.map_err(|_| MaylandError::FileNotFound(CONFIG_PATH.to_owned()))?;
+	pub fn read() -> Result<Self, Error> {
+		let file =
+			std::fs::read_to_string(CONFIG_PATH).map_err(|_| Error::FileNotFound(CONFIG_PATH.to_owned()))?;
 
 		// workaround for https://github.com/rust-lang/annotate-snippets-rs/issues/25
 		let file = file.replace('\t', "    ");
@@ -41,14 +45,8 @@ impl Config {
 				let renderer = Renderer::styled();
 				anstream::println!("{}", renderer.render(message));
 
-				Err(MaylandError::AlreadyPrinted)
+				Err(Error::AlreadyPrinted)
 			}
 		}
-	}
-}
-
-impl Config {
-	pub fn init(&self, state: &mut State) {
-		self.input.keyboard.load_file(state);
 	}
 }
