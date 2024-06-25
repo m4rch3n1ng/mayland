@@ -1,11 +1,11 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
-	config::Config,
 	cursor::{Cursor, RenderCursor},
 	error::MaylandError,
 	layout::workspace::WorkspaceManager,
 	shell::window::UnmappedSurface,
 };
+use mayland_config::Config;
 use smithay::{
 	backend::renderer::{
 		element::{
@@ -56,7 +56,6 @@ use smithay::{
 use std::{
 	collections::{HashMap, HashSet},
 	fmt::Debug,
-	rc::Rc,
 	sync::Arc,
 	time::{Duration, Instant},
 };
@@ -101,9 +100,20 @@ impl State {
 	}
 }
 
+impl State {
+	pub fn load_config(&mut self) {
+		if let Some(xkb_file) = self.mayland.config.input.keyboard.xkb_file.as_deref() {
+			let keymap = std::fs::read_to_string(xkb_file).unwrap();
+
+			let xkb = self.mayland.seat.get_keyboard().unwrap();
+			xkb.set_keymap_from_string(self, keymap).unwrap();
+		}
+	}
+}
+
 #[derive(Debug)]
 pub struct Mayland {
-	pub config: Rc<Config>,
+	pub config: Config,
 
 	pub display_handle: DisplayHandle,
 	pub socket_name: String,
@@ -159,7 +169,6 @@ impl Mayland {
 		display: Display<State>,
 	) -> Result<Self, MaylandError> {
 		let config = Config::read()?;
-		let config = Rc::new(config);
 
 		let display_handle = display.handle();
 		let socket_name = init_wayland_display(display, event_loop);

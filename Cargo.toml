@@ -1,30 +1,42 @@
-[package]
-name = "mayland"
+[workspace]
+members = [
+	"mayland-config",
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
 
+[workspace.dependencies]
+thiserror = "1.0.61"
+
+[workspace.dependencies.smithay]
+git = "https://github.com/Smithay/smithay"
+version = "0.3.0"
+default-features = false
+
+[workspace.lints.clippy]
+new_without_default = "allow"
+undocumented_unsafe_blocks = "warn"
+
+[package]
+name = "mayland"
+version = { workspace = true }
+edition = { workspace = true }
+
 [dependencies]
 chrono = { version = "0.4.38", features = ["clock", "std"] }
 libc = "0.2.157"
+mayland-config = { path = "mayland-config" }
+thiserror = { workspace = true }
 tracing = "0.1.40"
 tracing-panic = "0.1.2"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 xcursor = "0.3.8"
-serde = { version = "1.0.197", features = ["derive"] }
-annotate-snippets = "0.11.2"
-anstream = "0.6.14"
-thiserror = "1.0.61"
-
-[dependencies.mayfig]
-git = "ssh://git@github.com/m4rch3n1ng/mayfig.git"
-branch = "main"
-version = "0.1.0"
 
 [dependencies.smithay]
-git = "https://github.com/Smithay/smithay"
-version = "0.3.0"
-default-features = false
+workspace = true
 features = [
 	"backend_drm",
 	"backend_egl",
@@ -43,9 +55,8 @@ features = [
 git = "https://github.com/Smithay/smithay"
 default-features = false
 
-[lints.clippy]
-new_without_default = "allow"
-undocumented_unsafe_blocks = "warn"
+[lints]
+workspace = true
 
 [features]
 default = []

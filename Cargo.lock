@@ -817,12 +817,9 @@ dependencies = [
 name = "mayland"
 version = "0.1.0"
 dependencies = [
- "annotate-snippets",
- "anstream",
  "chrono",
  "libc",
- "mayfig",
- "serde",
+ "mayland-config",
  "smithay",
  "smithay-drm-extras",
  "thiserror",
@@ -830,6 +827,18 @@ dependencies = [
  "tracing-panic",
  "tracing-subscriber",
  "xcursor",
+]
+
+[[package]]
+name = "mayland-config"
+version = "0.1.0"
+dependencies = [
+ "annotate-snippets",
+ "anstream",
+ "mayfig",
+ "serde",
+ "smithay",
+ "thiserror",
 ]
 
 [[package]]

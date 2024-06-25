@@ -23,9 +23,7 @@ fn main() {
 		Err(e) => Err(e),
 	}
 	.unwrap();
-
-	let config = state.mayland.config.clone();
-	config.init(&mut state);
+	state.load_config();
 
 	std::env::set_var("WAYLAND_DISPLAY", &state.mayland.socket_name);
 	std::env::set_var("GDK_BACKEND", "wayland");
