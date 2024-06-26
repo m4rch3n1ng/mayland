@@ -287,11 +287,13 @@ impl Mayland {
 	fn pointer_element(&mut self, renderer: &mut GlowRenderer) -> MaylandRenderElements {
 		let pointer_pos = self.workspaces.relative_cursor_location(&self.pointer);
 
-		let buffer = self.cursor_buffer.buffer();
+		let (buffer, hotspot) = self.cursor_buffer.get();
+		let pointer_pos = pointer_pos - hotspot.to_f64();
+
 		let texture = MemoryRenderBufferRenderElement::from_buffer(
 			renderer,
-			pointer_pos.to_f64(),
-			&buffer,
+			pointer_pos,
+			buffer,
 			None,
 			None,
 			None,

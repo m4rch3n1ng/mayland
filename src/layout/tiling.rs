@@ -1,5 +1,5 @@
 use crate::{
-	render::OutputRenderElements,
+	render::MaylandRenderElements,
 	shell::window::MappedWindow,
 	utils::{output_size, SizeExt},
 };
@@ -208,8 +208,6 @@ impl Tiling {
 				Some(mapped)
 			}
 		} else {
-			tracing::debug!("add tiling window");
-
 			let size = self.layout.single.size;
 			mapped.resize(size);
 
@@ -277,7 +275,7 @@ impl Tiling {
 }
 
 impl Tiling {
-	pub fn render(&self, renderer: &mut GlowRenderer, scale: f64) -> Vec<OutputRenderElements<GlowRenderer>> {
+	pub fn render(&self, renderer: &mut GlowRenderer, scale: f64) -> Vec<MaylandRenderElements> {
 		match (&self.one, &self.two) {
 			(Some(window1), Some(window2)) => {
 				let window_layout = self.layout.double;

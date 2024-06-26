@@ -51,12 +51,9 @@ impl CursorBuffer {
 		CursorBuffer(None)
 	}
 
-	fn get(&mut self) -> &(MemoryRenderBuffer, Point<i32, Physical>) {
-		self.0.get_or_insert_with(load_default_cursor)
-	}
-
-	pub fn buffer(&mut self) -> MemoryRenderBuffer {
-		self.get().0.clone()
+	pub fn get(&mut self) -> (&MemoryRenderBuffer, &Point<i32, Physical>) {
+		let (buf, hot) = self.0.get_or_insert_with(load_default_cursor);
+		(buf, hot)
 	}
 }
 
@@ -75,10 +72,9 @@ impl Default for CursorBuffer {
 pub type MaylandRenderElements = OutputRenderElements<GlowRenderer>;
 
 render_elements! {
-	pub OutputRenderElements<R> where
-		R: ImportAll + ImportMem;
+	pub OutputRenderElements<R> where R: ImportAll + ImportMem;
 	DefaultPointer = MemoryRenderBufferRenderElement<R>,
-	Surface=WaylandSurfaceRenderElement<R>,
+	Surface = WaylandSurfaceRenderElement<R>,
 }
 
 impl<R: ImportAll + ImportMem> Debug for OutputRenderElements<R> {

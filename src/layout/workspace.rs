@@ -1,6 +1,6 @@
 use super::tiling::Tiling;
 use crate::{
-	render::{MaylandRenderElements, OutputRenderElements},
+	render::MaylandRenderElements,
 	shell::window::MappedWindow,
 	utils::{output_size, RectExt},
 	State,
@@ -30,6 +30,7 @@ pub struct WorkspaceManager {
 }
 
 impl WorkspaceManager {
+	#[allow(clippy::new_without_default)]
 	pub fn new() -> Self {
 		let space = Space::default();
 
@@ -183,7 +184,7 @@ impl WorkspaceManager {
 		self.active_output.as_ref().is_some_and(|active| active == output)
 	}
 
-	pub fn relative_cursor_location(&mut self, pointer: &PointerHandle<State>) -> Point<i32, Physical> {
+	pub fn relative_cursor_location(&mut self, pointer: &PointerHandle<State>) -> Point<f64, Physical> {
 		let absolute_location = pointer.current_location();
 		let location = if let Some(active) = &self.active_output {
 			let geometry = self.space.output_geometry(active).unwrap();
@@ -192,7 +193,7 @@ impl WorkspaceManager {
 			absolute_location
 		};
 
-		location.to_physical_precise_round::<_, i32>(1.)
+		location.to_physical(1.)
 	}
 }
 
@@ -284,12 +285,6 @@ impl WorkspaceManager {
 	}
 }
 
-impl Default for WorkspaceManager {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 #[derive(Debug)]
 pub struct Workspace {
 	tiling: Tiling,
@@ -355,7 +350,7 @@ impl Workspace {
 				1.,
 			)
 			.into_iter()
-			.map(OutputRenderElements::Surface)
+			.map(MaylandRenderElements::Surface)
 		}));
 
 		if let Some(output_geo) = self.floating.output_geometry(output) {
@@ -363,7 +358,7 @@ impl Workspace {
 				self.floating
 					.render_elements_for_region(renderer, &output_geo, output_scale, 1.)
 					.into_iter()
-					.map(OutputRenderElements::Surface),
+					.map(MaylandRenderElements::Surface),
 			);
 		}
 
@@ -378,7 +373,7 @@ impl Workspace {
 				1.,
 			)
 			.into_iter()
-			.map(OutputRenderElements::Surface)
+			.map(MaylandRenderElements::Surface)
 		}));
 
 		render_elements.into_iter()
