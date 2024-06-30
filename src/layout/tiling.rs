@@ -1,6 +1,6 @@
 use crate::{
-	render::MaylandRenderElements,
 	shell::window::MappedWindow,
+	state::MaylandRenderElements,
 	utils::{output_size, SizeExt},
 };
 use smithay::{

@@ -1,12 +1,16 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
+	cursor::CursorBuffer,
 	layout::workspace::WorkspaceManager,
-	render::{CursorBuffer, MaylandRenderElements},
 };
 use smithay::{
 	backend::renderer::{
-		element::{memory::MemoryRenderBufferRenderElement, Kind, RenderElementStates},
+		element::{
+			memory::MemoryRenderBufferRenderElement, surface::WaylandSurfaceRenderElement, Kind,
+			RenderElementStates,
+		},
 		glow::GlowRenderer,
+		ImportAll, ImportMem,
 	},
 	desktop::{
 		layer_map_for_output,
@@ -30,6 +34,7 @@ use smithay::{
 			Display, DisplayHandle,
 		},
 	},
+	render_elements,
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
 		cursor_shape::CursorShapeManagerState,
@@ -49,6 +54,7 @@ use smithay::{
 };
 use std::{
 	collections::{HashMap, HashSet},
+	fmt::Debug,
 	sync::Arc,
 	time::{Duration, Instant},
 };
@@ -398,3 +404,23 @@ pub struct ClientState {
 }
 
 impl ClientData for ClientState {}
+
+pub type MaylandRenderElements = OutputRenderElements<GlowRenderer>;
+
+render_elements! {
+	pub OutputRenderElements<R> where R: ImportAll + ImportMem;
+	DefaultPointer = MemoryRenderBufferRenderElement<R>,
+	Surface = WaylandSurfaceRenderElement<R>,
+}
+
+impl<R: ImportAll + ImportMem> Debug for OutputRenderElements<R> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			OutputRenderElements::DefaultPointer(element) => {
+				f.debug_tuple("DefaultPointer").field(&element).finish()
+			}
+			OutputRenderElements::Surface(surface) => f.debug_tuple("Surface").field(&surface).finish(),
+			OutputRenderElements::_GenericCatcher(_) => f.write_str("_GenericCatcher"),
+		}
+	}
+}

@@ -1,8 +1,5 @@
 use super::BACKGROUND_COLOR;
-use crate::{
-	render::MaylandRenderElements,
-	state::{Mayland, State},
-};
+use crate::state::{Mayland, MaylandRenderElements, State};
 use libc::dev_t;
 use smithay::{
 	backend::{
