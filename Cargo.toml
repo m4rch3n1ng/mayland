@@ -33,6 +33,9 @@ features = [
 git = "https://github.com/Smithay/smithay"
 default-features = false
 
+[lints.clippy]
+new_without_default = "allow"
+
 [features]
 default = []
 debug = []

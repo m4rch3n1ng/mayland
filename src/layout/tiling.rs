@@ -127,7 +127,6 @@ pub struct Tiling {
 }
 
 impl Tiling {
-	#[allow(clippy::new_without_default)]
 	pub fn new() -> Self {
 		let layout = Layout::new();
 

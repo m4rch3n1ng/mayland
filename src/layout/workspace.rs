@@ -30,7 +30,6 @@ pub struct WorkspaceManager {
 }
 
 impl WorkspaceManager {
-	#[allow(clippy::new_without_default)]
 	pub fn new() -> Self {
 		let space = Space::default();
 

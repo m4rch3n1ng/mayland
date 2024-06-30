@@ -36,6 +36,8 @@ impl PartialEq for MappedWindow {
 	}
 }
 
+impl Eq for MappedWindow {}
+
 impl MappedWindow {
 	pub fn resize(&self, size: Size<i32, Logical>) {
 		match self.underlying_surface() {
