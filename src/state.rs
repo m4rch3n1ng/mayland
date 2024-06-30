@@ -32,6 +32,7 @@ use smithay::{
 	},
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
+		cursor_shape::CursorShapeManagerState,
 		dmabuf::DmabufState,
 		output::OutputManagerState,
 		selection::{
@@ -117,6 +118,7 @@ pub struct Mayland {
 	pub xdg_decoration_state: XdgDecorationState,
 	pub xdg_shell_state: XdgShellState,
 	pub shm_state: ShmState,
+	pub cursor_shape_manager_state: CursorShapeManagerState,
 
 	// input
 	pub pointer: PointerHandle<State>,
@@ -161,6 +163,7 @@ impl Mayland {
 		let xdg_decoration_state = XdgDecorationState::new::<State>(&display_handle);
 		let xdg_shell_state = XdgShellState::new::<State>(&display_handle);
 		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
+		let cursor_shape_manager_state = CursorShapeManagerState::new::<State>(&display_handle);
 
 		let keyboard = seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
 		let pointer = seat.add_pointer();
@@ -195,6 +198,7 @@ impl Mayland {
 			xdg_decoration_state,
 			xdg_shell_state,
 			shm_state,
+			cursor_shape_manager_state,
 
 			pointer,
 			keyboard,

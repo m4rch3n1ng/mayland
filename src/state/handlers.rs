@@ -1,8 +1,8 @@
 use super::State;
 use crate::shell::focus::{KeyboardFocusTarget, PointerFocusTarget};
 use smithay::{
-	backend::allocator::dmabuf::Dmabuf,
-	delegate_data_control, delegate_data_device, delegate_dmabuf, delegate_output,
+	backend::{allocator::dmabuf::Dmabuf, input::TabletToolDescriptor},
+	delegate_cursor_shape, delegate_data_control, delegate_data_device, delegate_dmabuf, delegate_output,
 	delegate_primary_selection, delegate_seat, delegate_xdg_decoration,
 	input::{pointer::CursorImageStatus, Seat, SeatHandler, SeatState},
 	reexports::{
@@ -23,6 +23,7 @@ use smithay::{
 			SelectionHandler,
 		},
 		shell::xdg::{decoration::XdgDecorationHandler, ToplevelSurface},
+		tablet_manager::TabletSeatHandler,
 	},
 };
 
@@ -51,6 +52,15 @@ impl SeatHandler for State {
 }
 
 delegate_seat!(State);
+delegate_cursor_shape!(State);
+
+impl TabletSeatHandler for State {
+	fn tablet_tool_image(&mut self, _tool: &TabletToolDescriptor, image: CursorImageStatus) {
+		// todo tablet tools should have their own cursors
+		self.mayland.cursor_image = image;
+		self.mayland.queue_redraw_all();
+	}
+}
 
 impl SelectionHandler for State {
 	type SelectionUserData = ();
