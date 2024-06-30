@@ -4,7 +4,7 @@ mod action;
 mod backend;
 mod input;
 mod layout;
-mod render;
+mod cursor;
 mod shell;
 mod state;
 mod utils;

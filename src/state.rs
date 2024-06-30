@@ -1,7 +1,7 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
 	layout::workspace::WorkspaceManager,
-	render::CursorBuffer,
+	cursor::CursorBuffer,
 };
 use smithay::{
 	backend::renderer::{
