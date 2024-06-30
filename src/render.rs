@@ -1,16 +1,5 @@
 use smithay::{
-	backend::{
-		allocator::Fourcc,
-		renderer::{
-			element::{
-				memory::{MemoryRenderBuffer, MemoryRenderBufferRenderElement},
-				surface::WaylandSurfaceRenderElement,
-			},
-			glow::GlowRenderer,
-			ImportAll, ImportMem,
-		},
-	},
-	render_elements,
+	backend::{allocator::Fourcc, renderer::element::memory::MemoryRenderBuffer},
 	utils::{Physical, Point, Transform},
 };
 use std::fmt::Debug;
@@ -66,25 +55,5 @@ impl Debug for CursorBuffer {
 impl Default for CursorBuffer {
 	fn default() -> Self {
 		Self::new()
-	}
-}
-
-pub type MaylandRenderElements = OutputRenderElements<GlowRenderer>;
-
-render_elements! {
-	pub OutputRenderElements<R> where R: ImportAll + ImportMem;
-	DefaultPointer = MemoryRenderBufferRenderElement<R>,
-	Surface = WaylandSurfaceRenderElement<R>,
-}
-
-impl<R: ImportAll + ImportMem> Debug for OutputRenderElements<R> {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		match self {
-			OutputRenderElements::DefaultPointer(element) => {
-				f.debug_tuple("DefaultPointer").field(&element).finish()
-			}
-			OutputRenderElements::Surface(surface) => f.debug_tuple("Surface").field(&surface).finish(),
-			OutputRenderElements::_GenericCatcher(_) => f.write_str("_GenericCatcher"),
-		}
 	}
 }

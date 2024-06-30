@@ -1,6 +1,6 @@
 use super::tiling::Tiling;
 use crate::{
-	render::MaylandRenderElements,
+	state::MaylandRenderElements,
 	shell::window::MappedWindow,
 	utils::{output_size, RectExt},
 	State,

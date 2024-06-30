@@ -1,5 +1,5 @@
 use super::BACKGROUND_COLOR;
-use crate::{render::MaylandRenderElements, state::Mayland, State};
+use crate::state::{Mayland, MaylandRenderElements, State};
 use smithay::{
 	backend::{
 		allocator::dmabuf::Dmabuf,
