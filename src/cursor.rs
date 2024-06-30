@@ -6,19 +6,21 @@ use smithay::{
 	utils::{Logical, Physical, Point, Transform},
 	wayland::compositor::with_states,
 };
-use std::{collections::HashMap, fmt::Debug, io::Read, time::Duration};
+use std::{cell::RefCell, collections::HashMap, fmt::Debug, io::Read, rc::Rc, time::Duration};
 use xcursor::{parser::Image, CursorTheme};
 
 const FALLBACK_CURSOR_DATA: &[u8] = include_bytes!("../resources/cursor.rgba");
 
-pub enum RenderCursor<'a> {
+pub enum RenderCursor {
 	Hidden,
 	Surface {
 		hotspot: Point<i32, Logical>,
 		surface: WlSurface,
 	},
-	Named(&'a mut XCursor),
+	Named(XCursorRef),
 }
+
+type XCursorRef = Rc<RefCell<XCursor>>;
 
 #[derive(Debug)]
 pub struct Cursor {
@@ -27,7 +29,7 @@ pub struct Cursor {
 	theme: CursorTheme,
 	size: u32,
 
-	cache: HashMap<CursorIcon, Option<XCursor>>,
+	cache: RefCell<HashMap<CursorIcon, Option<XCursorRef>>>,
 }
 
 impl Cursor {
@@ -35,39 +37,44 @@ impl Cursor {
 		let theme = CursorTheme::load("default");
 		let size = 24;
 
+		let cache = RefCell::new(HashMap::new());
+
 		Cursor {
 			status: CursorImageStatus::default_named(),
 
 			theme,
 			size,
 
-			cache: HashMap::new(),
+			cache,
 		}
 	}
 
-	fn get_named_cursor(&mut self, icon: CursorIcon) -> Option<&mut XCursor> {
+	fn get_named_cursor(&mut self, icon: CursorIcon) -> Option<XCursorRef> {
 		self.cache
+			.borrow_mut()
 			.entry(icon)
 			.or_insert_with(|| {
 				// todo scale
 				let size = self.size;
 
 				if let Some(xcursor) = XCursor::load(&self.theme, icon.name(), size) {
+					let xcursor = Rc::new(RefCell::new(xcursor));
 					Some(xcursor)
 				} else if icon == CursorIcon::Default {
 					let xcursor = XCursor::fallback_cursor();
+					let xcursor = Rc::new(RefCell::new(xcursor));
 					Some(xcursor)
 				} else {
 					None
 				}
 			})
-			.as_mut()
+			.clone()
 	}
 
-	// fn get_default_cursor(&mut self) -> &mut XCursor {
-	// 	self.get_named_cursor(CursorIcon::Default)
-	// 		.expect("CursorIcon::Default should always be populated")
-	// }
+	fn get_default_cursor(&mut self) -> XCursorRef {
+		self.get_named_cursor(CursorIcon::Default)
+			.expect("CursorIcon::Default should always be populated")
+	}
 
 	// todo scale
 	pub fn get_render_cursor(&mut self, _scale: i32) -> RenderCursor {
@@ -87,8 +94,9 @@ impl Cursor {
 				RenderCursor::Surface { hotspot, surface }
 			}
 			CursorImageStatus::Named(icon) => {
-				let xcursor = self.get_named_cursor(icon).unwrap();
-				// .unwrap_or_else(|| self.get_default_cursor());
+				let xcursor = self
+					.get_named_cursor(icon)
+					.unwrap_or_else(|| self.get_default_cursor());
 				RenderCursor::Named(xcursor)
 			}
 		}

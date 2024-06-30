@@ -306,6 +306,7 @@ impl Mayland {
 				render_elements_from_surface_tree(renderer, &surface, pointer_pos, 1., 1., Kind::Cursor)
 			}
 			RenderCursor::Named(xcursor) => {
+				let mut xcursor = xcursor.borrow_mut();
 				let frame = xcursor.frame(self.start_time.elapsed());
 
 				let hotspot = frame.hotspot();
