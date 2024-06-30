@@ -1,13 +1,14 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
-	cursor::{Cursor, CursorBuffer},
+	cursor::{Cursor, RenderCursor},
 	layout::workspace::WorkspaceManager,
 };
 use smithay::{
 	backend::renderer::{
 		element::{
-			memory::MemoryRenderBufferRenderElement, surface::WaylandSurfaceRenderElement, Kind,
-			RenderElementStates,
+			memory::MemoryRenderBufferRenderElement,
+			surface::{render_elements_from_surface_tree, WaylandSurfaceRenderElement},
+			Kind, RenderElementStates,
 		},
 		glow::GlowRenderer,
 		ImportAll, ImportMem,
@@ -130,7 +131,6 @@ pub struct Mayland {
 	pub pointer: PointerHandle<State>,
 	pub keyboard: KeyboardHandle<State>,
 	pub cursor: Cursor,
-	pub cursor_buffer: CursorBuffer,
 
 	pub suppressed_keys: HashSet<u32>,
 }
@@ -174,7 +174,6 @@ impl Mayland {
 		let keyboard = seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
 		let pointer = seat.add_pointer();
 		let cursor = Cursor::new();
-		let cursor_buffer = CursorBuffer::new();
 
 		let suppressed_keys = HashSet::new();
 
@@ -210,7 +209,6 @@ impl Mayland {
 			pointer,
 			keyboard,
 			cursor,
-			cursor_buffer,
 
 			suppressed_keys,
 		}
@@ -287,7 +285,7 @@ impl Mayland {
 
 		if self.workspaces.is_active_output(output) {
 			let pointer_element = self.pointer_element(renderer);
-			elements.push(pointer_element);
+			elements.extend(pointer_element);
 		}
 
 		let workspace_elements = self.workspaces.render_elements(renderer, output);
@@ -296,24 +294,40 @@ impl Mayland {
 		elements
 	}
 
-	fn pointer_element(&mut self, renderer: &mut GlowRenderer) -> MaylandRenderElements {
+	fn pointer_element(&mut self, renderer: &mut GlowRenderer) -> Vec<MaylandRenderElements> {
 		let pointer_pos = self.workspaces.relative_cursor_location(&self.pointer);
 
-		let (buffer, hotspot) = self.cursor_buffer.get();
-		let pointer_pos = pointer_pos - hotspot.to_f64();
+		let render_cursor = self.cursor.get_render_cursor(1);
+		match render_cursor {
+			RenderCursor::Hidden => vec![],
+			RenderCursor::Surface { surface, hotspot } => {
+				let pointer_pos = pointer_pos.to_i32_round() - hotspot.to_physical(1);
 
-		let texture = MemoryRenderBufferRenderElement::from_buffer(
-			renderer,
-			pointer_pos,
-			buffer,
-			None,
-			None,
-			None,
-			Kind::Cursor,
-		)
-		.unwrap();
+				render_elements_from_surface_tree(renderer, &surface, pointer_pos, 1., 1., Kind::Cursor)
+			}
+			RenderCursor::Named(xcursor) => {
+				let frame = xcursor.frame(self.start_time.elapsed());
 
-		MaylandRenderElements::DefaultPointer(texture)
+				let hotspot = frame.hotspot();
+				let buffer = frame.buffer();
+
+				let pointer_pos = pointer_pos - hotspot.to_f64();
+
+				let texture = MemoryRenderBufferRenderElement::from_buffer(
+					renderer,
+					pointer_pos,
+					buffer,
+					None,
+					None,
+					None,
+					Kind::Cursor,
+				)
+				.unwrap();
+
+				let render_element = MaylandRenderElements::DefaultPointer(texture);
+				vec![render_element]
+			}
+		}
 	}
 
 	pub fn presentation_feedback(
