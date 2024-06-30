@@ -1,59 +1,194 @@
 use smithay::{
 	backend::{allocator::Fourcc, renderer::element::memory::MemoryRenderBuffer},
-	utils::{Physical, Point, Transform},
+	input::pointer::{CursorIcon, CursorImageStatus, CursorImageSurfaceData},
+	reexports::wayland_server::protocol::wl_surface::WlSurface,
+	utils::{Logical, Physical, Point, Transform},
+	wayland::compositor::with_states,
 };
-use std::fmt::Debug;
-use xcursor::parser::Image;
+use std::{collections::HashMap, fmt::Debug, io::Read, time::Duration};
+use xcursor::{parser::Image, CursorTheme};
 
 const FALLBACK_CURSOR_DATA: &[u8] = include_bytes!("../resources/cursor.rgba");
 
-fn load_default_cursor() -> (MemoryRenderBuffer, Point<i32, Physical>) {
-	let icon = Image {
-		size: 32,
-		width: 64,
-		height: 64,
-		xhot: 1,
-		yhot: 1,
-		delay: 0,
-		pixels_rgba: Vec::from(FALLBACK_CURSOR_DATA),
-		pixels_argb: vec![],
-	};
-
-	let mem = MemoryRenderBuffer::from_slice(
-		&icon.pixels_rgba,
-		Fourcc::Argb8888,
-		(icon.width as i32, icon.height as i32),
-		2,
-		Transform::Normal,
-		None,
-	);
-
-	let hotspot = Point::from((icon.xhot as i32, icon.yhot as i32));
-
-	(mem, hotspot)
+pub enum RenderCursor<'a> {
+	Hidden,
+	Surface {
+		hotspot: Point<i32, Logical>,
+		surface: WlSurface,
+	},
+	Named(&'a mut XCursor),
 }
 
-pub struct CursorBuffer(Option<(MemoryRenderBuffer, Point<i32, Physical>)>);
+#[derive(Debug)]
+pub struct Cursor {
+	pub status: CursorImageStatus,
 
-impl CursorBuffer {
-	pub const fn new() -> Self {
-		CursorBuffer(None)
+	theme: CursorTheme,
+	size: u32,
+
+	cache: HashMap<CursorIcon, Option<XCursor>>,
+}
+
+impl Cursor {
+	pub fn new() -> Self {
+		let theme = CursorTheme::load("default");
+		let size = 24;
+
+		Cursor {
+			status: CursorImageStatus::default_named(),
+
+			theme,
+			size,
+
+			cache: HashMap::new(),
+		}
 	}
 
-	pub fn get(&mut self) -> (&MemoryRenderBuffer, &Point<i32, Physical>) {
-		let (buf, hot) = self.0.get_or_insert_with(load_default_cursor);
-		(buf, hot)
+	fn get_named_cursor(&mut self, icon: CursorIcon) -> Option<&mut XCursor> {
+		self.cache
+			.entry(icon)
+			.or_insert_with(|| {
+				// todo scale
+				let size = self.size;
+
+				if let Some(xcursor) = XCursor::load(&self.theme, icon.name(), size) {
+					Some(xcursor)
+				} else if icon == CursorIcon::Default {
+					let xcursor = XCursor::fallback_cursor();
+					Some(xcursor)
+				} else {
+					None
+				}
+			})
+			.as_mut()
+	}
+
+	// fn get_default_cursor(&mut self) -> &mut XCursor {
+	// 	self.get_named_cursor(CursorIcon::Default)
+	// 		.expect("CursorIcon::Default should always be populated")
+	// }
+
+	// todo scale
+	pub fn get_render_cursor(&mut self, _scale: i32) -> RenderCursor {
+		match self.status.clone() {
+			CursorImageStatus::Hidden => RenderCursor::Hidden,
+			CursorImageStatus::Surface(surface) => {
+				let hotspot = with_states(&surface, |states| {
+					states
+						.data_map
+						.get::<CursorImageSurfaceData>()
+						.unwrap()
+						.lock()
+						.unwrap()
+						.hotspot
+				});
+
+				RenderCursor::Surface { hotspot, surface }
+			}
+			CursorImageStatus::Named(icon) => {
+				let xcursor = self.get_named_cursor(icon).unwrap();
+				// .unwrap_or_else(|| self.get_default_cursor());
+				RenderCursor::Named(xcursor)
+			}
+		}
 	}
 }
 
-impl Debug for CursorBuffer {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		f.debug_tuple("Cursor").field(&..).finish()
+#[derive(Debug)]
+pub struct Frame {
+	image: Image,
+	buffer: Option<MemoryRenderBuffer>,
+}
+
+impl Frame {
+	pub fn new(image: Image) -> Self {
+		Frame { image, buffer: None }
+	}
+
+	pub fn hotspot(&self) -> Point<i32, Physical> {
+		Point::from((self.image.xhot as i32, self.image.yhot as i32))
+	}
+
+	pub fn buffer(&mut self) -> &MemoryRenderBuffer {
+		self.buffer.get_or_insert_with(|| {
+			MemoryRenderBuffer::from_slice(
+				&self.image.pixels_rgba,
+				Fourcc::Argb8888,
+				(self.image.width as i32, self.image.height as i32),
+				1,
+				Transform::Normal,
+				None,
+			)
+		})
 	}
 }
 
-impl Default for CursorBuffer {
-	fn default() -> Self {
-		Self::new()
+#[derive(Debug)]
+pub struct XCursor {
+	frames: Vec<Frame>,
+	animation_duration: u32,
+}
+
+impl XCursor {
+	fn load(theme: &CursorTheme, name: &str, size: u32) -> Option<Self> {
+		let icon_path = theme.load_icon(name)?;
+		let mut cursor_file = std::fs::File::open(icon_path).ok()?;
+		let mut cursor_data = Vec::new();
+		cursor_file.read_to_end(&mut cursor_data).ok()?;
+
+		let mut images = xcursor::parser::parse_xcursor(&cursor_data)?;
+
+		let (width, height) = images
+			.iter()
+			.min_by_key(|image| u32::abs_diff(image.size, size))
+			.map(|image| (image.width, image.height))
+			.unwrap();
+
+		images.retain(|image| image.width == width && image.height == height);
+
+		let animation_duration = images.iter().fold(0, |acc, image| acc + image.delay);
+		let frames = images.into_iter().map(Frame::new).collect();
+
+		Some(XCursor {
+			frames,
+			animation_duration,
+		})
+	}
+
+	fn fallback_cursor() -> Self {
+		let icon = Image {
+			size: 32,
+			width: 64,
+			height: 64,
+			xhot: 1,
+			yhot: 1,
+			delay: 0,
+			pixels_rgba: Vec::from(FALLBACK_CURSOR_DATA),
+			pixels_argb: vec![],
+		};
+		let frame = Frame::new(icon);
+
+		XCursor {
+			frames: vec![frame],
+			animation_duration: 0,
+		}
+	}
+
+	pub fn frame(&mut self, duration: Duration) -> &mut Frame {
+		if self.animation_duration == 0 {
+			return &mut self.frames[0];
+		}
+
+		let mut millis = duration.as_millis() as u32;
+		millis %= self.animation_duration;
+
+		for frame in &mut self.frames {
+			if millis < frame.image.delay {
+				return frame;
+			}
+			millis -= frame.image.delay;
+		}
+
+		unreachable!();
 	}
 }
