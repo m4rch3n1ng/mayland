@@ -1,7 +1,7 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
+	cursor::{Cursor, CursorBuffer},
 	layout::workspace::WorkspaceManager,
-	cursor::CursorBuffer,
 };
 use smithay::{
 	backend::renderer::{
@@ -22,7 +22,7 @@ use smithay::{
 	},
 	input::{
 		keyboard::{KeyboardHandle, XkbConfig},
-		pointer::{CursorImageStatus, PointerHandle},
+		pointer::PointerHandle,
 		Seat, SeatState,
 	},
 	output::Output,
@@ -129,7 +129,7 @@ pub struct Mayland {
 	// input
 	pub pointer: PointerHandle<State>,
 	pub keyboard: KeyboardHandle<State>,
-	pub cursor_image: CursorImageStatus,
+	pub cursor: Cursor,
 	pub cursor_buffer: CursorBuffer,
 
 	pub suppressed_keys: HashSet<u32>,
@@ -173,6 +173,7 @@ impl Mayland {
 
 		let keyboard = seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
 		let pointer = seat.add_pointer();
+		let cursor = Cursor::new();
 		let cursor_buffer = CursorBuffer::new();
 
 		let suppressed_keys = HashSet::new();
@@ -208,7 +209,7 @@ impl Mayland {
 
 			pointer,
 			keyboard,
-			cursor_image: CursorImageStatus::default_named(),
+			cursor,
 			cursor_buffer,
 
 			suppressed_keys,

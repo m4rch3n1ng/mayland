@@ -37,7 +37,7 @@ impl SeatHandler for State {
 	}
 
 	fn cursor_image(&mut self, _seat: &Seat<Self>, image: CursorImageStatus) {
-		self.mayland.cursor_image = image;
+		self.mayland.cursor.status = image;
 		self.mayland.queue_redraw_all();
 	}
 
@@ -57,7 +57,7 @@ delegate_cursor_shape!(State);
 impl TabletSeatHandler for State {
 	fn tablet_tool_image(&mut self, _tool: &TabletToolDescriptor, image: CursorImageStatus) {
 		// todo tablet tools should have their own cursors
-		self.mayland.cursor_image = image;
+		self.mayland.cursor.status = image;
 		self.mayland.queue_redraw_all();
 	}
 }

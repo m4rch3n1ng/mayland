@@ -732,6 +732,7 @@ name = "mayland"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "cursor-icon",
  "libc",
  "smithay",
  "smithay-drm-extras",
