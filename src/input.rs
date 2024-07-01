@@ -132,6 +132,8 @@ impl State {
 			},
 		);
 
+		pointer.frame(self);
+
 		self.mayland.queue_redraw_all();
 	}
 
@@ -145,8 +147,8 @@ impl State {
 
 		self.update_keyboard_focus(location, serial);
 
-		let ptr = self.mayland.pointer.clone();
-		ptr.motion(
+		let pointer = self.mayland.pointer.clone();
+		pointer.motion(
 			self,
 			under,
 			&MotionEvent {
@@ -155,7 +157,7 @@ impl State {
 				time: event.time_msec(),
 			},
 		);
-		ptr.frame(self);
+		pointer.frame(self);
 
 		self.mayland.queue_redraw_all();
 	}
