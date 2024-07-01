@@ -460,5 +460,11 @@ impl Workspace {
 		self.floating
 			.element_under(location)
 			.or_else(|| self.tiling.window_under(location))
+			.or_else(|| {
+				self.floating.elements().next_back().map(|w| {
+					let location = self.floating.element_location(w).unwrap();
+					(w, w.render_location(location))
+				})
+			})
 	}
 }
