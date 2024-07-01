@@ -268,6 +268,7 @@ impl Mayland {
 		let elements = self.elements(renderer, output);
 
 		backend.render(self, output, &elements);
+		self.display_handle.flush_clients().unwrap();
 	}
 
 	fn elements(&mut self, renderer: &mut GlowRenderer, output: &Output) -> Vec<MaylandRenderElements> {

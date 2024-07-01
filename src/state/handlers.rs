@@ -18,7 +18,7 @@ use smithay::{
 				set_data_device_focus, ClientDndGrabHandler, DataDeviceHandler, DataDeviceState,
 				ServerDndGrabHandler,
 			},
-			primary_selection::{PrimarySelectionHandler, PrimarySelectionState},
+			primary_selection::{set_primary_focus, PrimarySelectionHandler, PrimarySelectionState},
 			wlr_data_control::{DataControlHandler, DataControlState},
 			SelectionHandler,
 		},
@@ -45,7 +45,8 @@ impl SeatHandler for State {
 
 		let wl_surface = target.and_then(WaylandFocus::wl_surface);
 		let client = wl_surface.and_then(|s| dh.get_client(s.id()).ok());
-		set_data_device_focus(dh, seat, client);
+		set_data_device_focus(dh, seat, client.clone());
+		set_primary_focus(dh, seat, client);
 	}
 }
 
