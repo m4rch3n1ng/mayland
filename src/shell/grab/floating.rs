@@ -4,7 +4,7 @@ use smithay::{
 	desktop::WindowSurface,
 	input::{
 		pointer::{
-			AxisFrame, ButtonEvent, Focus, GestureHoldBeginEvent, GestureHoldEndEvent,
+			AxisFrame, ButtonEvent, CursorIcon, Focus, GestureHoldBeginEvent, GestureHoldEndEvent,
 			GesturePinchBeginEvent, GesturePinchEndEvent, GesturePinchUpdateEvent, GestureSwipeBeginEvent,
 			GestureSwipeEndEvent, GestureSwipeUpdateEvent, GrabStartData, MotionEvent, PointerGrab,
 			PointerInnerHandle, RelativeMotionEvent,
@@ -50,10 +50,13 @@ impl PointerGrab<State> for MoveGrab {
 		handle.relative_motion(data, focus, event);
 	}
 
-	fn button(&mut self, data: &mut State, handle: &mut PointerInnerHandle<'_, State>, event: &ButtonEvent) {
-		handle.button(data, event);
+	fn button(&mut self, state: &mut State, handle: &mut PointerInnerHandle<'_, State>, event: &ButtonEvent) {
+		handle.button(state, event);
 		if !handle.current_pressed().contains(&272) {
-			handle.unset_grab(self, data, event.serial, event.time, true);
+			handle.unset_grab(self, state, event.serial, event.time, true);
+
+			state.mayland.cursor.icon = None;
+			state.mayland.queue_redraw_all();
 		}
 	}
 
@@ -198,11 +201,14 @@ impl PointerGrab<State> for ResizeGrab {
 		handle.relative_motion(data, focus, event);
 	}
 
-	fn button(&mut self, data: &mut State, handle: &mut PointerInnerHandle<'_, State>, event: &ButtonEvent) {
-		handle.button(data, event);
+	fn button(&mut self, state: &mut State, handle: &mut PointerInnerHandle<'_, State>, event: &ButtonEvent) {
+		handle.button(state, event);
 
 		if !handle.current_pressed().contains(&273) {
-			handle.unset_grab(self, data, event.serial, event.time, true);
+			handle.unset_grab(self, state, event.serial, event.time, true);
+
+			state.mayland.cursor.icon = None;
+			state.mayland.queue_redraw_all();
 
 			if !self.window.alive() {
 				return;
@@ -335,6 +341,9 @@ impl State {
 		let window_geometry = self.mayland.workspaces.window_geometry(&window).unwrap();
 		let window_offset = window_geometry.loc - pointer_location;
 
+		self.mayland.cursor.icon = Some(CursorIcon::Grabbing);
+		self.mayland.queue_redraw_all();
+
 		let grab = MoveGrab {
 			start_data,
 			window,
@@ -384,6 +393,15 @@ impl State {
 		let mut guard = window.resize_state.lock().unwrap();
 		*guard = Some(ResizeState::Resizing(resize_data));
 		drop(guard);
+
+		let cursor_icon = match corner {
+			ResizeCorner::TopLeft => CursorIcon::NwResize,
+			ResizeCorner::TopRight => CursorIcon::NeResize,
+			ResizeCorner::BottomLeft => CursorIcon::SwResize,
+			ResizeCorner::BottomRight => CursorIcon::SeResize,
+		};
+		self.mayland.cursor.icon = Some(cursor_icon);
+		self.mayland.queue_redraw_all();
 
 		let grab = ResizeGrab {
 			start_data,

@@ -22,6 +22,8 @@ pub enum RenderCursor<'a> {
 #[derive(Debug)]
 pub struct Cursor {
 	pub status: CursorImageStatus,
+	/// manually set the [`CursorIcon`] to override what the applications provide
+	pub icon: Option<CursorIcon>,
 
 	theme: CursorTheme,
 	size: u32,
@@ -36,6 +38,7 @@ impl Cursor {
 
 		Cursor {
 			status: CursorImageStatus::default_named(),
+			icon: None,
 
 			theme,
 			size,
@@ -70,6 +73,17 @@ impl Cursor {
 
 	// todo scale
 	pub fn get_render_cursor(&mut self, _scale: i32) -> RenderCursor {
+		if let Some(xcursor) = self.icon.and_then(|icon| self.get_named_cursor(icon)) {
+			let xcursor = xcursor as *mut XCursor;
+
+			// SAFETY: see safety comment further down below.
+			//
+			// this code snippet also compiles normally
+			// with `-Zpolonius` and miri doesn't complain either.
+			let xcursor = unsafe { &mut *xcursor };
+			return RenderCursor::Named(xcursor);
+		}
+
 		match self.status.clone() {
 			CursorImageStatus::Hidden => RenderCursor::Hidden,
 			CursorImageStatus::Surface(surface) => {
