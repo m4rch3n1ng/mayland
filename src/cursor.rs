@@ -63,10 +63,10 @@ impl Cursor {
 			.as_mut()
 	}
 
-	// fn get_default_cursor(&mut self) -> &mut XCursor {
-	// 	self.get_named_cursor(CursorIcon::Default)
-	// 		.expect("CursorIcon::Default should always be populated")
-	// }
+	fn get_default_cursor(&mut self) -> &mut XCursor {
+		self.get_named_cursor(CursorIcon::Default)
+			.expect("CursorIcon::Default should always be populated")
+	}
 
 	// todo scale
 	pub fn get_render_cursor(&mut self, _scale: i32) -> RenderCursor {
@@ -86,8 +86,24 @@ impl Cursor {
 				RenderCursor::Surface { hotspot, surface }
 			}
 			CursorImageStatus::Named(icon) => {
-				let xcursor = self.get_named_cursor(icon).unwrap();
-				// .unwrap_or_else(|| self.get_default_cursor());
+				let xcursor = match self.get_named_cursor(icon) {
+					Some(xcursor) => xcursor as *mut XCursor,
+					None => self.get_default_cursor() as *mut XCursor,
+				};
+
+				// SAFETY: this shouldn't break the rust aliasing rules,
+				// as there is only one (1) mutable reference at a time,
+				// and the 'a reflects the actual lifetime of the data,
+				// which makes it a compiler error to borrow immutably twice.
+				//
+				// the pointer is also properly aligned, non-null and
+				// dereferenceable.
+				//
+				// i wouldn't normally use unsafe for something like this,
+				// but with `-Zpolonius` the code compiles even without
+				// any raw pointer fuckery.
+				// miri also seems happy with this code.
+				let xcursor = unsafe { &mut *xcursor };
 				RenderCursor::Named(xcursor)
 			}
 		}

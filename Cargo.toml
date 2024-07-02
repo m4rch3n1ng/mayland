@@ -35,6 +35,7 @@ default-features = false
 
 [lints.clippy]
 new_without_default = "allow"
+undocumented_unsafe_blocks = "warn"
 
 [features]
 default = []
