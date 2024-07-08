@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use super::window::MappedWindow;
 use crate::state::State;
 use smithay::{
@@ -18,6 +16,7 @@ use smithay::{
 	utils::{IsAlive, Serial},
 	wayland::seat::WaylandFocus,
 };
+use std::borrow::Cow;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum KeyboardFocusTarget {
