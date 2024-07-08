@@ -116,7 +116,7 @@ delegate_dmabuf!(State);
 impl XdgDecorationHandler for State {
 	fn new_decoration(&mut self, toplevel: ToplevelSurface) {
 		toplevel.with_pending_state(|state| {
-			state.decoration_mode = Some(DecorationMode::ClientSide);
+			state.decoration_mode = Some(DecorationMode::ServerSide);
 		});
 		toplevel.send_pending_configure();
 	}
@@ -128,7 +128,7 @@ impl XdgDecorationHandler for State {
 
 	fn unset_mode(&mut self, toplevel: ToplevelSurface) {
 		toplevel.with_pending_state(|state| {
-			state.decoration_mode = Some(DecorationMode::ClientSide);
+			state.decoration_mode = Some(DecorationMode::ServerSide);
 		});
 		toplevel.send_pending_configure();
 	}
