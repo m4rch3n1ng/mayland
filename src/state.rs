@@ -56,7 +56,9 @@ use smithay::{
 		},
 		shm::ShmState,
 		socket::ListeningSocketSource,
+		xwayland_shell::XWaylandShellState,
 	},
+	xwayland::{X11Wm, XWayland, XWaylandEvent},
 };
 use std::{
 	collections::{HashMap, HashSet},
@@ -79,6 +81,7 @@ impl State {
 		display: Display<State>,
 	) -> Result<Self, MaylandError> {
 		let mut mayland = Mayland::new(event_loop, display, CompMod::Alt)?;
+		mayland.start_xwayland();
 
 		let winit = Winit::init(&mut mayland);
 		let winit = Backend::Winit(winit);
@@ -94,6 +97,7 @@ impl State {
 		display: Display<State>,
 	) -> Result<Self, MaylandError> {
 		let mut mayland = Mayland::new(event_loop, display, CompMod::Meta)?;
+		mayland.start_xwayland();
 
 		let udev = Udev::init(&mut mayland);
 		let udev = Backend::Udev(udev);
@@ -154,6 +158,11 @@ pub struct Mayland {
 	pub shm_state: ShmState,
 	pub cursor_shape_manager_state: CursorShapeManagerState,
 	pub relative_pointer_manager_state: RelativePointerManagerState,
+	pub xwayland_shell_state: XWaylandShellState,
+
+	// xwayland
+	pub xwm: Option<X11Wm>,
+	pub xdisplay: Option<u32>,
 
 	// input
 	pub pointer: PointerHandle<State>,
@@ -208,6 +217,7 @@ impl Mayland {
 		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
 		let cursor_shape_manager_state = CursorShapeManagerState::new::<State>(&display_handle);
 		let relative_pointer_manager_state = RelativePointerManagerState::new::<State>(&display_handle);
+		let xwayland_shell_state = XWaylandShellState::new::<State>(&display_handle);
 
 		let keyboard = seat
 			.add_keyboard(
@@ -255,6 +265,10 @@ impl Mayland {
 			shm_state,
 			cursor_shape_manager_state,
 			relative_pointer_manager_state,
+			xwayland_shell_state,
+
+			xwm: None,
+			xdisplay: None,
 
 			pointer,
 			keyboard,
@@ -264,6 +278,42 @@ impl Mayland {
 		};
 
 		Ok(mayland)
+	}
+
+	fn start_xwayland(&mut self) {
+		let (xwayland, xclient) = XWayland::spawn(
+			&self.display_handle,
+			None,
+			std::iter::empty::<(String, String)>(),
+			true,
+			std::process::Stdio::null(),
+			std::process::Stdio::null(),
+			|_| {},
+		)
+		.unwrap();
+
+		self.loop_handle
+			.insert_source(xwayland, move |event, _, state| match event {
+				XWaylandEvent::Ready {
+					x11_socket,
+					display_number,
+				} => {
+					let xwm = X11Wm::start_wm(state.mayland.loop_handle.clone(), x11_socket, xclient.clone())
+						.unwrap();
+
+					state.mayland.xwm = Some(xwm);
+					state.mayland.xdisplay = Some(display_number);
+
+					state
+						.mayland
+						.environment
+						.insert("DISPLAY".to_owned(), format!(":{}", display_number));
+				}
+				XWaylandEvent::Error => {
+					tracing::warn!("xwayland crashed on startup");
+				}
+			})
+			.unwrap();
 	}
 }
 
