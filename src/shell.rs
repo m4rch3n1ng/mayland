@@ -18,6 +18,7 @@ use smithay::{
 		},
 		shm::{ShmHandler, ShmState},
 	},
+	xwayland::XWaylandClientData,
 };
 
 pub mod focus;
@@ -25,6 +26,7 @@ pub mod grab;
 pub mod window;
 pub mod wlr;
 pub mod xdg;
+pub mod xwm;
 
 impl BufferHandler for State {
 	fn buffer_destroyed(&mut self, _buffer: &wl_buffer::WlBuffer) {}
@@ -36,6 +38,10 @@ impl CompositorHandler for State {
 	}
 
 	fn client_compositor_state<'a>(&self, client: &'a Client) -> &'a CompositorClientState {
+		if let Some(state) = client.get_data::<XWaylandClientData>() {
+			return &state.compositor_state;
+		}
+
 		if let Some(state) = client.get_data::<ClientState>() {
 			return &state.compositor_state;
 		}

@@ -26,6 +26,7 @@ use smithay::{
 		seat::WaylandFocus,
 		shell::xdg::{SurfaceCachedState, ToplevelSurface, XdgToplevelSurfaceData},
 	},
+	xwayland::X11Surface,
 };
 use std::{
 	borrow::Cow,
@@ -57,6 +58,11 @@ impl MappedWindow {
 				});
 				xdg.send_pending_configure();
 			}
+			WindowSurface::X11(x11) => {
+				// todo rect loc
+				let rect = Rectangle::from_loc_and_size(Point::from((0, 0)), size);
+				x11.configure(rect).unwrap();
+			}
 		}
 	}
 }
@@ -73,6 +79,9 @@ impl MappedWindow {
 	pub fn close(&self) {
 		match self.underlying_surface() {
 			WindowSurface::Wayland(xdg) => xdg.send_close(),
+			WindowSurface::X11(x11) => {
+				let _ = x11.close();
+			}
 		}
 	}
 
@@ -121,6 +130,13 @@ impl MappedWindow {
 
 				min.w > 0 && min.h > 0 && min == max
 			}
+			WindowSurface::X11(x11) => {
+				let Some((min, max)) = x11.min_size().zip(x11.max_size()) else {
+					return false;
+				};
+
+				min.w > 0 && min.h > 0 && min == max
+			}
 		}
 	}
 
@@ -137,6 +153,10 @@ impl MappedWindow {
 
 				(data.min_size, max_size)
 			}),
+			WindowSurface::X11(x11) => (
+				x11.min_size().unwrap_or_default(),
+				x11.max_size().unwrap_or_default(),
+			),
 		}
 	}
 
@@ -159,6 +179,7 @@ impl MappedWindow {
 				});
 				xdg.send_pending_configure();
 			}
+			WindowSurface::X11(_x11) => {}
 		}
 	}
 }
@@ -176,6 +197,12 @@ impl MappedWindow {
 
 				config.compute(surface_data.app_id.as_deref(), surface_data.title.as_deref())
 			}),
+			WindowSurface::X11(x11) => {
+				let class = x11.class();
+				let title = x11.title();
+
+				config.compute(Some(&class), Some(&title))
+			}
 		};
 
 		self.windowrules.write(windowrules)
@@ -269,6 +296,7 @@ impl PartialEq<ToplevelSurface> for MappedWindow {
 	fn eq(&self, other: &ToplevelSurface) -> bool {
 		match self.underlying_surface() {
 			WindowSurface::Wayland(xdg) => xdg == other,
+			WindowSurface::X11(_) => false,
 		}
 	}
 }
@@ -452,6 +480,10 @@ impl From<&MappedWindow> for mayland_comm::workspace::Window {
 					}
 				})
 			}
+			WindowSurface::X11(x11) => mayland_comm::workspace::Window {
+				app_id: Some(x11.class()),
+				title: Some(x11.title()),
+			},
 		}
 	}
 }
@@ -476,6 +508,12 @@ impl UnmappedSurface {
 
 				windowrules.compute(surface_data.app_id.as_deref(), surface_data.title.as_deref())
 			}),
+			WindowSurface::X11(x11) => {
+				let class = x11.class();
+				let title = x11.title();
+
+				windowrules.compute(Some(&class), Some(&title))
+			}
 		}
 	}
 }
@@ -496,6 +534,16 @@ impl PartialEq<ToplevelSurface> for UnmappedSurface {
 	fn eq(&self, other: &ToplevelSurface) -> bool {
 		match self.0.underlying_surface() {
 			WindowSurface::Wayland(toplevel) => toplevel == other,
+			WindowSurface::X11(_x11) => false,
+		}
+	}
+}
+
+impl PartialEq<X11Surface> for UnmappedSurface {
+	fn eq(&self, other: &X11Surface) -> bool {
+		match self.0.underlying_surface() {
+			WindowSurface::Wayland(_toplevel) => false,
+			WindowSurface::X11(x11) => x11 == other,
 		}
 	}
 }
@@ -509,6 +557,13 @@ impl PartialEq<WlSurface> for UnmappedSurface {
 impl From<ToplevelSurface> for UnmappedSurface {
 	fn from(toplevel: ToplevelSurface) -> Self {
 		let window = Window::new_wayland_window(toplevel);
+		UnmappedSurface(window)
+	}
+}
+
+impl From<X11Surface> for UnmappedSurface {
+	fn from(x11_surface: X11Surface) -> Self {
+		let window = Window::new_x11_window(x11_surface);
 		UnmappedSurface(window)
 	}
 }
