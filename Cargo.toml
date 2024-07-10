@@ -63,6 +63,7 @@ features = [
 	"desktop",
 	"renderer_glow",
 	"use_system_lib",
+	"xwayland",
 	"wayland_frontend",
 ]
 
