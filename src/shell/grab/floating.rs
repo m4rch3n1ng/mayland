@@ -14,7 +14,7 @@ use smithay::{
 	reexports::{
 		wayland_protocols::xdg::shell::server::xdg_toplevel::State as TopLevelState, wayland_server::Resource,
 	},
-	utils::{IsAlive, Logical, Point, Serial, Size},
+	utils::{IsAlive, Logical, Point, Rectangle, Serial, Size},
 	wayland::seat::WaylandFocus,
 };
 
@@ -188,6 +188,10 @@ impl PointerGrab<State> for ResizeGrab {
 				});
 				xdg.send_pending_configure();
 			}
+			WindowSurface::X11(x11) => {
+				let rect = Rectangle::from_loc_and_size(Point::from((0, 0)), self.new_window_size);
+				x11.configure(rect).unwrap();
+			}
 		}
 	}
 
@@ -226,6 +230,10 @@ impl PointerGrab<State> for ResizeGrab {
 					if let Some(ResizeState::Resizing(data)) = *guard {
 						*guard = Some(ResizeState::WatingForCommit(data));
 					}
+				}
+				WindowSurface::X11(x11) => {
+					let rect = Rectangle::from_loc_and_size(Point::from((0, 0)), self.new_window_size);
+					x11.configure(rect).unwrap();
 				}
 			}
 		}

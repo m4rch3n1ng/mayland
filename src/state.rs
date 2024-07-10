@@ -52,6 +52,7 @@ use smithay::{
 		shm::ShmState,
 		socket::ListeningSocketSource,
 	},
+	xwayland::{X11Wm, XWayland, XWaylandEvent},
 };
 use std::{
 	collections::{HashMap, HashSet},
@@ -126,6 +127,9 @@ pub struct Mayland {
 	pub xdg_shell_state: XdgShellState,
 	pub shm_state: ShmState,
 	pub cursor_shape_manager_state: CursorShapeManagerState,
+
+	// xwayland
+	pub xwm: Option<X11Wm>,
 
 	// input
 	pub pointer: PointerHandle<State>,
@@ -206,12 +210,44 @@ impl Mayland {
 			shm_state,
 			cursor_shape_manager_state,
 
+			xwm: None,
+
 			pointer,
 			keyboard,
 			cursor,
 
 			suppressed_keys,
 		}
+	}
+
+	fn start_xwayland(&mut self) {
+		let (xwayland, xclient) = XWayland::spawn(
+			&self.display_handle,
+			None,
+			std::iter::empty::<(String, String)>(),
+			true,
+			std::process::Stdio::null(),
+			std::process::Stdio::null(),
+			|_| {},
+		)
+		.unwrap();
+
+		let ret = self
+			.loop_handle
+			.insert_source(xwayland, move |event, _, state| match event {
+				XWaylandEvent::Ready {
+					x11_socket,
+					display_number,
+				} => {
+					let mut xwm =
+						X11Wm::start_wm(state.mayland.loop_handle.clone(), x11_socket, xclient).unwrap();
+
+					state.mayland.xwm = Some(xwm);
+				}
+				XWaylandEvent::Error => {
+					tracing::warn!("xwayland crashed on startup");
+				}
+			});
 	}
 }
 

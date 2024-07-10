@@ -47,6 +47,11 @@ impl MappedWindow {
 				});
 				xdg.send_pending_configure();
 			}
+			WindowSurface::X11(x11) => {
+				// todo rect loc
+				let rect = Rectangle::from_loc_and_size(Point::from((0, 0)), size);
+				x11.configure(rect).unwrap();
+			}
 		}
 	}
 }
@@ -62,6 +67,9 @@ impl MappedWindow {
 	pub fn close(&self) {
 		match self.underlying_surface() {
 			WindowSurface::Wayland(xdg) => xdg.send_close(),
+			WindowSurface::X11(x11) => {
+				let _ = x11.close();
+			}
 		}
 	}
 

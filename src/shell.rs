@@ -25,6 +25,7 @@ pub mod focus;
 pub mod grab;
 pub mod window;
 pub mod xdg;
+pub mod xwm;
 
 impl BufferHandler for State {
 	fn buffer_destroyed(&mut self, _buffer: &wl_buffer::WlBuffer) {}
