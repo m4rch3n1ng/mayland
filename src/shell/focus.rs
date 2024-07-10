@@ -57,6 +57,9 @@ impl KeyboardTarget<State> for KeyboardFocusTarget {
 				WindowSurface::Wayland(w) => {
 					KeyboardTarget::enter(w.wl_surface(), seat, data, keys, serial);
 				}
+				WindowSurface::X11(x) => {
+					KeyboardTarget::enter(x, seat, data, keys, serial);
+				}
 			},
 			KeyboardFocusTarget::LayerSurface(l) => {
 				KeyboardTarget::enter(l.wl_surface(), seat, data, keys, serial);
@@ -72,6 +75,9 @@ impl KeyboardTarget<State> for KeyboardFocusTarget {
 			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
 				WindowSurface::Wayland(w) => {
 					KeyboardTarget::leave(w.wl_surface(), seat, data, serial);
+				}
+				WindowSurface::X11(x) => {
+					KeyboardTarget::leave(x, seat, data, serial);
 				}
 			},
 			KeyboardFocusTarget::LayerSurface(l) => {
@@ -97,6 +103,9 @@ impl KeyboardTarget<State> for KeyboardFocusTarget {
 				WindowSurface::Wayland(w) => {
 					KeyboardTarget::key(w.wl_surface(), seat, data, key, state, serial, time);
 				}
+				WindowSurface::X11(x) => {
+					KeyboardTarget::key(x, seat, data, key, state, serial, time);
+				}
 			},
 			KeyboardFocusTarget::LayerSurface(l) => {
 				KeyboardTarget::key(l.wl_surface(), seat, data, key, state, serial, time);
@@ -112,6 +121,9 @@ impl KeyboardTarget<State> for KeyboardFocusTarget {
 			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
 				WindowSurface::Wayland(w) => {
 					KeyboardTarget::modifiers(w.wl_surface(), seat, data, modifiers, serial);
+				}
+				WindowSurface::X11(x) => {
+					KeyboardTarget::modifiers(x, seat, data, modifiers, serial);
 				}
 			},
 			KeyboardFocusTarget::LayerSurface(l) => {
