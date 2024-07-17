@@ -13,9 +13,8 @@ use smithay::{
 	desktop::{layer_map_for_output, LayerMap, LayerSurface, Space},
 	input::pointer::PointerHandle,
 	output::Output,
-	reexports::wayland_server::protocol::wl_surface::WlSurface,
 	utils::{Logical, Physical, Point, Rectangle, Scale, Size},
-	wayland::{seat::WaylandFocus, shell::wlr_layer::Layer},
+	wayland::shell::wlr_layer::Layer,
 };
 use std::collections::{BTreeMap, HashMap};
 
@@ -216,14 +215,14 @@ impl WorkspaceManager {
 }
 
 impl WorkspaceManager {
-	pub fn window_for_surface(&self, surface: &WlSurface) -> Option<&MappedWindow> {
-		let window = self
-			.workspaces
-			.iter()
-			.flat_map(|(_i, w)| w.windows())
-			.find(|&w| w.wl_surface().is_some_and(|w| *w == *surface));
-
-		window
+	pub fn window_for_surface<S>(&self, surface: &S) -> Option<&MappedWindow>
+	where
+		MappedWindow: PartialEq<S>,
+	{
+		self.workspaces
+			.values()
+			.flat_map(|w| w.windows())
+			.find(|&w| w == surface)
 	}
 }
 

@@ -50,14 +50,13 @@ impl XdgShellHandler for State {
 	}
 
 	fn toplevel_destroyed(&mut self, toplevel: ToplevelSurface) {
-		let surface = toplevel.wl_surface();
-
 		if let Some(idx) = self.mayland.unmapped_windows.iter().position(|w| w == &toplevel) {
 			let _ = self.mayland.unmapped_windows.remove(idx);
 			// an unmapped window got destroyed
 			return;
 		}
 
+		let surface = toplevel.wl_surface();
 		let window = self.mayland.workspaces.window_for_surface(surface).cloned();
 		let Some(window) = window else {
 			tracing::error!("couldn't find toplevel");

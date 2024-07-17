@@ -133,6 +133,12 @@ where
 	}
 }
 
+impl PartialEq<WlSurface> for MappedWindow {
+	fn eq(&self, other: &WlSurface) -> bool {
+		self.wl_surface().is_some_and(|w| &*w == other)
+	}
+}
+
 impl From<UnmappedSurface> for MappedWindow {
 	fn from(unmapped: UnmappedSurface) -> Self {
 		MappedWindow::new(unmapped.0)
