@@ -19,7 +19,7 @@ use smithay::{
 			surface_presentation_feedback_flags_from_states, surface_primary_scanout_output,
 			OutputPresentationFeedback,
 		},
-		PopupManager, Window,
+		PopupManager,
 	},
 	input::{
 		keyboard::{KeyboardHandle, XkbConfig},
@@ -31,7 +31,6 @@ use smithay::{
 		calloop::{generic::Generic, EventLoop, Idle, Interest, LoopHandle, LoopSignal, Mode, PostAction},
 		wayland_server::{
 			backend::{ClientData, GlobalId},
-			protocol::wl_surface::WlSurface,
 			Display, DisplayHandle,
 		},
 	},
@@ -47,7 +46,7 @@ use smithay::{
 		},
 		shell::{
 			wlr_layer::WlrLayerShellState,
-			xdg::{decoration::XdgDecorationState, XdgShellState},
+			xdg::{decoration::XdgDecorationState, ToplevelSurface, XdgShellState},
 		},
 		shm::ShmState,
 		socket::ListeningSocketSource,
@@ -107,7 +106,7 @@ pub struct Mayland {
 	pub workspaces: WorkspaceManager,
 
 	// unmapped_windows
-	pub unmapped_windows: HashMap<WlSurface, Window>,
+	pub unmapped_windows: Vec<ToplevelSurface>,
 
 	pub start_time: std::time::Instant,
 	pub loop_signal: LoopSignal,
@@ -187,7 +186,7 @@ impl Mayland {
 
 			workspaces,
 
-			unmapped_windows: HashMap::new(),
+			unmapped_windows: Vec::new(),
 
 			start_time,
 			loop_signal,

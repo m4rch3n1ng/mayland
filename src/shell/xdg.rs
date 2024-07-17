@@ -1,7 +1,7 @@
 use crate::state::{Mayland, State};
 use smithay::{
 	delegate_layer_shell, delegate_xdg_shell,
-	desktop::{PopupKind, Window},
+	desktop::PopupKind,
 	reexports::wayland_server::protocol::{wl_seat::WlSeat, wl_surface::WlSurface},
 	utils::Serial,
 	wayland::{
@@ -21,11 +21,8 @@ impl XdgShellHandler for State {
 	}
 
 	fn new_toplevel(&mut self, surface: ToplevelSurface) {
-		let wl_surface = surface.wl_surface().clone();
-		let window = Window::new_wayland_window(surface);
-
-		let prev = self.mayland.unmapped_windows.insert(wl_surface, window);
-		assert!(prev.is_none());
+		assert!(!self.mayland.unmapped_windows.iter().any(|w| w == &surface));
+		self.mayland.unmapped_windows.push(surface);
 	}
 
 	fn new_popup(&mut self, surface: PopupSurface, _positioner: PositionerState) {
@@ -47,10 +44,11 @@ impl XdgShellHandler for State {
 		info!("XdgShellHandler::grab {:?}", surface);
 	}
 
-	fn toplevel_destroyed(&mut self, surface: ToplevelSurface) {
-		let surface = surface.wl_surface();
+	fn toplevel_destroyed(&mut self, toplevel: ToplevelSurface) {
+		let surface = toplevel.wl_surface();
 
-		if self.mayland.unmapped_windows.remove(surface).is_some() {
+		if let Some(idx) = self.mayland.unmapped_windows.iter().position(|w| w == &toplevel) {
+			let _ = self.mayland.unmapped_windows.remove(idx);
 			// an unmapped window got destroyed
 			return;
 		}
