@@ -301,6 +301,15 @@ impl PartialEq<ToplevelSurface> for MappedWindow {
 	}
 }
 
+impl PartialEq<X11Surface> for MappedWindow {
+	fn eq(&self, other: &X11Surface) -> bool {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(_) => false,
+			WindowSurface::X11(x11) => x11 == other,
+		}
+	}
+}
+
 impl PointerTarget<State> for MappedWindow {
 	fn enter(&self, seat: &smithay::input::Seat<State>, data: &mut State, event: &MotionEvent) {
 		if let Some(w) = self.wl_surface() {

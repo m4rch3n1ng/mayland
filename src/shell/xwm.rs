@@ -1,5 +1,5 @@
 use super::window::UnmappedSurface;
-use crate::State;
+use crate::{shell::window::MappedWindow, State};
 use smithay::{
 	delegate_xwayland_shell,
 	reexports::x11rb::protocol::xproto,
@@ -34,22 +34,44 @@ impl XwmHandler for State {
 		self.mayland.unmapped_windows.push(surface);
 	}
 
-	fn map_window_notify(&mut self, _xwm: XwmId, _window: X11Surface) {
-		// todo map window here
+	fn map_window_notify(&mut self, _xwm: XwmId, surface: X11Surface) {
 		tracing::info!("XwmHandler::map_window_notify");
+
+		if let Some(idx) = self.mayland.unmapped_windows.iter().position(|w| w == &surface) {
+			let unmapped = self.mayland.unmapped_windows.remove(idx);
+			let windowrules = unmapped.compute_windowrules(&self.mayland.config.windowrules);
+			let window = MappedWindow::new(unmapped, windowrules);
+
+			let location = self.mayland.pointer.current_location();
+			self.mayland.workspaces.add_window(window.clone(), location);
+
+			self.focus_window(window);
+		}
 	}
 
 	fn mapped_override_redirect_window(&mut self, _xwm: XwmId, _window: X11Surface) {
 		tracing::info!("XwmHandler::todo mapped_override_redirect_window");
 	}
 
-	fn unmapped_window(&mut self, _xwm: XwmId, _window: X11Surface) {
-		tracing::info!("XwmHandler::unmapped_window");
+	fn unmapped_window(&mut self, _xwm: XwmId, xsurface: X11Surface) {
+		if let Some(idx) = self.mayland.unmapped_windows.iter().position(|w| w == &xsurface) {
+			let _ = self.mayland.unmapped_windows.remove(idx);
+			// an unmapped window got destroyed
+			return;
+		}
+
+		let window = self.mayland.workspaces.window_for_surface(&xsurface).cloned();
+		let Some(window) = window else {
+			tracing::error!("couldn't find window");
+			return;
+		};
+
+		self.mayland.workspaces.remove_window(&window);
+		self.reset_focus();
+		self.mayland.queue_redraw_all();
 	}
 
-	fn destroyed_window(&mut self, _xwm: XwmId, _window: X11Surface) {
-		tracing::info!("XwmHandler::destroyed_window");
-	}
+	fn destroyed_window(&mut self, _xwm: XwmId, _window: X11Surface) {}
 
 	fn configure_request(
 		&mut self,
@@ -71,7 +93,7 @@ impl XwmHandler for State {
 		_geometry: Rectangle<i32, Logical>,
 		_above: Option<xproto::Window>,
 	) {
-		tracing::info!("XwmHandler::configure_notify");
+		// tracing::info!("XwmHandler::configure_notify");
 	}
 
 	fn resize_request(
