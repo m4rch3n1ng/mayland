@@ -17,7 +17,7 @@ use smithay::{
 	},
 	output::Output,
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
-	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial, Size},
+	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial},
 	wayland::{seat::WaylandFocus, shell::xdg::ToplevelSurface},
 	xwayland::X11Surface,
 };
@@ -41,17 +41,15 @@ impl PartialEq for MappedWindow {
 impl Eq for MappedWindow {}
 
 impl MappedWindow {
-	pub fn resize(&self, size: Size<i32, Logical>) {
+	pub fn resize(&self, rect: Rectangle<i32, Logical>) {
 		match self.underlying_surface() {
 			WindowSurface::Wayland(xdg) => {
 				xdg.with_pending_state(|state| {
-					state.size = Some(size);
+					state.size = Some(rect.size);
 				});
 				xdg.send_pending_configure();
 			}
 			WindowSurface::X11(x11) => {
-				// todo rect loc
-				let rect = Rectangle::from_loc_and_size(Point::from((0, 0)), size);
 				x11.configure(rect).unwrap();
 			}
 		}
