@@ -180,6 +180,12 @@ impl PartialEq<WlSurface> for MappedWindow {
 	}
 }
 
+impl PartialEq<X11Surface> for MappedWindow {
+	fn eq(&self, other: &X11Surface) -> bool {
+		self.window.x11_surface().map_or(false, |s| s == other)
+	}
+}
+
 impl From<UnmappedSurface> for MappedWindow {
 	fn from(unmapped: UnmappedSurface) -> Self {
 		MappedWindow::new(unmapped.0)
