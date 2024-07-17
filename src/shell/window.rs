@@ -17,7 +17,7 @@ use smithay::{
 	output::Output,
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
 	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial, Size},
-	wayland::seat::WaylandFocus,
+	wayland::{seat::WaylandFocus, shell::xdg::ToplevelSurface},
 };
 use std::{
 	borrow::Cow,
@@ -130,6 +130,12 @@ where
 		alpha: f32,
 	) -> Vec<C> {
 		self.window.render_elements(renderer, location, scale, alpha)
+	}
+}
+
+impl From<UnmappedSurface> for MappedWindow {
+	fn from(unmapped: UnmappedSurface) -> Self {
+		MappedWindow::new(unmapped.0)
 	}
 }
 
@@ -290,5 +296,41 @@ impl PointerTarget<State> for MappedWindow {
 impl WaylandFocus for MappedWindow {
 	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
 		self.window.wl_surface()
+	}
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct UnmappedSurface(Window);
+
+impl UnmappedSurface {
+	pub fn toplevel(&self) -> Option<&ToplevelSurface> {
+		self.0.toplevel()
+	}
+}
+
+impl PartialEq<ToplevelSurface> for UnmappedSurface {
+	fn eq(&self, other: &ToplevelSurface) -> bool {
+		match self.0.underlying_surface() {
+			WindowSurface::Wayland(toplevel) => toplevel == other,
+		}
+	}
+}
+
+impl PartialEq<WlSurface> for UnmappedSurface {
+	fn eq(&self, wl_surface: &WlSurface) -> bool {
+		self.0.wl_surface().is_some_and(|w| &*w == wl_surface)
+	}
+}
+
+impl From<ToplevelSurface> for UnmappedSurface {
+	fn from(toplevel: ToplevelSurface) -> Self {
+		let window = Window::new_wayland_window(toplevel);
+		UnmappedSurface(window)
+	}
+}
+
+impl WaylandFocus for UnmappedSurface {
+	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
+		self.0.wl_surface()
 	}
 }

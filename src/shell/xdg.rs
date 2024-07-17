@@ -1,4 +1,7 @@
-use crate::state::{Mayland, State};
+use crate::{
+	shell::window::UnmappedSurface,
+	state::{Mayland, State},
+};
 use smithay::{
 	delegate_layer_shell, delegate_xdg_shell,
 	desktop::PopupKind,
@@ -22,6 +25,8 @@ impl XdgShellHandler for State {
 
 	fn new_toplevel(&mut self, surface: ToplevelSurface) {
 		assert!(!self.mayland.unmapped_windows.iter().any(|w| w == &surface));
+
+		let surface = UnmappedSurface::from(surface);
 		self.mayland.unmapped_windows.push(surface);
 	}
 

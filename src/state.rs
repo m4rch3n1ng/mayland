@@ -2,6 +2,7 @@ use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
 	cursor::{Cursor, RenderCursor},
 	layout::workspace::WorkspaceManager,
+	shell::window::UnmappedSurface,
 };
 use smithay::{
 	backend::renderer::{
@@ -46,7 +47,7 @@ use smithay::{
 		},
 		shell::{
 			wlr_layer::WlrLayerShellState,
-			xdg::{decoration::XdgDecorationState, ToplevelSurface, XdgShellState},
+			xdg::{decoration::XdgDecorationState, XdgShellState},
 		},
 		shm::ShmState,
 		socket::ListeningSocketSource,
@@ -106,7 +107,7 @@ pub struct Mayland {
 	pub workspaces: WorkspaceManager,
 
 	// unmapped_windows
-	pub unmapped_windows: Vec<ToplevelSurface>,
+	pub unmapped_windows: Vec<UnmappedSurface>,
 
 	pub start_time: std::time::Instant,
 	pub loop_signal: LoopSignal,

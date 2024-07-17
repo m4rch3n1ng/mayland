@@ -3,7 +3,7 @@ use crate::state::{ClientState, State};
 use smithay::{
 	backend::renderer::utils::{on_commit_buffer_handler, with_renderer_surface_state},
 	delegate_compositor, delegate_shm,
-	desktop::{layer_map_for_output, LayerSurface, Window},
+	desktop::{layer_map_for_output, LayerSurface},
 	output::Output,
 	reexports::wayland_server::{
 		protocol::{wl_buffer, wl_output::WlOutput, wl_surface::WlSurface},
@@ -56,35 +56,36 @@ impl CompositorHandler for State {
 		}
 
 		if surface == &root {
-			if let Some((idx, toplevel)) = self
+			if let Some((idx, unmapped)) = self
 				.mayland
 				.unmapped_windows
 				.iter()
 				.enumerate()
-				.find(|(_, w)| w.wl_surface() == surface)
+				.find(|(_, w)| w == &surface)
 			{
-				let is_mapped =
-					with_renderer_surface_state(surface, |state| state.buffer().is_some()).unwrap_or(false);
+				if let Some(toplevel) = unmapped.toplevel() {
+					let is_mapped = with_renderer_surface_state(surface, |state| state.buffer().is_some())
+						.unwrap_or(false);
 
-				if is_mapped {
-					let unmapped = self.mayland.unmapped_windows.remove(idx);
-					let unmapped = Window::new_wayland_window(unmapped);
-					let mapped = MappedWindow::new(unmapped);
+					if is_mapped {
+						let unmapped = self.mayland.unmapped_windows.remove(idx);
+						let mapped = MappedWindow::from(unmapped);
 
-					mapped.window.on_commit();
+						mapped.window.on_commit();
 
-					// add window to workspace
-					let location = self.mayland.pointer.current_location();
-					self.mayland.workspaces.add_window(mapped.clone(), location);
+						// add window to workspace
+						let location = self.mayland.pointer.current_location();
+						self.mayland.workspaces.add_window(mapped.clone(), location);
 
-					// automatically focus new windows
-					self.focus_window(mapped);
+						// automatically focus new windows
+						self.focus_window(mapped);
 
-					return;
-				}
+						return;
+					}
 
-				if !xdg::initial_configure_sent(toplevel) {
-					toplevel.send_configure();
+					if !xdg::initial_configure_sent(toplevel) {
+						toplevel.send_configure();
+					}
 				}
 			}
 
