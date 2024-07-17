@@ -155,6 +155,7 @@ struct ResizeGrab {
 	start_data: GrabStartData<State>,
 	corner: ResizeCorner,
 	window: MappedWindow,
+	initial_window_location: Point<i32, Logical>,
 	initial_window_size: Size<i32, Logical>,
 	new_window_size: Size<i32, Logical>,
 }
@@ -194,7 +195,12 @@ impl PointerGrab<State> for ResizeGrab {
 				xdg.send_pending_configure();
 			}
 			WindowSurface::X11(x11) => {
-				let rect = Rectangle::from_loc_and_size(Point::from((0, 0)), self.new_window_size);
+				let delta = self.corner.delta(self.initial_window_size, self.new_window_size);
+				let location = delta
+					.map(|delta| self.initial_window_location + delta)
+					.unwrap_or(self.initial_window_location);
+
+				let rect = Rectangle::from_loc_and_size(location, self.new_window_size);
 				x11.configure(rect).unwrap();
 			}
 		}
@@ -235,7 +241,12 @@ impl PointerGrab<State> for ResizeGrab {
 					}
 				}
 				WindowSurface::X11(x11) => {
-					let rect = Rectangle::from_loc_and_size(Point::from((0, 0)), self.new_window_size);
+					let delta = self.corner.delta(self.initial_window_size, self.new_window_size);
+					let location = delta
+						.map(|delta| self.initial_window_location + delta)
+						.unwrap_or(self.initial_window_location);
+
+					let rect = Rectangle::from_loc_and_size(location, self.new_window_size);
 					x11.configure(rect).unwrap();
 				}
 			}
@@ -425,6 +436,7 @@ impl State {
 			start_data,
 			corner,
 			window,
+			initial_window_location: window_geometry.loc,
 			initial_window_size: window_size,
 			new_window_size: window_size,
 		};
