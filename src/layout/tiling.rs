@@ -160,12 +160,11 @@ impl Tiling {
 			(Some(window1), Some(window2)) => {
 				let (one, two) = self.layout.double;
 
-				window1.resize(one.size);
-				window2.resize(two.size);
+				window1.resize(one);
+				window2.resize(two);
 			}
 			(Some(window), None) => {
-				let layout = self.layout.single;
-				window.resize(layout.size);
+				window.resize(self.layout.single);
 			}
 			(None, Some(_)) => unreachable!(),
 			(None, None) => {}
@@ -190,14 +189,14 @@ impl Tiling {
 
 				let position = self.layout.position(pointer);
 				if let Position::Left = position {
-					window.resize(two.size);
-					mapped.resize(one.size);
+					window.resize(two);
+					mapped.resize(one);
 
 					let prev = self.one.replace(mapped);
 					self.two = prev;
 				} else {
-					window.resize(one.size);
-					mapped.resize(two.size);
+					window.resize(one);
+					mapped.resize(two);
 
 					self.two = Some(mapped);
 				}
@@ -207,8 +206,7 @@ impl Tiling {
 				Some(mapped)
 			}
 		} else {
-			let size = self.layout.single.size;
-			mapped.resize(size);
+			mapped.resize(self.layout.single);
 
 			self.one = Some(mapped);
 			None
