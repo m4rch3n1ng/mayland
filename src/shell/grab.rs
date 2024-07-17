@@ -37,6 +37,24 @@ impl ResizeCorner {
 			(false, false) => ResizeCorner::BottomRight,
 		}
 	}
+
+	pub fn delta(
+		&self,
+		initial_window_size: Size<i32, Logical>,
+		window_size: Size<i32, Logical>,
+	) -> Option<Point<i32, Logical>> {
+		let delta = match self {
+			ResizeCorner::TopLeft => Some((
+				initial_window_size.w - window_size.w,
+				initial_window_size.h - window_size.h,
+			)),
+			ResizeCorner::TopRight => Some((0, initial_window_size.h - window_size.h)),
+			ResizeCorner::BottomLeft => Some((initial_window_size.w - window_size.w, 0)),
+			ResizeCorner::BottomRight => None,
+		};
+
+		delta.map(Point::from)
+	}
 }
 
 impl State {
@@ -67,21 +85,9 @@ impl State {
 
 			let window_size = window.geometry().size;
 
-			let delta = match corner {
-				ResizeCorner::TopLeft => Some((
-					initial_window_size.w - window_size.w,
-					initial_window_size.h - window_size.h,
-				)),
-				ResizeCorner::TopRight => Some((0, initial_window_size.h - window_size.h)),
-				ResizeCorner::BottomLeft => Some((initial_window_size.w - window_size.w, 0)),
-				ResizeCorner::BottomRight => None,
-			};
-
-			if let Some((dx, dy)) = delta {
-				let mut location = self.mayland.workspaces.window_location(&window).unwrap();
-				location.x = initial_window_location.x + dx;
-				location.y = initial_window_location.y + dy;
-
+			let delta = corner.delta(initial_window_size, window_size);
+			if let Some(delta) = delta {
+				let location = initial_window_location + delta;
 				self.mayland.workspaces.floating_move(window.clone(), location);
 			}
 		}
