@@ -19,6 +19,7 @@ use smithay::{
 		},
 		shm::{ShmHandler, ShmState},
 	},
+	xwayland::XWaylandClientData,
 };
 
 pub mod focus;
@@ -37,6 +38,10 @@ impl CompositorHandler for State {
 	}
 
 	fn client_compositor_state<'a>(&self, client: &'a Client) -> &'a CompositorClientState {
+		if let Some(state) = client.get_data::<XWaylandClientData>() {
+			return &state.compositor_state;
+		}
+
 		if let Some(state) = client.get_data::<ClientState>() {
 			return &state.compositor_state;
 		}

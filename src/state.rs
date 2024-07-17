@@ -51,6 +51,7 @@ use smithay::{
 		},
 		shm::ShmState,
 		socket::ListeningSocketSource,
+		xwayland_shell::XWaylandShellState,
 	},
 	xwayland::{X11Wm, XWayland, XWaylandEvent},
 };
@@ -72,6 +73,7 @@ pub struct State {
 impl State {
 	pub fn new_winit(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
 		let mut mayland = Mayland::new(event_loop, display);
+		mayland.start_xwayland();
 
 		let winit = Winit::init(&mut mayland);
 		let winit = Backend::Winit(winit);
@@ -84,6 +86,7 @@ impl State {
 
 	pub fn new_udev(event_loop: &mut EventLoop<'static, State>, display: Display<State>) -> Self {
 		let mut mayland = Mayland::new(event_loop, display);
+		mayland.start_xwayland();
 
 		let udev = Udev::init(&mut mayland);
 		let udev = Backend::Udev(udev);
@@ -127,9 +130,11 @@ pub struct Mayland {
 	pub xdg_shell_state: XdgShellState,
 	pub shm_state: ShmState,
 	pub cursor_shape_manager_state: CursorShapeManagerState,
+	pub xwayland_shell_state: XWaylandShellState,
 
 	// xwayland
 	pub xwm: Option<X11Wm>,
+	pub xdisplay: Option<u32>,
 
 	// input
 	pub pointer: PointerHandle<State>,
@@ -174,6 +179,7 @@ impl Mayland {
 		let xdg_shell_state = XdgShellState::new::<State>(&display_handle);
 		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
 		let cursor_shape_manager_state = CursorShapeManagerState::new::<State>(&display_handle);
+		let xwayland_shell_state = XWaylandShellState::new::<State>(&display_handle);
 
 		let keyboard = seat.add_keyboard(XkbConfig::default(), 200, 25).unwrap();
 		let pointer = seat.add_pointer();
@@ -209,8 +215,10 @@ impl Mayland {
 			xdg_shell_state,
 			shm_state,
 			cursor_shape_manager_state,
+			xwayland_shell_state,
 
 			xwm: None,
+			xdisplay: None,
 
 			pointer,
 			keyboard,
@@ -232,22 +240,26 @@ impl Mayland {
 		)
 		.unwrap();
 
-		let ret = self
-			.loop_handle
+		self.loop_handle
 			.insert_source(xwayland, move |event, _, state| match event {
 				XWaylandEvent::Ready {
 					x11_socket,
 					display_number,
 				} => {
-					let mut xwm =
-						X11Wm::start_wm(state.mayland.loop_handle.clone(), x11_socket, xclient).unwrap();
+					let xwm = X11Wm::start_wm(state.mayland.loop_handle.clone(), x11_socket, xclient.clone())
+						.unwrap();
 
 					state.mayland.xwm = Some(xwm);
+					state.mayland.xdisplay = Some(display_number);
+
+					// todo don't set them globally
+					std::env::set_var("DISPLAY", format!(":{}", display_number));
 				}
 				XWaylandEvent::Error => {
 					tracing::warn!("xwayland crashed on startup");
 				}
-			});
+			})
+			.unwrap();
 	}
 }
 

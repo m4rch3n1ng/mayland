@@ -18,6 +18,7 @@ use smithay::{
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
 	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial, Size},
 	wayland::{seat::WaylandFocus, shell::xdg::ToplevelSurface},
+	xwayland::X11Surface,
 };
 use std::{
 	borrow::Cow,
@@ -326,6 +327,16 @@ impl PartialEq<ToplevelSurface> for UnmappedSurface {
 	fn eq(&self, other: &ToplevelSurface) -> bool {
 		match self.0.underlying_surface() {
 			WindowSurface::Wayland(toplevel) => toplevel == other,
+			WindowSurface::X11(_x11) => false,
+		}
+	}
+}
+
+impl PartialEq<X11Surface> for UnmappedSurface {
+	fn eq(&self, other: &X11Surface) -> bool {
+		match self.0.underlying_surface() {
+			WindowSurface::Wayland(_toplevel) => false,
+			WindowSurface::X11(x11) => x11 == other,
 		}
 	}
 }
@@ -339,6 +350,13 @@ impl PartialEq<WlSurface> for UnmappedSurface {
 impl From<ToplevelSurface> for UnmappedSurface {
 	fn from(toplevel: ToplevelSurface) -> Self {
 		let window = Window::new_wayland_window(toplevel);
+		UnmappedSurface(window)
+	}
+}
+
+impl From<X11Surface> for UnmappedSurface {
+	fn from(x11_surface: X11Surface) -> Self {
+		let window = Window::new_x11_window(x11_surface);
 		UnmappedSurface(window)
 	}
 }
