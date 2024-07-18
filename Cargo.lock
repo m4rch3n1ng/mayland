@@ -835,6 +835,7 @@ version = "0.1.0"
 dependencies = [
  "annotate-snippets",
  "anstream",
+ "bitflags 2.6.0",
  "mayfig",
  "serde",
  "smithay",

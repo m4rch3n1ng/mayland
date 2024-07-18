@@ -1,11 +1,12 @@
 use crate::action::Action;
+use bitflags::bitflags;
 use serde::{de::Visitor, Deserialize};
 use smithay::input::keyboard::{
 	keysyms::KEY_NoSymbol,
 	xkb::{keysym_from_name, KEYSYM_CASE_INSENSITIVE},
 	Keysym, ModifiersState,
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 
 #[derive(Debug, Deserialize)]
 pub struct Binds(HashMap<Mapping, Action>);
@@ -114,54 +115,60 @@ impl Binds {
 	}
 }
 
-#[derive(Debug, Default, PartialEq, Eq, Hash)]
-struct Modifiers {
-	pub ctrl: bool,
-	pub alt: bool,
-	pub shift: bool,
-	pub meta: bool,
+bitflags! {
+	#[derive(Clone, Copy, Default, PartialEq, Eq, Hash)]
+	struct Modifiers: u8 {
+		const META = 1 << 0;
+		const ALT = 1 << 1;
+		const CTRL = 1 << 2;
+		const SHIFT = 1 << 3;
+	}
+}
+
+impl Debug for Modifiers {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		Debug::fmt(&self.0, f)
+	}
 }
 
 impl Modifiers {
-	const ALT: Modifiers = Modifiers {
-		ctrl: false,
-		alt: true,
-		shift: false,
-		meta: false,
-	};
+	fn from_xkb(modifiers_state: &ModifiersState) -> Modifiers {
+		let mut modifiers = Modifiers::empty();
 
-	fn from_xkb(modifiers: &ModifiersState) -> Modifiers {
-		Modifiers {
-			ctrl: modifiers.ctrl,
-			alt: modifiers.alt,
-			shift: modifiers.shift,
-			meta: modifiers.logo,
+		if modifiers_state.ctrl {
+			modifiers |= Modifiers::CTRL;
 		}
+		if modifiers_state.alt {
+			modifiers |= Modifiers::ALT;
+		}
+		if modifiers_state.shift {
+			modifiers |= Modifiers::SHIFT;
+		}
+		if modifiers_state.logo {
+			modifiers |= Modifiers::META;
+		}
+
+		modifiers
 	}
 
 	fn add(&mut self, r#mod: &str) -> bool {
-		if r#mod.eq_ignore_ascii_case("ctrl") {
-			self.ctrl = true;
-			true
+		let modifier = if r#mod.eq_ignore_ascii_case("ctrl") {
+			Modifiers::CTRL
 		} else if r#mod.eq_ignore_ascii_case("alt") {
-			self.alt = true;
-			true
+			Modifiers::ALT
 		} else if r#mod.eq_ignore_ascii_case("shift") {
-			self.shift = true;
-			true
+			Modifiers::SHIFT
 		} else if r#mod.eq_ignore_ascii_case("meta")
 			|| r#mod.eq_ignore_ascii_case("logo")
 			|| r#mod.eq_ignore_ascii_case("super")
 		{
-			self.meta = true;
-			true
+			Modifiers::META
 		} else {
-			false
-		}
-	}
+			return false;
+		};
 
-	fn is_empty(&self) -> bool {
-		!self.ctrl && !self.alt && !self.shift && !self.meta
+		*self |= modifier;
+		true
 	}
 }
 
