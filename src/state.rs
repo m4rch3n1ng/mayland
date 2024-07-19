@@ -5,7 +5,7 @@ use crate::{
 	layout::workspace::WorkspaceManager,
 	shell::window::UnmappedSurface,
 };
-use mayland_config::Config;
+use mayland_config::{bind::CompMod, Config};
 use smithay::{
 	backend::renderer::{
 		element::{
@@ -73,7 +73,7 @@ impl State {
 		event_loop: &mut EventLoop<'static, State>,
 		display: Display<State>,
 	) -> Result<Self, MaylandError> {
-		let mut mayland = Mayland::new(event_loop, display)?;
+		let mut mayland = Mayland::new(event_loop, display, CompMod::Alt)?;
 
 		let winit = Winit::init(&mut mayland);
 		let winit = Backend::Winit(winit);
@@ -88,7 +88,7 @@ impl State {
 		event_loop: &mut EventLoop<'static, State>,
 		display: Display<State>,
 	) -> Result<Self, MaylandError> {
-		let mut mayland = Mayland::new(event_loop, display)?;
+		let mut mayland = Mayland::new(event_loop, display, CompMod::Meta)?;
 
 		let udev = Udev::init(&mut mayland);
 		let udev = Backend::Udev(udev);
@@ -167,8 +167,9 @@ impl Mayland {
 	fn new(
 		event_loop: &mut EventLoop<'static, State>,
 		display: Display<State>,
+		comp: CompMod,
 	) -> Result<Self, MaylandError> {
-		let config = Config::read()?;
+		let config = Config::read(comp)?;
 
 		let display_handle = display.handle();
 		let socket_name = init_wayland_display(display, event_loop);
