@@ -8,6 +8,21 @@ use smithay::input::keyboard::{
 };
 use std::{collections::HashMap, fmt::Debug};
 
+#[derive(Debug, Clone, Copy)]
+pub enum CompMod {
+	Alt,
+	Meta,
+}
+
+impl CompMod {
+	fn modifiers(self) -> Modifiers {
+		match self {
+			CompMod::Alt => Modifiers::ALT,
+			CompMod::Meta => Modifiers::META,
+		}
+	}
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Binds(HashMap<Mapping, Action>);
 
@@ -113,6 +128,16 @@ impl Binds {
 		let mapping = Mapping::from_xkb(modifiers, keysym)?;
 		self.0.get(&mapping).cloned()
 	}
+
+	pub(crate) fn flatten_mod(mut self, comp: CompMod) -> Self {
+		self.0 = self
+			.0
+			.into_iter()
+			.map(|(key, val)| (key.flatten_mod(comp), val))
+			.collect();
+
+		self
+	}
 }
 
 bitflags! {
@@ -122,6 +147,7 @@ bitflags! {
 		const ALT = 1 << 1;
 		const CTRL = 1 << 2;
 		const SHIFT = 1 << 3;
+		const MOD = 1 << 4;
 	}
 }
 
@@ -163,6 +189,8 @@ impl Modifiers {
 			|| r#mod.eq_ignore_ascii_case("super")
 		{
 			Modifiers::META
+		} else if r#mod.eq_ignore_ascii_case("mod") {
+			Modifiers::MOD
 		} else {
 			return false;
 		};
@@ -189,6 +217,15 @@ impl Mapping {
 		}
 
 		Some(Mapping { mods, key })
+	}
+
+	/// remove [`Modifiers::MOD`] from `self`
+	fn flatten_mod(mut self, comp: CompMod) -> Self {
+		if self.mods.contains(Modifiers::MOD) {
+			self.mods = (self.mods - Modifiers::MOD) | comp.modifiers();
+		}
+
+		self
 	}
 }
 
