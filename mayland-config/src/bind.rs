@@ -33,7 +33,7 @@ impl Default for Binds {
 		// quit the compositor
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::Escape,
 			},
 			Action::Quit,
@@ -42,7 +42,7 @@ impl Default for Binds {
 		// close a window
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::q,
 			},
 			Action::CloseWindow,
@@ -51,7 +51,7 @@ impl Default for Binds {
 		// spawn kitty
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::t,
 			},
 			Action::Spawn("kitty".to_owned()),
@@ -60,7 +60,7 @@ impl Default for Binds {
 		// spawn nautilus
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::e,
 			},
 			Action::Spawn("nautilus".to_owned()),
@@ -69,7 +69,7 @@ impl Default for Binds {
 		// spawn firefox
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::n,
 			},
 			Action::Spawn("firefox".to_owned()),
@@ -78,42 +78,42 @@ impl Default for Binds {
 		// workspaces
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::_0,
 			},
 			Action::Workspace(0),
 		);
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::_1,
 			},
 			Action::Workspace(1),
 		);
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::_2,
 			},
 			Action::Workspace(2),
 		);
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::_3,
 			},
 			Action::Workspace(3),
 		);
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::_4,
 			},
 			Action::Workspace(4),
 		);
 		binds.insert(
 			Mapping {
-				mods: Modifiers::ALT,
+				mods: Modifiers::MOD,
 				key: Keysym::_5,
 			},
 			Action::Workspace(5),
