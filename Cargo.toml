@@ -5,11 +5,11 @@ edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4.38", features = ["clock", "std"] }
-libc = "0.2.155"
+libc = "0.2.157"
 tracing = "0.1.40"
 tracing-panic = "0.1.2"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
-xcursor = "0.3.5"
+xcursor = "0.3.8"
 
 [dependencies.smithay]
 git = "https://github.com/Smithay/smithay"

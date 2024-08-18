@@ -48,6 +48,7 @@ impl WorkspaceManager {
 }
 
 impl WorkspaceManager {
+	#[must_use = "you have to reposition the cursor"]
 	pub fn switch_to_workspace(&mut self, idx: usize) -> Option<Point<i32, Logical>> {
 		let Some(active_output) = &self.active_output else {
 			return None;

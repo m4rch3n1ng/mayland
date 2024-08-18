@@ -15,6 +15,10 @@ pub enum Action {
 impl State {
 	pub fn handle_action(&mut self, action: Action) {
 		match action {
+			Action::Quit => {
+				self.mayland.loop_signal.stop();
+				self.mayland.loop_signal.wakeup();
+			}
 			Action::CloseWindow => {
 				let Some(focus) = self.mayland.keyboard.current_focus() else {
 					return;
@@ -24,9 +28,16 @@ impl State {
 					window.close();
 				}
 			}
-			Action::Quit => {
-				self.mayland.loop_signal.stop();
-				self.mayland.loop_signal.wakeup();
+			Action::Workspace(idx) => {
+				let location = self.mayland.workspaces.switch_to_workspace(idx);
+
+				// todo serious refactor
+				if let Some(location) = location {
+					self.mayland.queue_redraw_all();
+					self.move_cursor(location.to_f64());
+				}
+
+				self.reset_keyboard_focus();
 			}
 			Action::Spawn(spawn) => {
 				let mut cmd = Command::new("/bin/sh");
@@ -43,17 +54,6 @@ impl State {
 					}
 					Err(err) => error!("error spawning child: {:?}", err),
 				});
-			}
-			Action::Workspace(idx) => {
-				let location = self.mayland.workspaces.switch_to_workspace(idx);
-
-				// todo serious refactor
-				if let Some(location) = location {
-					self.mayland.queue_redraw_all();
-					self.move_cursor(location.to_f64());
-				}
-
-				self.reset_keyboard_focus();
 			}
 		}
 	}
