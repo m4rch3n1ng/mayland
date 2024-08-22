@@ -1,9 +1,7 @@
 use smithay::{
 	output::Output,
-	reexports::rustix::time::{clock_gettime, ClockId},
 	utils::{Coordinate, Logical, Point, Rectangle, Size},
 };
-use std::time::Duration;
 
 pub trait RectExt<N, Kind> {
 	fn center(&self) -> Point<N, Kind>;
@@ -38,9 +36,4 @@ pub fn output_size(output: &Output) -> Size<i32, Logical> {
 	output_transform
 		.transform_size(output_mode.size)
 		.to_logical(output_scale)
-}
-
-pub fn get_monotonic_time() -> Duration {
-	let timespec = clock_gettime(ClockId::Monotonic);
-	Duration::new(timespec.tv_sec as u64, timespec.tv_nsec as u32)
 }

@@ -1,5 +1,4 @@
 use super::State;
-use crate::utils::get_monotonic_time;
 use smithay::{
 	input::pointer::MotionEvent,
 	utils::{Logical, Point, SERIAL_COUNTER},
@@ -11,7 +10,7 @@ impl State {
 		let under = self.surface_under(location);
 
 		let serial = SERIAL_COUNTER.next_serial();
-		let time = get_monotonic_time().as_millis() as u32;
+		let time = self.mayland.clock.now().as_millis();
 
 		pointer.motion(
 			self,

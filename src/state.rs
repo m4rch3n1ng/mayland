@@ -36,6 +36,7 @@ use smithay::{
 		},
 	},
 	render_elements,
+	utils::{Clock, Monotonic},
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
 		cursor_shape::CursorShapeManagerState,
@@ -102,6 +103,7 @@ pub struct Mayland {
 	pub seat: Seat<State>,
 	pub popups: PopupManager,
 	pub output_state: HashMap<Output, OutputState>,
+	pub clock: Clock<Monotonic>,
 
 	// workspace
 	pub workspaces: WorkspaceManager,
@@ -184,6 +186,7 @@ impl Mayland {
 			seat,
 			popups,
 			output_state: HashMap::new(),
+			clock: Clock::new(),
 
 			workspaces,
 

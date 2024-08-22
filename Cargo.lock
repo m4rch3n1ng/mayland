@@ -651,9 +651,9 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "libc"
-version = "0.2.157"
+version = "0.2.158"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "374af5f94e54fa97cf75e945cce8a6b201e88a1a07e688b47dfd2a59c66dbd86"
+checksum = "d8adc4bb1803a324070e64a98ae98f38934d91957a99cfb3a43dcbc01bc56439"
 
 [[package]]
 name = "libloading"
@@ -1367,7 +1367,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 [[package]]
 name = "smithay"
 version = "0.3.0"
-source = "git+https://github.com/Smithay/smithay#ef9782b8548c6e876bc61052e4e09351e4071a35"
+source = "git+https://github.com/Smithay/smithay#e97bff13dd404bf350f3872de726803d7aed8b85"
 dependencies = [
  "appendlist",
  "bitflags 2.6.0",
@@ -1441,7 +1441,7 @@ dependencies = [
 [[package]]
 name = "smithay-drm-extras"
 version = "0.1.0"
-source = "git+https://github.com/Smithay/smithay#ef9782b8548c6e876bc61052e4e09351e4071a35"
+source = "git+https://github.com/Smithay/smithay#e97bff13dd404bf350f3872de726803d7aed8b85"
 dependencies = [
  "drm",
  "edid-rs",
