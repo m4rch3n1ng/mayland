@@ -22,7 +22,7 @@ use smithay::{
 	reexports::{
 		calloop::{Dispatcher, RegistrationToken},
 		drm::control::{connector, crtc, ModeTypeFlags},
-		input::{AccelProfile, Libinput},
+		input::Libinput,
 		rustix::fs::OFlags,
 		wayland_protocols::wp::presentation_time::server::wp_presentation_feedback,
 	},
@@ -525,12 +525,15 @@ impl State {
 				let _ = device.config_tap_set_enabled(conf.tap);
 				let _ = device.config_tap_set_drag_enabled(conf.tap_drag);
 
-				let _ = device.config_click_set_method(conf.click_method.into());
+				let click_method = smithay::reexports::input::ClickMethod::from(conf.click_method);
+				let _ = device.config_click_set_method(click_method);
 
-				let _ = device.config_accel_set_profile(AccelProfile::Flat);
+				let accel_profile = smithay::reexports::input::AccelProfile::from(conf.accel_profile);
+				let _ = device.config_accel_set_profile(accel_profile);
 
 				let _ = device.config_scroll_set_natural_scroll_enabled(conf.natural_scroll);
-				let _ = device.config_scroll_set_method(conf.scroll_method.into());
+				let scroll_method = smithay::reexports::input::ScrollMethod::from(conf.scroll_method);
+				let _ = device.config_scroll_set_method(scroll_method);
 			}
 		}
 	}
