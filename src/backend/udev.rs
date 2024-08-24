@@ -140,12 +140,14 @@ impl Udev {
 				let output_presentation_feedback =
 					mayland.presentation_feedback(output, &render_output_res.states);
 
-				match drm_compositor.queue_frame(output_presentation_feedback) {
-					Ok(()) => {
-						let output_state = mayland.output_state.get_mut(output).unwrap();
-						output_state.waiting_for_vblank = true;
+				if !render_output_res.is_empty {
+					match drm_compositor.queue_frame(output_presentation_feedback) {
+						Ok(()) => {
+							let output_state = mayland.output_state.get_mut(output).unwrap();
+							output_state.waiting_for_vblank = true;
+						}
+						Err(err) => error!("error queueing frame {:?}", err),
 					}
-					Err(err) => error!("error queueing frame {:?}", err),
 				}
 			}
 			Err(err) => error!("error rendering frame {:?}", err),
