@@ -1,0 +1,50 @@
+input {
+	keyboard {
+		# xkb_file = "/home/may/.config/keymap/may.xkb"
+
+		# xkb_layout = "de,us"
+		# xkb_model = "thinkpad"
+		# xkb_options = "ctrl:nocaps"
+
+		repeat_delay = 600
+		repeat_rate = 25
+	}
+
+	touchpad {
+		tap = true
+		tap_and_drag = false
+		tap_drag_lock = false
+
+		dwt = true
+		dwtp = true
+
+		click_method = "clickfinger"
+
+		middle_emulation = true
+		tap_button_map = "left_right_middle"
+		left_handed = false
+
+		natural_scroll = true
+		# scroll_method = "two_finger"
+
+		accel_speed = 0
+		# accel_profile = "adaptive"
+	}
+}
+
+bind {
+	"mod escape" = "quit"
+	"mod q" = "close"
+
+	"mod t" = "spawn" [ "kitty" ]
+	"mod e" = "spawn" [ "nautilus" ]
+	"mod n" = "spawn" [ "firefox" ]
+	"mod shift n" = "spawn" [ "firefox --private-window" ]
+
+	"mod 0" = "workspace" [ 0 ]
+	"mod 1" = "workspace" [ 1 ]
+	"mod 2" = "workspace" [ 2 ]
+	"mod 3" = "workspace" [ 3 ]
+	"mod 4" = "workspace" [ 4 ]
+	"mod 5" = "workspace" [ 5 ]
+}
