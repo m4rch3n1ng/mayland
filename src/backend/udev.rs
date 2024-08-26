@@ -530,7 +530,6 @@ impl State {
 				let _ = device.config_dwtp_set_enabled(conf.dwtp);
 
 				if let Some(click_method) = conf.click_method {
-					let click_method = smithay::reexports::input::ClickMethod::from(click_method);
 					let _ = device.config_click_set_method(click_method);
 				} else if let Some(default_click_method) = device.config_click_default_method() {
 					let _ = device.config_click_set_method(default_click_method);
@@ -538,7 +537,6 @@ impl State {
 
 				let _ = device.config_middle_emulation_set_enabled(conf.middle_emulation);
 				if let Some(tap_button_map) = conf.tap_button_map {
-					let tap_button_map = smithay::reexports::input::TapButtonMap::from(tap_button_map);
 					let _ = device.config_tap_set_button_map(tap_button_map);
 				} else if let Some(default_tap_button_map) = device.config_tap_default_button_map() {
 					let _ = device.config_tap_set_button_map(default_tap_button_map);
@@ -547,7 +545,6 @@ impl State {
 
 				let _ = device.config_scroll_set_natural_scroll_enabled(conf.natural_scroll);
 				if let Some(scroll_method) = conf.scroll_method {
-					let scroll_method = smithay::reexports::input::ScrollMethod::from(scroll_method);
 					let _ = device.config_scroll_set_method(scroll_method);
 				} else if let Some(default_scroll_method) = device.config_scroll_default_method() {
 					let _ = device.config_scroll_set_method(default_scroll_method);
@@ -563,7 +560,6 @@ impl State {
 				}
 				let _ = device.config_accel_set_speed(accel_speed);
 				if let Some(accel_profile) = conf.accel_profile {
-					let accel_profile = smithay::reexports::input::AccelProfile::from(accel_profile);
 					let _ = device.config_accel_set_profile(accel_profile);
 				} else if let Some(default_accel_profile) = device.config_accel_default_profile() {
 					let _ = device.config_accel_set_profile(default_accel_profile);
