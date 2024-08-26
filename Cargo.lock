@@ -818,6 +818,7 @@ name = "mayland"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "input",
  "libc",
  "mayland-config",
  "smithay",

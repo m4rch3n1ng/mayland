@@ -57,15 +57,22 @@ impl Default for Keyboard {
 #[serde(default)]
 pub struct Touchpad {
 	pub tap: bool,
-	pub tap_drag: bool,
+	pub tap_and_drag: bool,
+	pub tap_drag_lock: bool,
 
 	pub dwt: bool,
+	pub dwtp: bool,
 
 	pub click_method: ClickMethod,
+
+	pub middle_emulation: bool,
+	pub tap_button_map: TapButtonMap,
+	pub left_handed: bool,
 
 	pub natural_scroll: bool,
 	pub scroll_method: ScrollMethod,
 
+	pub accel_speed: f64,
 	pub accel_profile: AccelProfile,
 }
 
@@ -73,15 +80,22 @@ impl Default for Touchpad {
 	fn default() -> Self {
 		Touchpad {
 			tap: true,
-			tap_drag: true,
+			tap_and_drag: false,
+			tap_drag_lock: false,
 
 			dwt: true,
+			dwtp: true,
 
 			click_method: ClickMethod::Clickfinger,
+
+			middle_emulation: true,
+			tap_button_map: TapButtonMap::LeftRightMiddle,
+			left_handed: false,
 
 			natural_scroll: true,
 			scroll_method: ScrollMethod::TwoFinger,
 
+			accel_speed: 0.0,
 			accel_profile: AccelProfile::Adaptive,
 		}
 	}
@@ -100,6 +114,23 @@ impl From<ClickMethod> for libinput::ClickMethod {
 		match value {
 			ClickMethod::ButtonAreas => libinput::ClickMethod::ButtonAreas,
 			ClickMethod::Clickfinger => libinput::ClickMethod::Clickfinger,
+		}
+	}
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TapButtonMap {
+	#[default]
+	LeftRightMiddle,
+	LeftMiddleRight,
+}
+
+impl From<TapButtonMap> for libinput::TapButtonMap {
+	fn from(value: TapButtonMap) -> Self {
+		match value {
+			TapButtonMap::LeftRightMiddle => libinput::TapButtonMap::LeftRightMiddle,
+			TapButtonMap::LeftMiddleRight => libinput::TapButtonMap::LeftMiddleRight,
 		}
 	}
 }
