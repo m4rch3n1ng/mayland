@@ -27,6 +27,7 @@ edition = { workspace = true }
 
 [dependencies]
 chrono = { version = "0.4.38", features = ["clock", "std"] }
+input = { version = "0.9.0", default-features = false, features = ["libinput_1_21"] }
 libc = "0.2.157"
 mayland-config = { path = "mayland-config" }
 thiserror = { workspace = true }
