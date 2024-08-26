@@ -12,6 +12,7 @@ pub struct Input {
 #[derive(Debug, Deserialize)]
 #[serde(default)]
 pub struct Keyboard {
+	#[serde(deserialize_with = "deserialize_path")]
 	pub xkb_file: Option<String>,
 
 	pub xkb_rules: String,
@@ -103,6 +104,29 @@ impl Default for Touchpad {
 			accel_profile: None,
 		}
 	}
+}
+
+fn deserialize_path<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+	D: serde::Deserializer<'de>,
+{
+	let option = Option::<String>::deserialize(deserializer)?;
+	let Some(mut path) = option else { return Ok(None) };
+
+	let path = if let Some(rest) = path.strip_prefix("~") {
+		let home = dirs::home_dir().unwrap();
+		let home = home.into_os_string().into_string().unwrap();
+		if rest.is_empty() {
+			home
+		} else {
+			path.replace_range(0..=0, &home);
+			path
+		}
+	} else {
+		path
+	};
+
+	Ok(Some(path))
 }
 
 mod click_method {
