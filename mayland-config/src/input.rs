@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use smithay::input::keyboard::XkbConfig;
-use smithay::reexports::input as libinput;
+use smithay::reexports::input::{AccelProfile, ClickMethod, ScrollMethod, TapButtonMap};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
@@ -63,16 +63,20 @@ pub struct Touchpad {
 	pub dwt: bool,
 	pub dwtp: bool,
 
+	#[serde(with = "click_method")]
 	pub click_method: Option<ClickMethod>,
 
 	pub middle_emulation: bool,
+	#[serde(with = "tap_button_map")]
 	pub tap_button_map: Option<TapButtonMap>,
 	pub left_handed: bool,
 
 	pub natural_scroll: bool,
+	#[serde(with = "scroll_method")]
 	pub scroll_method: Option<ScrollMethod>,
 
 	pub accel_speed: f64,
+	#[serde(with = "accel_profile")]
 	pub accel_profile: Option<AccelProfile>,
 }
 
@@ -101,70 +105,126 @@ impl Default for Touchpad {
 	}
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ClickMethod {
-	ButtonAreas,
-	Clickfinger,
-}
+mod click_method {
+	use serde::{Deserialize, Deserializer};
+	use smithay::reexports::input as libinput;
 
-impl From<ClickMethod> for libinput::ClickMethod {
-	fn from(value: ClickMethod) -> Self {
-		match value {
-			ClickMethod::ButtonAreas => libinput::ClickMethod::ButtonAreas,
-			ClickMethod::Clickfinger => libinput::ClickMethod::Clickfinger,
+	#[derive(Debug, Deserialize)]
+	#[serde(rename_all = "snake_case")]
+	enum ClickMethod {
+		ButtonAreas,
+		Clickfinger,
+	}
+
+	impl From<ClickMethod> for libinput::ClickMethod {
+		fn from(value: ClickMethod) -> Self {
+			match value {
+				ClickMethod::ButtonAreas => libinput::ClickMethod::ButtonAreas,
+				ClickMethod::Clickfinger => libinput::ClickMethod::Clickfinger,
+			}
 		}
+	}
+
+	pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<libinput::ClickMethod>, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let option = Option::<ClickMethod>::deserialize(deserializer)?;
+		let option = option.map(libinput::ClickMethod::from);
+		Ok(option)
 	}
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum TapButtonMap {
-	LeftRightMiddle,
-	LeftMiddleRight,
-}
+mod tap_button_map {
+	use serde::{Deserialize, Deserializer};
+	use smithay::reexports::input as libinput;
 
-impl From<TapButtonMap> for libinput::TapButtonMap {
-	fn from(value: TapButtonMap) -> Self {
-		match value {
-			TapButtonMap::LeftRightMiddle => libinput::TapButtonMap::LeftRightMiddle,
-			TapButtonMap::LeftMiddleRight => libinput::TapButtonMap::LeftMiddleRight,
+	#[derive(Debug, Deserialize)]
+	#[serde(rename_all = "snake_case")]
+	enum TapButtonMap {
+		LeftRightMiddle,
+		LeftMiddleRight,
+	}
+
+	impl From<TapButtonMap> for libinput::TapButtonMap {
+		fn from(value: TapButtonMap) -> Self {
+			match value {
+				TapButtonMap::LeftRightMiddle => libinput::TapButtonMap::LeftRightMiddle,
+				TapButtonMap::LeftMiddleRight => libinput::TapButtonMap::LeftMiddleRight,
+			}
 		}
+	}
+
+	pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<libinput::TapButtonMap>, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let option = Option::<TapButtonMap>::deserialize(deserializer)?;
+		let option = option.map(libinput::TapButtonMap::from);
+		Ok(option)
 	}
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ScrollMethod {
-	NoScroll,
-	TwoFinger,
-	Edge,
-	OnButtonDown,
-}
+mod scroll_method {
+	use serde::{Deserialize, Deserializer};
+	use smithay::reexports::input as libinput;
 
-impl From<ScrollMethod> for libinput::ScrollMethod {
-	fn from(value: ScrollMethod) -> Self {
-		match value {
-			ScrollMethod::NoScroll => libinput::ScrollMethod::NoScroll,
-			ScrollMethod::TwoFinger => libinput::ScrollMethod::TwoFinger,
-			ScrollMethod::Edge => libinput::ScrollMethod::Edge,
-			ScrollMethod::OnButtonDown => libinput::ScrollMethod::OnButtonDown,
+	#[derive(Debug, Deserialize)]
+	#[serde(rename_all = "snake_case")]
+	enum ScrollMethod {
+		NoScroll,
+		TwoFinger,
+		Edge,
+		OnButtonDown,
+	}
+
+	impl From<ScrollMethod> for libinput::ScrollMethod {
+		fn from(value: ScrollMethod) -> Self {
+			match value {
+				ScrollMethod::NoScroll => libinput::ScrollMethod::NoScroll,
+				ScrollMethod::TwoFinger => libinput::ScrollMethod::TwoFinger,
+				ScrollMethod::Edge => libinput::ScrollMethod::Edge,
+				ScrollMethod::OnButtonDown => libinput::ScrollMethod::OnButtonDown,
+			}
 		}
+	}
+
+	pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<libinput::ScrollMethod>, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let option = Option::<ScrollMethod>::deserialize(deserializer)?;
+		let option = option.map(libinput::ScrollMethod::from);
+		Ok(option)
 	}
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum AccelProfile {
-	Adaptive,
-	Flat,
-}
+mod accel_profile {
+	use serde::{Deserialize, Deserializer};
+	use smithay::reexports::input as libinput;
 
-impl From<AccelProfile> for libinput::AccelProfile {
-	fn from(value: AccelProfile) -> Self {
-		match value {
-			AccelProfile::Adaptive => libinput::AccelProfile::Adaptive,
-			AccelProfile::Flat => libinput::AccelProfile::Flat,
+	#[derive(Debug, Deserialize)]
+	#[serde(rename_all = "snake_case")]
+	enum AccelProfile {
+		Adaptive,
+		Flat,
+	}
+
+	impl From<AccelProfile> for libinput::AccelProfile {
+		fn from(value: AccelProfile) -> Self {
+			match value {
+				AccelProfile::Adaptive => libinput::AccelProfile::Adaptive,
+				AccelProfile::Flat => libinput::AccelProfile::Flat,
+			}
 		}
+	}
+
+	pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<libinput::AccelProfile>, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let option = Option::<AccelProfile>::deserialize(deserializer)?;
+		let option = option.map(libinput::AccelProfile::from);
+		Ok(option)
 	}
 }
