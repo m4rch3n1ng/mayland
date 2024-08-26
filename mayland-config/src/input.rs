@@ -63,17 +63,17 @@ pub struct Touchpad {
 	pub dwt: bool,
 	pub dwtp: bool,
 
-	pub click_method: ClickMethod,
+	pub click_method: Option<ClickMethod>,
 
 	pub middle_emulation: bool,
-	pub tap_button_map: TapButtonMap,
+	pub tap_button_map: Option<TapButtonMap>,
 	pub left_handed: bool,
 
 	pub natural_scroll: bool,
-	pub scroll_method: ScrollMethod,
+	pub scroll_method: Option<ScrollMethod>,
 
 	pub accel_speed: f64,
-	pub accel_profile: AccelProfile,
+	pub accel_profile: Option<AccelProfile>,
 }
 
 impl Default for Touchpad {
@@ -86,26 +86,25 @@ impl Default for Touchpad {
 			dwt: true,
 			dwtp: true,
 
-			click_method: ClickMethod::Clickfinger,
+			click_method: None,
 
 			middle_emulation: true,
-			tap_button_map: TapButtonMap::LeftRightMiddle,
+			tap_button_map: None,
 			left_handed: false,
 
 			natural_scroll: true,
-			scroll_method: ScrollMethod::TwoFinger,
+			scroll_method: None,
 
 			accel_speed: 0.0,
-			accel_profile: AccelProfile::Adaptive,
+			accel_profile: None,
 		}
 	}
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ClickMethod {
 	ButtonAreas,
-	#[default]
 	Clickfinger,
 }
 
@@ -118,10 +117,9 @@ impl From<ClickMethod> for libinput::ClickMethod {
 	}
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TapButtonMap {
-	#[default]
 	LeftRightMiddle,
 	LeftMiddleRight,
 }
@@ -135,11 +133,10 @@ impl From<TapButtonMap> for libinput::TapButtonMap {
 	}
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ScrollMethod {
 	NoScroll,
-	#[default]
 	TwoFinger,
 	Edge,
 	OnButtonDown,
@@ -156,10 +153,9 @@ impl From<ScrollMethod> for libinput::ScrollMethod {
 	}
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AccelProfile {
-	#[default]
 	Adaptive,
 	Flat,
 }
