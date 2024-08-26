@@ -1,6 +1,6 @@
 input {
 	keyboard {
-		# xkb_file = "/home/may/.config/keymap/may.xkb"
+		# xkb_file = "~/.config/keymap/may.xkb"
 
 		# xkb_layout = "de,us"
 		# xkb_model = "thinkpad"
