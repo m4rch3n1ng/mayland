@@ -10,7 +10,7 @@ use smithay::{
 			Fourcc,
 		},
 		drm::{compositor::DrmCompositor, DrmDevice, DrmDeviceFd, DrmEvent, DrmEventTime},
-		egl::{EGLContext, EGLDisplay},
+		egl::{EGLContext, EGLDevice, EGLDisplay},
 		input::InputEvent,
 		libinput::{LibinputInputBackend, LibinputSessionInterface},
 		renderer::{glow::GlowRenderer, Bind, ImportDma, ImportEgl},
@@ -27,6 +27,7 @@ use smithay::{
 		wayland_protocols::wp::presentation_time::server::wp_presentation_feedback,
 	},
 	utils::{DeviceFd, Monotonic},
+	wayland::dmabuf::{DmabufFeedbackBuilder, DmabufGlobal},
 };
 use smithay_drm_extras::{
 	drm_scanner::{DrmScanEvent, DrmScanner},
@@ -68,6 +69,7 @@ pub struct Udev {
 	udev_dispatcher: Dispatcher<'static, UdevBackend, State>,
 	primary_gpu_path: PathBuf,
 	output_device: Option<OutputDevice>,
+	dmabuf_global: Option<DmabufGlobal>,
 }
 
 impl Udev {
@@ -116,6 +118,7 @@ impl Udev {
 			session,
 			udev_dispatcher,
 			primary_gpu_path,
+			dmabuf_global: None,
 			output_device: None,
 		};
 
@@ -225,7 +228,21 @@ impl Udev {
 
 		// SAFETY: the egl context is only active in this thread
 		let mut glow = unsafe { GlowRenderer::new(egl_context) }.unwrap();
+
 		glow.bind_wl_display(&mayland.display_handle).unwrap();
+
+		let egl_device = EGLDevice::device_for_display(glow.egl_context().display()).unwrap();
+		let render_node = egl_device.try_get_render_node().unwrap().unwrap();
+
+		let dmabuf_formats = glow.dmabuf_formats();
+		let dmabuf_default_feedback = DmabufFeedbackBuilder::new(render_node.dev_id(), dmabuf_formats)
+			.build()
+			.unwrap();
+
+		let dmabuf_global = mayland
+			.dmabuf_state
+			.create_global_with_default_feedback::<State>(&mayland.display_handle, &dmabuf_default_feedback);
+		self.dmabuf_global = Some(dmabuf_global);
 
 		let token = mayland
 			.loop_handle
@@ -358,6 +375,13 @@ impl Udev {
 
 		let mut device = self.output_device.take().unwrap();
 		device.glow.unbind_wl_display();
+
+		// todo disable first
+		let dmabuf_global = self.dmabuf_global.take().unwrap();
+		mayland
+			.dmabuf_state
+			.destroy_global::<State>(&mayland.display_handle, dmabuf_global);
+
 		mayland.loop_handle.remove(device.token);
 	}
 
