@@ -105,7 +105,7 @@ impl Udev {
 		mayland
 			.loop_handle
 			.insert_source(notifier, |event, (), state| {
-				state.backend.udev().on_session_event(event);
+				state.backend.udev().on_session_event(event, &mut state.mayland);
 			})
 			.unwrap();
 
@@ -207,7 +207,7 @@ impl Udev {
 		}
 	}
 
-	fn on_session_event(&mut self, event: SessionEvent) {
+	fn on_session_event(&mut self, event: SessionEvent, mayland: &mut Mayland) {
 		match event {
 			SessionEvent::PauseSession => {
 				tracing::info!("pause session");
@@ -224,6 +224,8 @@ impl Udev {
 				if let Some(device) = &mut self.output_device {
 					device.drm.activate(true).unwrap();
 				}
+
+				mayland.queue_redraw_all();
 			}
 		}
 	}
