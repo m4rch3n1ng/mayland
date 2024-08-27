@@ -33,8 +33,7 @@ pub struct Cursor {
 
 impl Cursor {
 	pub fn new() -> Self {
-		let theme = CursorTheme::load("default");
-		let size = 24;
+		let (theme, size) = load_cursor_theme();
 
 		Cursor {
 			status: CursorImageStatus::default_named(),
@@ -122,6 +121,18 @@ impl Cursor {
 			}
 		}
 	}
+}
+
+fn load_cursor_theme() -> (CursorTheme, u32) {
+	let name = std::env::var("XCURSOR_THEME").unwrap_or_else(|_| "default".to_owned());
+	let theme = CursorTheme::load(&name);
+
+	let size = std::env::var("XCURSOR_SIZE")
+		.ok()
+		.and_then(|s| s.parse().ok())
+		.unwrap_or(24);
+
+	(theme, size)
 }
 
 #[derive(Debug)]
