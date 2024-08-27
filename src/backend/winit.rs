@@ -3,11 +3,13 @@ use crate::state::{Mayland, MaylandRenderElements, State};
 use smithay::{
 	backend::{
 		allocator::dmabuf::Dmabuf,
+		egl::EGLDevice,
 		renderer::{damage::OutputDamageTracker, glow::GlowRenderer, ImportDma, ImportEgl},
 		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
 	output::{Mode, Output, PhysicalProperties, Subpixel},
 	utils::{Rectangle, Transform},
+	wayland::dmabuf::DmabufFeedbackBuilder,
 };
 use tracing::{error, info};
 
@@ -42,6 +44,23 @@ impl Winit {
 		output.set_preferred(mode);
 
 		mayland.add_output(output.clone());
+
+		let egl_device = EGLDevice::device_for_display(backend.renderer().egl_context().display()).unwrap();
+		let render_node = egl_device.try_get_render_node().unwrap();
+
+		if let Some(node) = render_node {
+			let dmabuf_formats = backend.renderer().dmabuf_formats();
+			let dmabuf_default_feedback = DmabufFeedbackBuilder::new(node.dev_id(), dmabuf_formats)
+				.build()
+				.unwrap();
+
+			mayland.dmabuf_state.create_global_with_default_feedback::<State>(
+				&mayland.display_handle,
+				&dmabuf_default_feedback,
+			);
+		} else {
+			tracing::warn!("no render node");
+		}
 
 		if backend
 			.renderer()
