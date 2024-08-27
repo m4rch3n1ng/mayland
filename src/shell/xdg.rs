@@ -3,7 +3,7 @@ use crate::{
 	state::{Mayland, State},
 };
 use smithay::{
-	delegate_layer_shell, delegate_xdg_shell,
+	delegate_layer_shell, delegate_presentation, delegate_xdg_shell,
 	desktop::PopupKind,
 	reexports::wayland_server::protocol::{wl_seat::WlSeat, wl_surface::WlSurface},
 	utils::Serial,
@@ -75,6 +75,7 @@ impl XdgShellHandler for State {
 
 delegate_xdg_shell!(State);
 delegate_layer_shell!(State);
+delegate_presentation!(State);
 
 pub fn initial_configure_sent(toplevel: &ToplevelSurface) -> bool {
 	with_states(toplevel.wl_surface(), |states| {

@@ -42,6 +42,7 @@ use smithay::{
 		cursor_shape::CursorShapeManagerState,
 		dmabuf::DmabufState,
 		output::OutputManagerState,
+		presentation::PresentationState,
 		selection::{
 			data_device::DataDeviceState, primary_selection::PrimarySelectionState,
 			wlr_data_control::DataControlState,
@@ -126,6 +127,7 @@ pub struct Mayland {
 	pub seat_state: SeatState<State>,
 	pub xdg_decoration_state: XdgDecorationState,
 	pub xdg_shell_state: XdgShellState,
+	pub presentation_state: PresentationState,
 	pub shm_state: ShmState,
 	pub cursor_shape_manager_state: CursorShapeManagerState,
 
@@ -151,6 +153,7 @@ impl Mayland {
 
 		let mut seat_state = SeatState::new();
 		let mut seat = seat_state.new_wl_seat(&display_handle, "winit");
+		let clock = Clock::new();
 
 		let popups = PopupManager::default();
 
@@ -170,6 +173,7 @@ impl Mayland {
 			DataControlState::new::<State, _>(&display_handle, Some(&primary_selection_state), |_| true);
 		let xdg_decoration_state = XdgDecorationState::new::<State>(&display_handle);
 		let xdg_shell_state = XdgShellState::new::<State>(&display_handle);
+		let presentation_state = PresentationState::new::<State>(&display_handle, clock.id() as u32);
 		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
 		let cursor_shape_manager_state = CursorShapeManagerState::new::<State>(&display_handle);
 
@@ -186,7 +190,7 @@ impl Mayland {
 			seat,
 			popups,
 			output_state: HashMap::new(),
-			clock: Clock::new(),
+			clock,
 
 			workspaces,
 
@@ -206,6 +210,7 @@ impl Mayland {
 			seat_state,
 			xdg_decoration_state,
 			xdg_shell_state,
+			presentation_state,
 			shm_state,
 			cursor_shape_manager_state,
 
