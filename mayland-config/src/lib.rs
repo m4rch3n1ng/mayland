@@ -14,8 +14,16 @@ pub use self::{bind::Binds, decoration::Decoration, error::Error, input::Input};
 #[serde(default)]
 pub struct Config {
 	pub input: Input,
+	pub cursor: Cursor,
 	pub decoration: Decoration,
 	pub bind: Binds,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+pub struct Cursor {
+	pub xcursor_theme: Option<String>,
+	pub xcursor_size: Option<u32>,
 }
 
 static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {

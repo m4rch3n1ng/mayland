@@ -32,8 +32,8 @@ pub struct Cursor {
 }
 
 impl Cursor {
-	pub fn new(environment: &mut HashMap<String, String>) -> Self {
-		let (theme, size) = load_cursor_theme(environment);
+	pub fn new(config: &mayland_config::Cursor, environment: &mut HashMap<String, String>) -> Self {
+		let (theme, size) = load_cursor_theme(config, environment);
 
 		Cursor {
 			status: CursorImageStatus::default_named(),
@@ -87,13 +87,17 @@ impl Cursor {
 	}
 }
 
-fn load_cursor_theme(environment: &mut HashMap<String, String>) -> (CursorTheme, u32) {
-	let theme_name = std::env::var("XCURSOR_THEME").unwrap_or_else(|_| "default".to_owned());
+fn load_cursor_theme(
+	config: &mayland_config::Cursor,
+	environment: &mut HashMap<String, String>,
+) -> (CursorTheme, u32) {
+	let theme_name = (config.xcursor_theme.clone())
+		.or_else(|| std::env::var("XCURSOR_THEME").ok())
+		.unwrap_or_else(|| "default".to_owned());
 	let theme = CursorTheme::load(&theme_name);
 
-	let size = std::env::var("XCURSOR_SIZE")
-		.ok()
-		.and_then(|s| s.parse().ok())
+	let size = (config.xcursor_size)
+		.or_else(|| std::env::var("XCURSOR_SIZE").ok().and_then(|s| s.parse().ok()))
 		.unwrap_or(24);
 
 	environment.insert("XCURSOR_THEME".to_owned(), theme_name);

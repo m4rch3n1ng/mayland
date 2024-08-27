@@ -230,7 +230,7 @@ impl Mayland {
 			)
 			.unwrap();
 		let pointer = seat.add_pointer();
-		let cursor = Cursor::new(&mut environment);
+		let cursor = Cursor::new(&config.cursor, &mut environment);
 
 		let may_socket = MaySocket::init(&loop_handle, &socket_name);
 		environment.insert(

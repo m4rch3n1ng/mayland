@@ -41,6 +41,15 @@ decoration {
 	}
 }
 
+cursor {
+	# if this isn't set mayland will read from the
+	# XCURSOR_THEME and the XCURSOR_SIZE env var
+	# and will otherwise fallback to "default" and 24
+
+	# xcursor_theme = "Bibata-Modern-Classic"
+	# xcursor_size = 24
+}
+
 bind {
 	"mod escape" = "quit"
 	"mod q" = "close"
