@@ -66,6 +66,8 @@ struct UdevOutputState {
 #[derive(Debug)]
 pub struct Udev {
 	session: LibSeatSession,
+	libinput: Libinput,
+
 	udev_dispatcher: Dispatcher<'static, UdevBackend, State>,
 	primary_gpu_path: PathBuf,
 	output_device: Option<OutputDevice>,
@@ -102,13 +104,8 @@ impl Udev {
 
 		mayland
 			.loop_handle
-			.insert_source(notifier, |event, (), _state| match event {
-				SessionEvent::ActivateSession => {
-					info!("activate session");
-				}
-				SessionEvent::PauseSession => {
-					info!("pause session");
-				}
+			.insert_source(notifier, |event, (), state| {
+				state.backend.udev().on_session_event(event);
 			})
 			.unwrap();
 
@@ -116,6 +113,8 @@ impl Udev {
 
 		let mut udev = Udev {
 			session,
+			libinput,
+
 			udev_dispatcher,
 			primary_gpu_path,
 			dmabuf_global: None,
@@ -161,6 +160,10 @@ impl Udev {
 		&mut self.output_device.as_mut().unwrap().glow
 	}
 
+	pub fn switch_vt(&mut self, vt: i32) {
+		self.session.change_vt(vt).unwrap();
+	}
+
 	pub fn import_dmabuf(&mut self, dmabuf: &Dmabuf) -> bool {
 		let Some(output_device) = self.output_device.as_mut() else {
 			return false;
@@ -200,6 +203,27 @@ impl Udev {
 				}
 
 				self.device_removed(device_id, mayland);
+			}
+		}
+	}
+
+	fn on_session_event(&mut self, event: SessionEvent) {
+		match event {
+			SessionEvent::PauseSession => {
+				tracing::info!("pause session");
+
+				self.libinput.suspend();
+				if let Some(device) = &mut self.output_device {
+					device.drm.pause();
+				}
+			}
+			SessionEvent::ActivateSession => {
+				tracing::info!("activate session");
+
+				self.libinput.resume().unwrap();
+				if let Some(device) = &mut self.output_device {
+					device.drm.activate(true).unwrap();
+				}
 			}
 		}
 	}

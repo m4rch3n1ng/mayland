@@ -13,7 +13,10 @@ use smithay::{
 	},
 	desktop::{layer_map_for_output, WindowSurfaceType},
 	input::{
-		keyboard::{FilterResult, KeyboardHandle, Keysym, KeysymHandle, ModifiersState},
+		keyboard::{
+			keysyms::{KEY_XF86Switch_VT_1, KEY_XF86Switch_VT_12},
+			FilterResult, KeyboardHandle, Keysym, KeysymHandle, ModifiersState,
+		},
 		pointer::{AxisFrame, ButtonEvent, MotionEvent, RelativeMotionEvent},
 	},
 	reexports::wayland_server::protocol::wl_pointer,
@@ -232,6 +235,15 @@ impl State {
 		mods: &ModifiersState,
 		keysym: KeysymHandle,
 	) -> FilterResult<Option<Action>> {
+		if let vt_key @ KEY_XF86Switch_VT_1..=KEY_XF86Switch_VT_12 = keysym.modified_sym().raw() {
+			let vt = (vt_key - KEY_XF86Switch_VT_1 + 1) as i32;
+
+			self.backend.switch_vt(vt);
+			self.mayland.suppressed_keys.clear();
+
+			return FilterResult::Intercept(None);
+		}
+
 		let Some(raw_sym) = keysym.raw_latin_sym_or_raw_current_sym() else {
 			return FilterResult::Forward;
 		};

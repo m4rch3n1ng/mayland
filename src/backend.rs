@@ -31,6 +31,13 @@ impl Backend {
 		}
 	}
 
+	pub fn switch_vt(&mut self, vt: i32) {
+		match self {
+			Backend::Udev(udev) => udev.switch_vt(vt),
+			Backend::Winit(_) => (),
+		}
+	}
+
 	pub fn import_dmabuf(&mut self, dmabuf: &Dmabuf) -> bool {
 		match self {
 			Backend::Udev(udev) => udev.import_dmabuf(dmabuf),
