@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=mayland
+Comment=a bad wayland compositor
+Exec=/usr/bin/mayland
+Type=Application
+DesktopNames=mayland
