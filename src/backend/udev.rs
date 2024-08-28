@@ -429,6 +429,14 @@ impl Udev {
 			.create_surface(crtc, *mode, &[connector.handle()])
 			.unwrap();
 
+		let mut planes = surface.planes().clone();
+
+		// overlay planes need to be cleared when switching vt to
+		// avoid the windows getting stuck on the monitor when switching
+		// to a compositor that doesn't clean overlay planes on activate
+		// todo find a better way to do this
+		planes.overlay.clear();
+
 		let gbm_flags = GbmBufferFlags::RENDERING | GbmBufferFlags::SCANOUT;
 		let allocator = GbmAllocator::new(device.gbm.clone(), gbm_flags);
 
@@ -460,7 +468,7 @@ impl Udev {
 		let compositor = DrmCompositor::new(
 			OutputModeSource::Auto(output.clone()),
 			surface,
-			None,
+			Some(planes),
 			allocator,
 			device.gbm.clone(),
 			SUPPORTED_COLOR_FORMATS,
