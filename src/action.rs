@@ -31,13 +31,15 @@ impl State {
 				self.reset_keyboard_focus();
 			}
 			Action::Spawn(spawn) => {
-				let mut cmd = Command::new("/bin/sh");
-				cmd.arg("-c")
+				let [command, args @ ..] = &*spawn else {
+					panic!("spawn commands cannot be empty");
+				};
+
+				let mut cmd = Command::new(command);
+				cmd.args(args)
 					.stdin(Stdio::null())
 					.stdout(Stdio::null())
-					.stderr(Stdio::null())
-					.arg(&spawn)
-					.env("WAYLAND_DISPLAY", &self.mayland.socket_name);
+					.stderr(Stdio::null());
 
 				std::thread::spawn(move || match cmd.spawn() {
 					Ok(mut child) => {

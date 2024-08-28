@@ -54,7 +54,7 @@ impl Default for Binds {
 				mods: Modifiers::MOD,
 				key: Keysym::t,
 			},
-			Action::Spawn("kitty".to_owned()),
+			Action::Spawn(vec!["kitty".to_owned()]),
 		);
 
 		// spawn nautilus
@@ -63,7 +63,7 @@ impl Default for Binds {
 				mods: Modifiers::MOD,
 				key: Keysym::e,
 			},
-			Action::Spawn("nautilus".to_owned()),
+			Action::Spawn(vec!["nautilus".to_owned()]),
 		);
 
 		// spawn firefox
@@ -72,7 +72,7 @@ impl Default for Binds {
 				mods: Modifiers::MOD,
 				key: Keysym::n,
 			},
-			Action::Spawn("firefox".to_owned()),
+			Action::Spawn(vec!["firefox".to_owned()]),
 		);
 
 		// workspaces
