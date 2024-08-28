@@ -25,8 +25,10 @@ fn main() {
 	.unwrap();
 	state.load_config();
 
-	std::env::set_var("WAYLAND_DISPLAY", &state.mayland.socket_name);
-	std::env::set_var("GDK_BACKEND", "wayland");
+	state.mayland.environment.extend([
+		("WAYLAND_DISPLAY".to_owned(), state.mayland.socket_name.clone()),
+		("GDK_BACKEND".to_owned(), "wayland".to_owned()),
+	]);
 
 	event_loop
 		.run(None, &mut state, |state| {

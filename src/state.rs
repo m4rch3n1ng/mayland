@@ -114,6 +114,7 @@ impl State {
 #[derive(Debug)]
 pub struct Mayland {
 	pub config: Config,
+	pub environment: HashMap<String, String>,
 
 	pub display_handle: DisplayHandle,
 	pub socket_name: String,
@@ -170,6 +171,7 @@ impl Mayland {
 		comp: CompMod,
 	) -> Result<Self, MaylandError> {
 		let config = Config::read(comp)?;
+		let mut environment = HashMap::new();
 
 		let display_handle = display.handle();
 		let socket_name = init_wayland_display(display, event_loop);
@@ -208,12 +210,13 @@ impl Mayland {
 			)
 			.unwrap();
 		let pointer = seat.add_pointer();
-		let cursor = Cursor::new();
+		let cursor = Cursor::new(&mut environment);
 
 		let suppressed_keys = HashSet::new();
 
 		let mayland = Mayland {
 			config,
+			environment,
 
 			display_handle,
 			socket_name,

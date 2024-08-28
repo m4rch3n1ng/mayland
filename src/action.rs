@@ -39,7 +39,8 @@ impl State {
 				cmd.args(args)
 					.stdin(Stdio::null())
 					.stdout(Stdio::null())
-					.stderr(Stdio::null());
+					.stderr(Stdio::null())
+					.envs(&self.mayland.environment);
 
 				std::thread::spawn(move || match cmd.spawn() {
 					Ok(mut child) => {
