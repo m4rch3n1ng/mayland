@@ -39,7 +39,7 @@ bind {
 	"mod t" = "spawn" [ "kitty" ]
 	"mod e" = "spawn" [ "nautilus" ]
 	"mod n" = "spawn" [ "firefox" ]
-	"mod shift n" = "spawn" [ "firefox --private-window" ]
+	"mod shift n" = "spawn" [ "firefox" "--private-window" ]
 
 	"mod 0" = "workspace" [ 0 ]
 	"mod 1" = "workspace" [ 1 ]

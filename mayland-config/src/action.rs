@@ -9,5 +9,5 @@ pub enum Action {
 
 	Workspace(usize),
 
-	Spawn(String),
+	Spawn(Vec<String>),
 }
