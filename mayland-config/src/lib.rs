@@ -20,8 +20,16 @@ const CONFIG_PATH: &str = "/home/may/.config/mayland.mf";
 
 impl Config {
 	pub fn read(comp: CompMod) -> Result<Self, Error> {
-		let file =
-			std::fs::read_to_string(CONFIG_PATH).map_err(|_| Error::FileNotFound(CONFIG_PATH.to_owned()))?;
+		let file = match std::fs::read_to_string(CONFIG_PATH) {
+			Ok(file) => file,
+			Err(err) if matches!(err.kind(), std::io::ErrorKind::NotFound) => {
+				let mut config = Config::default();
+				config.bind = config.bind.flatten_mod(comp);
+
+				return Ok(config);
+			}
+			Err(err) => return Err(From::from(err)),
+		};
 
 		// workaround for https://github.com/rust-lang/annotate-snippets-rs/issues/25
 		let file = file.replace('\t', "    ");
