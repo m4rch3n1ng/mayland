@@ -524,7 +524,7 @@ impl State {
 
 				let _ = device.config_tap_set_enabled(conf.tap);
 				let _ = device.config_tap_set_drag_enabled(conf.tap_and_drag);
-				let _ = device.config_tap_set_drag_enabled(conf.tap_drag_lock);
+				let _ = device.config_tap_set_drag_lock_enabled(conf.tap_drag_lock);
 
 				let _ = device.config_dwt_set_enabled(conf.dwt);
 				let _ = device.config_dwtp_set_enabled(conf.dwtp);
