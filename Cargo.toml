@@ -1,6 +1,7 @@
 [workspace]
 members = [
 	"mayland-config",
+	"mayctl",
 ]
 
 [workspace.package]
