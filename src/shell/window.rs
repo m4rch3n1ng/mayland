@@ -203,7 +203,7 @@ impl PointerTarget<State> for MappedWindow {
 
 	fn button(&self, seat: &Seat<State>, data: &mut State, event: &ButtonEvent) {
 		let mods = data.mayland.keyboard.modifier_state();
-		if mods.alt {
+		if mods == data.mayland.comp_mod {
 			let button = event.button;
 
 			if button == 272 {

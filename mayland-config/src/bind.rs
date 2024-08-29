@@ -27,6 +27,12 @@ impl CompMod {
 	}
 }
 
+impl PartialEq<CompMod> for ModifiersState {
+	fn eq(&self, other: &CompMod) -> bool {
+		Modifiers::from_xkb(self) == other.modifiers()
+	}
+}
+
 #[derive(Debug)]
 pub struct Binds(HashMap<Mapping, Action>);
 

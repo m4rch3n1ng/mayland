@@ -160,6 +160,7 @@ pub struct Mayland {
 	pub keyboard: KeyboardHandle<State>,
 	pub cursor: Cursor,
 
+	pub comp_mod: CompMod,
 	pub suppressed_keys: HashSet<Keycode>,
 }
 
@@ -174,9 +175,9 @@ impl Mayland {
 	fn new(
 		event_loop: &mut EventLoop<'static, State>,
 		display: Display<State>,
-		comp: CompMod,
+		comp_mod: CompMod,
 	) -> Result<Self, MaylandError> {
-		let config = Config::read(comp)?;
+		let config = Config::read(comp_mod)?;
 		let mut environment = HashMap::new();
 
 		let display_handle = display.handle();
@@ -260,6 +261,7 @@ impl Mayland {
 			keyboard,
 			cursor,
 
+			comp_mod,
 			suppressed_keys,
 		};
 
