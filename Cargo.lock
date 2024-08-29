@@ -903,6 +903,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "mayctl"
+version = "0.1.0"
+
+[[package]]
 name = "mayfig"
 version = "0.1.0"
 source = "git+https://github.com/m4rch3n1ng/mayfig.git#63f04cb30289fdd993a6030f9d5009f91b047f29"
