@@ -6,6 +6,7 @@ use crate::{
 	layout::workspace::WorkspaceManager,
 	shell::window::UnmappedSurface,
 };
+use calloop::futures::Scheduler;
 use indexmap::IndexSet;
 use mayland_config::{bind::CompMod, Config};
 use smithay::{
@@ -141,6 +142,7 @@ pub struct Mayland {
 	pub start_time: std::time::Instant,
 	pub loop_signal: LoopSignal,
 	pub loop_handle: LoopHandle<'static, State>,
+	pub scheduler: Scheduler<()>,
 
 	// wayland state
 	pub compositor_state: CompositorState,
@@ -199,6 +201,8 @@ impl Mayland {
 		let start_time = Instant::now();
 		let loop_signal = event_loop.get_signal();
 		let loop_handle = event_loop.handle();
+		let (executor, scheduler) = calloop::futures::executor().unwrap();
+		loop_handle.insert_source(executor, |(), (), _| ()).unwrap();
 
 		let compositor_state = CompositorState::new::<State>(&display_handle);
 		let data_device_state = DataDeviceState::new::<State>(&display_handle);
@@ -246,6 +250,7 @@ impl Mayland {
 			start_time,
 			loop_signal,
 			loop_handle,
+			scheduler,
 
 			compositor_state,
 			data_device_state,

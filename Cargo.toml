@@ -46,6 +46,9 @@ tracing = "0.1.40"
 tracing-journald = "0.3.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 xcursor = "0.3.8"
+calloop = { version = "0.14.0", features = ["executor", "futures-io"] }
+futures-util = { version = "0.3.30", default-features = false, features = ["std", "io"] }
+async-channel = "2.3.1"
 
 [dependencies.smithay]
 workspace = true
