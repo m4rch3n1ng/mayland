@@ -4,6 +4,7 @@ input {
 
 		# xkb_layout = "de,us"
 		# xkb_model = "thinkpad"
+		# xkb_variant = "nodeadkeys"
 		# xkb_options = "ctrl:nocaps"
 
 		repeat_delay = 600

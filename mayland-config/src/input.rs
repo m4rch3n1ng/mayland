@@ -16,8 +16,8 @@ pub struct Keyboard {
 	pub xkb_file: Option<String>,
 
 	pub xkb_rules: String,
-	pub xkb_model: String,
 	pub xkb_layout: String,
+	pub xkb_model: String,
 	pub xkb_variant: String,
 	pub xkb_options: Option<String>,
 
