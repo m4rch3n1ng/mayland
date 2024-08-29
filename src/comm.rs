@@ -1,10 +1,9 @@
 use crate::{state::Mayland, State};
+use calloop::{io::Async, LoopHandle};
+use futures_util::{AsyncBufReadExt, AsyncWriteExt};
 use mayland_comm::{Request, Response};
 use smithay::reexports::calloop::{generic::Generic, Interest, Mode, PostAction};
-use std::{
-	io::{BufRead, BufReader, Write},
-	os::unix::net::{UnixListener, UnixStream},
-};
+use std::os::unix::net::{UnixListener, UnixStream};
 
 static SOCKET_PATH: &str = "/tmp/mayland.sock";
 
@@ -40,21 +39,37 @@ impl MaySocket {
 	}
 }
 
-fn handle_stream(state: &mut State, mut stream: UnixStream) {
-	let mut read = BufReader::new(&mut stream);
+fn handle_stream(state: &mut State, stream: UnixStream) {
+	let stream = state.mayland.loop_handle.adapt_io(stream).unwrap();
+	let loop_handle = state.mayland.loop_handle.clone();
+	let future = async move {
+		handle_client(loop_handle, stream).await;
+	};
+
+	state.mayland.scheduler.schedule(future).unwrap();
+}
+
+async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async<'_, UnixStream>) {
+	let mut read = futures_util::io::BufReader::new(&mut stream);
 	let mut buf = String::new();
-	read.read_line(&mut buf).unwrap();
+	read.read_line(&mut buf).await.unwrap();
 
 	let request = serde_json::from_str::<Request>(&buf).unwrap();
 	let reply = match request {
 		Request::Dispatch(action) => {
-			state.handle_action(action);
+			let (tx, rx) = async_channel::bounded(1);
+			event_loop.insert_idle(move |state| {
+				state.handle_action(action);
+				let _ = tx.send_blocking(());
+			});
+
+			let () = rx.recv().await.unwrap();
 			Response::Dispatch
 		}
 	};
 
 	let reply = serde_json::to_vec(&reply).unwrap();
-	stream.write_all(&reply).unwrap();
+	stream.write_all(&reply).await.unwrap();
 }
 
 impl Drop for MaySocket {
