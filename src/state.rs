@@ -428,8 +428,6 @@ fn init_wayland_display(display: Display<State>, event_loop: &mut EventLoop<Stat
 	let source = ListeningSocketSource::new_auto().unwrap();
 	let socket_name = source.socket_name().to_os_string().into_string().unwrap();
 
-	let handle = event_loop.handle();
-
 	event_loop
 		.handle()
 		.insert_source(source, move |client_stream, (), state| {
@@ -443,7 +441,8 @@ fn init_wayland_display(display: Display<State>, event_loop: &mut EventLoop<Stat
 		.expect("failed to init the wayland event source.");
 
 	// add display to event loop
-	handle
+	event_loop
+		.handle()
 		.insert_source(
 			Generic::new(display, Interest::READ, Mode::Level),
 			|_, display, state| {

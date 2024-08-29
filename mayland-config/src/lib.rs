@@ -1,8 +1,7 @@
-use std::{path::PathBuf, sync::LazyLock};
-
 use annotate_snippets::{Level, Renderer, Snippet};
 use bind::CompMod;
 use serde::Deserialize;
+use std::{path::PathBuf, sync::LazyLock};
 
 mod action;
 pub mod bind;

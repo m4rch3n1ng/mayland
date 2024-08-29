@@ -412,8 +412,8 @@ impl Udev {
 	}
 
 	fn connector_connected(&mut self, connector: connector::Info, crtc: crtc::Handle, mayland: &mut Mayland) {
-		let output_name = format!("{}-{}", connector.interface().as_str(), connector.interface_id(),);
-		info!("connecting connector: {output_name}");
+		let output_name = format!("{}-{}", connector.interface().as_str(), connector.interface_id());
+		info!("connecting connector: {}", output_name);
 
 		let device = self.output_device.as_mut().unwrap();
 

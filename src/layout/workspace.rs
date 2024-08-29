@@ -109,7 +109,7 @@ impl WorkspaceManager {
 
 		self.space.map_output(output, (x, 0));
 
-		let idx = (0..)
+		let idx = (0..usize::MAX)
 			.find(|n| self.output_map.values().all(|v| n != v))
 			.expect("if you have more than usize::MAX monitors you deserve this");
 
