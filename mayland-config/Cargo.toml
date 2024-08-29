@@ -14,7 +14,7 @@ smithay = { workspace = true, features = ["backend_libinput"] }
 thiserror = { workspace = true }
 
 [dependencies.mayfig]
-git = "ssh://git@github.com/m4rch3n1ng/mayfig.git"
+git = "https://github.com/m4rch3n1ng/mayfig.git"
 branch = "main"
 version = "0.1.0"
 
