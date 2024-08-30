@@ -79,42 +79,42 @@ impl Default for Binds {
 		binds.insert(
 			Mapping {
 				mods: Modifiers::MOD,
-				key: Keysym::_0,
+				key: Keysym::_1,
 			},
 			Action::Workspace(0),
 		);
 		binds.insert(
 			Mapping {
 				mods: Modifiers::MOD,
-				key: Keysym::_1,
+				key: Keysym::_2,
 			},
 			Action::Workspace(1),
 		);
 		binds.insert(
 			Mapping {
 				mods: Modifiers::MOD,
-				key: Keysym::_2,
+				key: Keysym::_3,
 			},
 			Action::Workspace(2),
 		);
 		binds.insert(
 			Mapping {
 				mods: Modifiers::MOD,
-				key: Keysym::_3,
+				key: Keysym::_4,
 			},
 			Action::Workspace(3),
 		);
 		binds.insert(
 			Mapping {
 				mods: Modifiers::MOD,
-				key: Keysym::_4,
+				key: Keysym::_5,
 			},
 			Action::Workspace(4),
 		);
 		binds.insert(
 			Mapping {
 				mods: Modifiers::MOD,
-				key: Keysym::_5,
+				key: Keysym::_6,
 			},
 			Action::Workspace(5),
 		);
