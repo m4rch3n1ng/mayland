@@ -1,18 +1,24 @@
-use mayland_comm::{Action, Request, Response};
+use self::cli::Cli;
+use clap::Parser;
+use mayland_comm::{Request, Response};
 use std::{
 	io::{BufRead, BufReader, Write},
 	net::Shutdown,
 	os::unix::net::UnixStream,
 };
 
+mod cli;
+
 const SOCKET_PATH: &str = "/tmp/mayland.sock";
 
 fn main() {
-	let dispatch = Request::Dispatch(Action::Spawn(vec!["kitty".to_owned()]));
-	let dispatch = serde_json::to_string(&dispatch).unwrap();
+	let cli = Cli::parse();
+
+	let request = Request::from(cli);
+	let message = serde_json::to_string(&request).unwrap();
 
 	let mut stream = UnixStream::connect(SOCKET_PATH).unwrap();
-	stream.write_all(dispatch.as_bytes()).unwrap();
+	stream.write_all(message.as_bytes()).unwrap();
 	stream.shutdown(Shutdown::Write).unwrap();
 
 	let mut read = BufReader::new(&mut stream);
@@ -20,7 +26,12 @@ fn main() {
 	read.read_line(&mut buf).unwrap();
 
 	let reply = serde_json::from_str::<Response>(&buf).unwrap();
-	dbg!(reply);
-
 	stream.shutdown(Shutdown::Read).unwrap();
+
+	match request {
+		Request::Dispatch(_) => {
+			assert!(matches!(reply, Response::Dispatch));
+			println!("ok dispatch");
+		}
+	}
 }
