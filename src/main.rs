@@ -1,4 +1,4 @@
-use mayland::{comm::MaySocket, MaylandError, State};
+use mayland::{MaylandError, State};
 use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
 
 mod trace;
@@ -23,8 +23,6 @@ fn main() {
 	}
 	.unwrap();
 	state.load_config();
-
-	let _socket = MaySocket::init(&state.mayland);
 
 	state.mayland.environment.extend([
 		("WAYLAND_DISPLAY".to_owned(), state.mayland.socket_name.clone()),

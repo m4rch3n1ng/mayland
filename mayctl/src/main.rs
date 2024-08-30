@@ -1,6 +1,6 @@
 use self::cli::Cli;
 use clap::Parser;
-use mayland_comm::{Request, Response};
+use mayland_comm::{Request, Response, MAYLAND_SOCKET_VAR};
 use std::{
 	io::{BufRead, BufReader, Write},
 	net::Shutdown,
@@ -9,15 +9,14 @@ use std::{
 
 mod cli;
 
-const SOCKET_PATH: &str = "/tmp/mayland.sock";
-
 fn main() {
 	let cli = Cli::parse();
+	let socket_path = std::env::var(MAYLAND_SOCKET_VAR).expect("not running in a mayland instance");
 
 	let request = Request::from(cli);
 	let message = serde_json::to_string(&request).unwrap();
 
-	let mut stream = UnixStream::connect(SOCKET_PATH).unwrap();
+	let mut stream = UnixStream::connect(socket_path).unwrap();
 	stream.write_all(message.as_bytes()).unwrap();
 	stream.shutdown(Shutdown::Write).unwrap();
 

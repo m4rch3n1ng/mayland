@@ -1,4 +1,4 @@
-use crate::{state::Mayland, State};
+use crate::State;
 use calloop::{io::Async, LoopHandle};
 use futures_util::{AsyncBufReadExt, AsyncWriteExt};
 use mayland_comm::{Request, Response};
@@ -7,12 +7,13 @@ use std::os::unix::net::{UnixListener, UnixStream};
 
 static SOCKET_PATH: &str = "/tmp/mayland.sock";
 
+#[derive(Debug)]
 pub struct MaySocket {
 	pub path: String,
 }
 
 impl MaySocket {
-	pub fn init(mayland: &Mayland) -> Self {
+	pub fn init(loop_handle: &LoopHandle<'static, State>) -> Self {
 		let socket_path = SOCKET_PATH.to_owned();
 		if std::fs::exists(&socket_path).unwrap() {
 			std::fs::remove_file(&socket_path).unwrap();
@@ -22,8 +23,7 @@ impl MaySocket {
 		listener.set_nonblocking(true).unwrap();
 
 		let source = Generic::new(listener, Interest::READ, Mode::Level);
-		mayland
-			.loop_handle
+		loop_handle
 			.insert_source(source, |_, socket, state| {
 				match socket.accept() {
 					Ok((stream, _addr)) => handle_stream(state, stream),
