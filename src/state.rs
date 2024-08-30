@@ -1,11 +1,13 @@
 use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
+	comm::MaySocket,
 	cursor::{Cursor, RenderCursor},
 	error::MaylandError,
 	layout::workspace::WorkspaceManager,
 	shell::window::UnmappedSurface,
 };
 use calloop::futures::Scheduler;
+use mayland_comm::MAYLAND_SOCKET_VAR;
 use mayland_config::{bind::CompMod, Config};
 use smithay::{
 	backend::{
@@ -162,6 +164,8 @@ pub struct Mayland {
 	pub keyboard: KeyboardHandle<State>,
 	pub cursor: Cursor,
 
+	pub may_socket: MaySocket,
+
 	pub suppressed_keys: HashSet<Keycode>,
 }
 
@@ -223,6 +227,9 @@ impl Mayland {
 		let pointer = seat.add_pointer();
 		let cursor = Cursor::new(&mut environment);
 
+		let may_socket = MaySocket::init(&loop_handle);
+		environment.insert(MAYLAND_SOCKET_VAR.to_owned(), may_socket.path.clone());
+
 		let suppressed_keys = HashSet::new();
 
 		let mayland = Mayland {
@@ -264,6 +271,8 @@ impl Mayland {
 			pointer,
 			keyboard,
 			cursor,
+
+			may_socket,
 
 			suppressed_keys,
 		};
