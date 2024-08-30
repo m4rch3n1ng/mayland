@@ -23,8 +23,32 @@ impl CompMod {
 	}
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct Binds(HashMap<Mapping, Action>);
+
+impl<'de> Deserialize<'de> for Binds {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: serde::Deserializer<'de>,
+	{
+		let mut map = HashMap::<Mapping, Action>::deserialize(deserializer)?;
+
+		// insert shortcut to close the compositor, if none is set
+		// so that you can always at least get out if your shortcuts are broken
+		if map.values().all(|action| *action != Action::Quit) {
+			map.insert(
+				Mapping {
+					mods: Modifiers::MOD,
+					key: Keysym::Escape,
+				},
+				Action::Quit,
+			);
+		}
+
+		let binds = Binds(map);
+		Ok(binds)
+	}
+}
 
 impl Default for Binds {
 	fn default() -> Self {
