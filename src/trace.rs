@@ -93,4 +93,6 @@ pub fn setup() {
 		}
 		Err(_) => registry.init(),
 	}
+
+	log_panics::init();
 }

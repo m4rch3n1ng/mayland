@@ -5,7 +5,6 @@ mod trace;
 
 fn main() {
 	trace::setup();
-	std::panic::set_hook(Box::new(tracing_panic::panic_hook));
 
 	let mut event_loop = EventLoop::<State>::try_new().unwrap();
 	let display = Display::<State>::new().unwrap();
