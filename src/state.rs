@@ -235,8 +235,12 @@ impl Mayland {
 		let pointer = seat.add_pointer();
 		let cursor = Cursor::new(&mut environment);
 
-		let may_socket = MaySocket::init(&loop_handle);
-		environment.insert(MAYLAND_SOCKET_VAR.to_owned(), may_socket.path.clone());
+		let may_socket = MaySocket::init(&loop_handle, &socket_name);
+		environment.insert(
+			MAYLAND_SOCKET_VAR.to_owned(),
+			// todo fix this if it ever results in a panic
+			may_socket.path.clone().into_os_string().into_string().unwrap(),
+		);
 
 		let mayland = Mayland {
 			config,
