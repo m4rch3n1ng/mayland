@@ -1,8 +1,5 @@
 use chrono::Utc;
-use std::{
-	env,
-	fs::{self, File},
-};
+use std::fs::{self, File};
 use tracing::Subscriber;
 use tracing_journald as journald;
 use tracing_subscriber::{
@@ -34,10 +31,9 @@ fn only_trace<F>() -> impl Filter<F> {
 }
 
 fn log_file(ext: &str) -> File {
-	// todo pls
-	let cwd = env::current_dir().unwrap();
+	let local = dirs::data_dir().unwrap_or_else(std::env::temp_dir);
 
-	let dir = cwd.join(".tmp");
+	let dir = local.join("mayland");
 	fs::create_dir_all(&dir).unwrap();
 
 	let date = iso8601();
