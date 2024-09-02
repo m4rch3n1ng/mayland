@@ -1,6 +1,9 @@
 use crate::{shell::focus::KeyboardFocusTarget, state::State};
 use mayland_config::Action;
-use std::process::{Command, Stdio};
+use std::{
+	os::unix::process::CommandExt,
+	process::{Command, Stdio},
+};
 use tracing::error;
 
 impl State {
@@ -41,6 +44,25 @@ impl State {
 					.stdout(Stdio::null())
 					.stderr(Stdio::null())
 					.envs(&self.mayland.environment);
+
+				// SAFETY: the pre_exec closure does not access
+				// any memory of the parent process and is therefore safe to use
+				unsafe {
+					cmd.pre_exec(|| {
+						// double fork
+						match libc::fork() {
+							// fork returned an error
+							-1 => return Err(std::io::Error::last_os_error()),
+							// fork is inside the child process
+							0 => (),
+							// fork is inside the intermediate parent process
+							// so kill the intermediate parent
+							_ => libc::_exit(0),
+						};
+
+						Ok(())
+					})
+				};
 
 				std::thread::spawn(move || match cmd.spawn() {
 					Ok(mut child) => {
