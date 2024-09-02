@@ -3,23 +3,29 @@ use calloop::{io::Async, LoopHandle};
 use futures_util::{AsyncBufReadExt, AsyncWriteExt};
 use mayland_comm::{Request, Response};
 use smithay::reexports::calloop::{generic::Generic, Interest, Mode, PostAction};
-use std::os::unix::net::{UnixListener, UnixStream};
-
-static SOCKET_PATH: &str = "/tmp/mayland.sock";
+use std::{
+	os::unix::net::{UnixListener, UnixStream},
+	path::PathBuf,
+};
 
 #[derive(Debug)]
 pub struct MaySocket {
-	pub path: String,
+	pub path: PathBuf,
+}
+
+fn socket_path(wayland_socket_name: &str) -> PathBuf {
+	let mut runtime_dir = dirs::runtime_dir().unwrap_or_else(std::env::temp_dir);
+	let socket_name = format!("mayland.{}.{}.sock", wayland_socket_name, std::process::id());
+	runtime_dir.push(socket_name);
+
+	runtime_dir
 }
 
 impl MaySocket {
-	pub fn init(loop_handle: &LoopHandle<'static, State>) -> Self {
-		let socket_path = SOCKET_PATH.to_owned();
-		if std::fs::exists(&socket_path).unwrap() {
-			std::fs::remove_file(&socket_path).unwrap();
-		}
+	pub fn init(loop_handle: &LoopHandle<'static, State>, wayland_socket_name: &str) -> Self {
+		let socket_path = socket_path(wayland_socket_name);
 
-		let listener = UnixListener::bind(SOCKET_PATH).unwrap();
+		let listener = UnixListener::bind(&socket_path).unwrap();
 		listener.set_nonblocking(true).unwrap();
 
 		let source = Generic::new(listener, Interest::READ, Mode::Level);
@@ -74,6 +80,6 @@ async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async
 
 impl Drop for MaySocket {
 	fn drop(&mut self) {
-		let _ = std::fs::remove_file(SOCKET_PATH);
+		let _ = std::fs::remove_file(&self.path);
 	}
 }
