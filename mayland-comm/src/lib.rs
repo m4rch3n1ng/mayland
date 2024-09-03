@@ -7,10 +7,17 @@ pub const MAYLAND_SOCKET_VAR: &str = "MAYLAND_SOCKET";
 #[serde(rename_all = "snake_case")]
 pub enum Request {
 	Dispatch(Action),
+	Info,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Response {
 	Dispatch,
+	Info(Info),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Info {
+	pub workspaces: Vec<usize>,
 }

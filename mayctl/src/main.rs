@@ -32,5 +32,9 @@ fn main() {
 			assert!(matches!(reply, Response::Dispatch));
 			println!("ok dispatch");
 		}
+		Request::Info => {
+			let Response::Info(info) = reply else { panic!() };
+			println!("{:#?}", info);
+		}
 	}
 }

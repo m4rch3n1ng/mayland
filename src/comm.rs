@@ -1,7 +1,7 @@
 use crate::State;
 use calloop::{io::Async, LoopHandle};
 use futures_util::{AsyncBufReadExt, AsyncWriteExt};
-use mayland_comm::{Request, Response};
+use mayland_comm::{Info, Request, Response};
 use smithay::reexports::calloop::{generic::Generic, Interest, Mode, PostAction};
 use std::{
 	os::unix::net::{UnixListener, UnixStream},
@@ -71,6 +71,18 @@ async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async
 
 			let () = rx.recv().await.unwrap();
 			Response::Dispatch
+		}
+		Request::Info => {
+			let (tx, rx) = async_channel::bounded(1);
+			event_loop.insert_idle(move |state| {
+				let workspaces = state.mayland.workspaces.workspaces.keys().copied().collect();
+
+				let info = Info { workspaces };
+				let _ = tx.send_blocking(info);
+			});
+
+			let info = rx.recv().await.unwrap();
+			Response::Info(info)
 		}
 	};
 

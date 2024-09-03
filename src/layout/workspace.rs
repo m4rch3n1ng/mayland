@@ -24,7 +24,7 @@ pub struct WorkspaceManager {
 	active_output: Option<Output>,
 	output_map: HashMap<Output, usize>,
 
-	workspaces: BTreeMap<usize, Workspace>,
+	pub workspaces: BTreeMap<usize, Workspace>,
 }
 
 impl WorkspaceManager {
