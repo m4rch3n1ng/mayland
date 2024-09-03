@@ -1,6 +1,11 @@
+use crate::state::Mayland;
 use smithay::{
 	output::Output,
 	utils::{Coordinate, Logical, Point, Rectangle, Size},
+};
+use std::{
+	os::unix::process::CommandExt,
+	process::{Command, Stdio},
 };
 
 pub trait RectExt<N, Kind> {
@@ -36,4 +41,43 @@ pub fn output_size(output: &Output) -> Size<i32, Logical> {
 	output_transform
 		.transform_size(output_mode.size)
 		.to_logical(output_scale)
+}
+
+pub fn spawn(spawn: Vec<String>, mayland: &Mayland) {
+	let [command, args @ ..] = &*spawn else {
+		panic!("spawn commands cannot be empty");
+	};
+
+	let mut cmd = Command::new(command);
+	cmd.args(args)
+		.stdin(Stdio::null())
+		.stdout(Stdio::null())
+		.stderr(Stdio::null())
+		.envs(&mayland.environment);
+
+	// SAFETY: the pre_exec closure does not access
+	// any memory of the parent process and is therefore safe to use
+	unsafe {
+		cmd.pre_exec(|| {
+			// double fork
+			match libc::fork() {
+				// fork returned an error
+				-1 => return Err(std::io::Error::last_os_error()),
+				// fork is inside the child process
+				0 => (),
+				// fork is inside the intermediate parent process
+				// so kill the intermediate parent
+				_ => libc::_exit(0),
+			};
+
+			Ok(())
+		})
+	};
+
+	std::thread::spawn(move || match cmd.spawn() {
+		Ok(mut child) => {
+			let _ = child.wait();
+		}
+		Err(err) => tracing::error!("error spawning child: {:?}", err),
+	});
 }

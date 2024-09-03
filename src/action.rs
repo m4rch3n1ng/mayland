@@ -1,10 +1,5 @@
-use crate::{shell::focus::KeyboardFocusTarget, state::State};
+use crate::{shell::focus::KeyboardFocusTarget, state::State, utils::spawn};
 use mayland_config::Action;
-use std::{
-	os::unix::process::CommandExt,
-	process::{Command, Stdio},
-};
-use tracing::error;
 
 impl State {
 	pub fn handle_action(&mut self, action: Action) {
@@ -33,43 +28,8 @@ impl State {
 
 				self.reset_keyboard_focus();
 			}
-			Action::Spawn(spawn) => {
-				let [command, args @ ..] = &*spawn else {
-					panic!("spawn commands cannot be empty");
-				};
-
-				let mut cmd = Command::new(command);
-				cmd.args(args)
-					.stdin(Stdio::null())
-					.stdout(Stdio::null())
-					.stderr(Stdio::null())
-					.envs(&self.mayland.environment);
-
-				// SAFETY: the pre_exec closure does not access
-				// any memory of the parent process and is therefore safe to use
-				unsafe {
-					cmd.pre_exec(|| {
-						// double fork
-						match libc::fork() {
-							// fork returned an error
-							-1 => return Err(std::io::Error::last_os_error()),
-							// fork is inside the child process
-							0 => (),
-							// fork is inside the intermediate parent process
-							// so kill the intermediate parent
-							_ => libc::_exit(0),
-						};
-
-						Ok(())
-					})
-				};
-
-				std::thread::spawn(move || match cmd.spawn() {
-					Ok(mut child) => {
-						let _ = child.wait();
-					}
-					Err(err) => error!("error spawning child: {:?}", err),
-				});
+			Action::Spawn(command) => {
+				spawn(command, &self.mayland);
 			}
 		}
 	}
