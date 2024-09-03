@@ -11,6 +11,8 @@ pub enum Cli {
 		#[command(subcommand)]
 		dispatch: Dispatch,
 	},
+	/// request info from the compositor
+	Info,
 }
 
 #[derive(Debug, Subcommand)]
@@ -34,6 +36,7 @@ impl From<Cli> for Request {
 	fn from(value: Cli) -> Self {
 		match value {
 			Cli::Dispatch { dispatch: action } => Request::Dispatch(mayland_comm::Action::from(action)),
+			Cli::Info => Request::Info,
 		}
 	}
 }
