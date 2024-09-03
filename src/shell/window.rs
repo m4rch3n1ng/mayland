@@ -18,7 +18,11 @@ use smithay::{
 	output::Output,
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
 	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial, Size},
-	wayland::{seat::WaylandFocus, shell::xdg::ToplevelSurface},
+	wayland::{
+		compositor::with_states,
+		seat::WaylandFocus,
+		shell::xdg::{ToplevelSurface, XdgToplevelSurfaceData},
+	},
 };
 use std::{
 	borrow::Cow,
@@ -334,6 +338,32 @@ impl PointerTarget<State> for MappedWindow {
 impl WaylandFocus for MappedWindow {
 	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
 		self.window.wl_surface()
+	}
+}
+
+impl From<&MappedWindow> for mayland_comm::Window {
+	fn from(window: &MappedWindow) -> Self {
+		let Some(toplevel) = window.window.toplevel() else {
+			// todo xwayland
+			return mayland_comm::Window {
+				title: None,
+				app_id: None,
+			};
+		};
+
+		with_states(toplevel.wl_surface(), |states| {
+			let surface_data = states
+				.data_map
+				.get::<XdgToplevelSurfaceData>()
+				.unwrap()
+				.lock()
+				.unwrap();
+
+			mayland_comm::Window {
+				title: surface_data.title.clone(),
+				app_id: surface_data.app_id.clone(),
+			}
+		})
 	}
 }
 

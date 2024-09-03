@@ -34,7 +34,7 @@ impl WorkspaceManager {
 		let active_output = None;
 		let output_map = HashMap::new();
 
-		let workspace = Workspace::new();
+		let workspace = Workspace::new(0);
 		let workspaces = BTreeMap::from([(0, workspace)]);
 
 		WorkspaceManager {
@@ -69,7 +69,7 @@ impl WorkspaceManager {
 				prev.unmap_output(active_output);
 			}
 
-			let workspace = self.workspaces.entry(idx).or_insert_with(Workspace::new);
+			let workspace = self.workspaces.entry(idx).or_insert_with(|| Workspace::new(idx));
 			workspace.map_output(active_output);
 			*self.output_map.get_mut(active_output).unwrap() = idx;
 
@@ -118,7 +118,7 @@ impl WorkspaceManager {
 			self.active_output = Some(output.clone());
 		}
 
-		let workspace = self.workspaces.entry(idx).or_insert_with(Workspace::new);
+		let workspace = self.workspaces.entry(idx).or_insert_with(|| Workspace::new(idx));
 		workspace.map_output(output);
 	}
 
@@ -281,16 +281,21 @@ impl WorkspaceManager {
 
 #[derive(Debug)]
 pub struct Workspace {
+	idx: usize,
 	tiling: Tiling,
 	floating: Space<MappedWindow>,
 }
 
 impl Workspace {
-	fn new() -> Self {
+	fn new(idx: usize) -> Self {
 		let tiling = Tiling::new();
 		let floating = Space::default();
 
-		Workspace { tiling, floating }
+		Workspace {
+			idx,
+			tiling,
+			floating,
+		}
 	}
 }
 
@@ -462,5 +467,17 @@ impl Workspace {
 					(w, w.render_location(location))
 				})
 			})
+	}
+}
+
+impl From<&Workspace> for mayland_comm::Workspace {
+	fn from(workspace: &Workspace) -> Self {
+		let windows = workspace.windows().map(mayland_comm::Window::from).collect();
+
+		mayland_comm::Workspace {
+			idx: workspace.idx,
+			amt: workspace.windows().count(),
+			windows,
+		}
 	}
 }

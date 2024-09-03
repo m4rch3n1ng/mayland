@@ -24,5 +24,18 @@ pub enum Response {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Info {
-	pub workspaces: Vec<usize>,
+	pub workspaces: Vec<Workspace>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Workspace {
+	pub idx: usize,
+	pub amt: usize,
+	pub windows: Vec<Window>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Window {
+	pub title: Option<String>,
+	pub app_id: Option<String>,
 }
