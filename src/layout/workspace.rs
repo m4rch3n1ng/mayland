@@ -479,14 +479,15 @@ impl Workspace {
 
 impl From<&Workspace> for mayland_comm::Workspace {
 	fn from(workspace: &Workspace) -> Self {
-		let windows = workspace.windows().map(mayland_comm::Window::from).collect();
+		let windows = workspace
+			.windows()
+			.map(mayland_comm::workspace::Window::from)
+			.collect();
 		let output = workspace.output.as_ref().map(|output| output.name());
 
 		mayland_comm::Workspace {
 			idx: workspace.idx,
 			output,
-
-			amt: workspace.windows().count(),
 			windows,
 		}
 	}

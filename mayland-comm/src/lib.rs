@@ -12,6 +12,7 @@ pub const MAYLAND_SOCKET_VAR: &str = "MAYLAND_SOCKET";
 pub enum Request {
 	Dispatch(Action),
 	Info,
+	Workspaces,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,6 +21,7 @@ pub enum Request {
 pub enum Response {
 	Dispatch,
 	Info(Info),
+	Workspaces(Vec<Workspace>),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,13 +33,15 @@ pub struct Info {
 pub struct Workspace {
 	pub idx: usize,
 	pub output: Option<String>,
-
-	pub amt: usize,
-	pub windows: Vec<Window>,
+	pub windows: Vec<workspace::Window>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Window {
-	pub title: Option<String>,
-	pub app_id: Option<String>,
+pub mod workspace {
+	use serde::{Deserialize, Serialize};
+
+	#[derive(Debug, Serialize, Deserialize)]
+	pub struct Window {
+		pub title: Option<String>,
+		pub app_id: Option<String>,
+	}
 }

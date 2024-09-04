@@ -13,6 +13,8 @@ pub enum Cli {
 	},
 	/// request info from the compositor
 	Info,
+	/// request workspace info from the compositor
+	Workspaces,
 }
 
 #[derive(Debug, Subcommand)]
@@ -37,6 +39,7 @@ impl From<Cli> for Request {
 		match value {
 			Cli::Dispatch { dispatch: action } => Request::Dispatch(mayland_comm::Action::from(action)),
 			Cli::Info => Request::Info,
+			Cli::Workspaces => Request::Workspaces,
 		}
 	}
 }
