@@ -30,6 +30,8 @@ pub struct Info {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Workspace {
 	pub idx: usize,
+	pub output: Option<String>,
+
 	pub amt: usize,
 	pub windows: Vec<Window>,
 }

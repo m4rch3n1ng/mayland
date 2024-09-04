@@ -282,6 +282,8 @@ impl WorkspaceManager {
 #[derive(Debug)]
 pub struct Workspace {
 	idx: usize,
+	output: Option<Output>,
+
 	tiling: Tiling,
 	floating: Space<MappedWindow>,
 }
@@ -293,6 +295,8 @@ impl Workspace {
 
 		Workspace {
 			idx,
+			output: None,
+
 			tiling,
 			floating,
 		}
@@ -301,11 +305,14 @@ impl Workspace {
 
 impl Workspace {
 	fn map_output(&mut self, output: &Output) {
+		self.output = Some(output.clone());
+
 		self.tiling.map_output(output);
 		self.floating.map_output(output, (0, 0));
 	}
 
 	fn unmap_output(&mut self, output: &Output) {
+		self.output = None;
 		self.floating.unmap_output(output);
 	}
 
@@ -473,9 +480,12 @@ impl Workspace {
 impl From<&Workspace> for mayland_comm::Workspace {
 	fn from(workspace: &Workspace) -> Self {
 		let windows = workspace.windows().map(mayland_comm::Window::from).collect();
+		let output = workspace.output.as_ref().map(|output| output.name());
 
 		mayland_comm::Workspace {
 			idx: workspace.idx,
+			output,
+
 			amt: workspace.windows().count(),
 			windows,
 		}
