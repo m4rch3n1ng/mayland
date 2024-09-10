@@ -30,8 +30,8 @@ use smithay::{
 	wayland::dmabuf::{DmabufFeedbackBuilder, DmabufGlobal},
 };
 use smithay_drm_extras::{
+	display_info,
 	drm_scanner::{DrmScanEvent, DrmScanner},
-	edid::EdidInfo,
 };
 use std::{
 	collections::HashMap,
@@ -415,8 +415,6 @@ impl Udev {
 		let output_name = format!("{}-{}", connector.interface().as_str(), connector.interface_id());
 		info!("connecting connector: {}", output_name);
 
-		let device = self.output_device.as_mut().unwrap();
-
 		let mode = connector
 			.modes()
 			.iter()
@@ -424,6 +422,7 @@ impl Udev {
 			.max_by_key(|m| m.vrefresh())
 			.unwrap();
 
+		let device = self.output_device.as_mut().unwrap();
 		let surface = device
 			.drm
 			.create_surface(crtc, *mode, &[connector.handle()])
@@ -442,9 +441,15 @@ impl Udev {
 
 		let (physical_width, physical_height) = connector.size().unwrap_or((0, 0));
 
-		let (make, model) = EdidInfo::for_connector(&device.drm, connector.handle())
-			.map(|info| (info.manufacturer, info.model))
-			.unwrap_or_else(|| ("Unknown".into(), "Unknown".into()));
+		let info = display_info::for_connector(&device.drm, connector.handle());
+		let make = info
+			.as_ref()
+			.and_then(|info| info.make())
+			.unwrap_or_else(|| "unknown".to_owned());
+		let model = info
+			.as_ref()
+			.and_then(|info| info.model())
+			.unwrap_or_else(|| "unknown".to_owned());
 
 		let output = Output::new(
 			output_name,
