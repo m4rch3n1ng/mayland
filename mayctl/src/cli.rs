@@ -11,8 +11,6 @@ pub enum Cli {
 		#[command(subcommand)]
 		dispatch: Dispatch,
 	},
-	/// request info from the compositor
-	Info,
 	/// request workspace info from the compositor
 	Workspaces,
 }
@@ -38,7 +36,6 @@ impl From<Cli> for Request {
 	fn from(value: Cli) -> Self {
 		match value {
 			Cli::Dispatch { dispatch: action } => Request::Dispatch(mayland_comm::Action::from(action)),
-			Cli::Info => Request::Info,
 			Cli::Workspaces => Request::Workspaces,
 		}
 	}

@@ -11,7 +11,6 @@ pub const MAYLAND_SOCKET_VAR: &str = "MAYLAND_SOCKET";
 #[serde(tag = "tag", content = "val")]
 pub enum Request {
 	Dispatch(Action),
-	Info,
 	Workspaces,
 }
 
@@ -20,13 +19,7 @@ pub enum Request {
 #[serde(tag = "tag", content = "val")]
 pub enum Response {
 	Dispatch,
-	Info(Info),
 	Workspaces(Vec<Workspace>),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Info {
-	pub workspaces: Vec<Workspace>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
