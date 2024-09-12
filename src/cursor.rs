@@ -132,7 +132,7 @@ fn load_cursor_theme(environment: &mut HashMap<String, String>) -> (CursorTheme,
 		.and_then(|s| s.parse().ok())
 		.unwrap_or(24);
 
-	environment.insert("XCURSOR_THEME".to_owned(), theme_name.clone());
+	environment.insert("XCURSOR_THEME".to_owned(), theme_name);
 	environment.insert("XCURSOR_SIZE".to_owned(), size.to_string());
 
 	(theme, size)

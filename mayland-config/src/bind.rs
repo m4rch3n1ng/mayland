@@ -8,6 +8,10 @@ use smithay::input::keyboard::{
 };
 use std::{collections::HashMap, fmt::Debug};
 
+/// defines what the modifier `"mod"` binds to
+///
+/// set to [`CompMod::Alt`] in winit
+/// and [`CompMod::Meta`] in udev mode
 #[derive(Debug, Clone, Copy)]
 pub enum CompMod {
 	Alt,
