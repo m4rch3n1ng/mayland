@@ -353,7 +353,9 @@ impl State {
 	fn set_window_focus(&mut self, window: MappedWindow, keyboard: &KeyboardHandle<State>, serial: Serial) {
 		self.mayland.workspaces.activate_window(&window);
 		if let Some(xsurface) = window.window.x11_surface() {
-			self.mayland.xwm.as_mut().unwrap().raise_window(xsurface).unwrap();
+			if let Some(xwm) = self.mayland.xwm.as_mut() {
+				xwm.raise_window(xsurface).unwrap();
+			}
 		}
 
 		keyboard.set_focus(self, Some(KeyboardFocusTarget::Window(window)), serial);

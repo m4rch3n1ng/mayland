@@ -109,6 +109,10 @@ impl XwmHandler for State {
 	fn move_request(&mut self, _xwm: XwmId, _window: X11Surface, _button: u32) {
 		// explicity ignore move_request
 	}
+
+	fn disconnected(&mut self, _xwm: XwmId) {
+		self.mayland.xwm = None;
+	}
 }
 
 delegate_xwayland_shell!(State);
