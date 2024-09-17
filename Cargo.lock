@@ -1028,6 +1028,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "mayland-comm",
+ "serde",
  "serde_json",
 ]
 

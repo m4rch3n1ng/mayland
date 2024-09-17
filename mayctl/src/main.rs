@@ -1,6 +1,7 @@
 use self::cli::Cli;
 use clap::Parser;
 use mayland_comm::{Request, Response, MAYLAND_SOCKET_VAR};
+use serde::Serialize;
 use std::{
 	fmt::Display,
 	io::{BufRead, BufReader, Write},
@@ -14,7 +15,7 @@ fn main() {
 	let cli = Cli::parse();
 	let socket_path = std::env::var(MAYLAND_SOCKET_VAR).expect("not running in a mayland instance");
 
-	let request = Request::from(cli);
+	let request = Request::from(cli.cmd);
 	let message = serde_json::to_string(&request).unwrap();
 
 	let mut stream = UnixStream::connect(socket_path).unwrap();
@@ -35,7 +36,12 @@ fn main() {
 		}
 		Request::Workspaces => {
 			let Response::Workspaces(workspaces) = reply else { panic!() };
-			prettify(&workspaces);
+
+			if cli.json {
+				stringify(&workspaces);
+			} else {
+				prettify(&workspaces);
+			}
 		}
 	}
 }
@@ -48,4 +54,15 @@ fn prettify<T: Display>(t: &[T]) {
 
 		print!("{}", t);
 	}
+}
+
+fn stringify<T: Serialize>(v: &T) {
+	let mut stdout = std::io::stdout();
+
+	// i would like to use a tab, but this is called depression:    vvvv
+	let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
+	let mut json_serializer = serde_json::Serializer::with_formatter(&mut stdout, formatter);
+
+	v.serialize(&mut json_serializer).unwrap();
+	writeln!(stdout).unwrap();
 }
