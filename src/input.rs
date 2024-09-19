@@ -9,7 +9,7 @@ use mayland_config::Action;
 use smithay::{
 	backend::input::{
 		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState, KeyboardKeyEvent,
-		PointerAxisEvent, PointerButtonEvent, PointerMotionEvent,
+		Keycode, PointerAxisEvent, PointerButtonEvent, PointerMotionEvent,
 	},
 	desktop::{layer_map_for_output, WindowSurfaceType},
 	input::{
@@ -230,7 +230,7 @@ impl State {
 
 	fn handle_key(
 		&mut self,
-		code: u32,
+		code: Keycode,
 		key_state: KeyState,
 		mods: &ModifiersState,
 		keysym: KeysymHandle,
