@@ -7,17 +7,14 @@ use crate::{
 };
 use mayland_config::{bind::CompMod, Config};
 use smithay::{
-	backend::{
-		input::Keycode,
-		renderer::{
-			element::{
-				memory::MemoryRenderBufferRenderElement,
-				surface::{render_elements_from_surface_tree, WaylandSurfaceRenderElement},
-				Kind, RenderElementStates,
-			},
-			glow::GlowRenderer,
-			ImportAll, ImportMem,
+	backend::renderer::{
+		element::{
+			memory::MemoryRenderBufferRenderElement,
+			surface::{render_elements_from_surface_tree, WaylandSurfaceRenderElement},
+			Kind, RenderElementStates,
 		},
+		glow::GlowRenderer,
+		ImportAll, ImportMem,
 	},
 	desktop::{
 		layer_map_for_output,
@@ -157,7 +154,7 @@ pub struct Mayland {
 	pub keyboard: KeyboardHandle<State>,
 	pub cursor: Cursor,
 
-	pub suppressed_keys: HashSet<Keycode>,
+	pub suppressed_keys: HashSet<u32>,
 }
 
 #[derive(Debug)]
