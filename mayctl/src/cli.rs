@@ -3,6 +3,7 @@ use mayland_comm::{Action, Request};
 
 #[derive(Debug, Parser)]
 #[clap(version, about)]
+#[clap(disable_help_flag = true, disable_version_flag = true)]
 #[clap(disable_help_subcommand = true)]
 #[clap(propagate_version = true)]
 pub struct Cli {
@@ -11,6 +12,13 @@ pub struct Cli {
 	/// output in json format
 	#[arg(short, long, global = true)]
 	pub json: bool,
+
+	/// print help
+	#[arg(long, short, action = clap::ArgAction::Help, global = true)]
+	help: Option<bool>,
+	/// print version
+	#[arg(long, short = 'V', action = clap::ArgAction::Version, global = true)]
+	version: Option<bool>,
 }
 
 #[derive(Debug, Subcommand)]
