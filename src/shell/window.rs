@@ -1,8 +1,9 @@
 use super::grab::ResizeState;
-use crate::state::State;
+use crate::state::{MaylandRenderElements, State};
 use smithay::{
 	backend::renderer::{
-		element::{surface::WaylandSurfaceRenderElement, AsRenderElements},
+		element::{surface::WaylandSurfaceRenderElement, utils::CropRenderElement, AsRenderElements},
+		glow::GlowRenderer,
 		ImportAll, ImportMem, Renderer, Texture,
 	},
 	desktop::{space::SpaceElement, Window, WindowSurface},
@@ -130,6 +131,23 @@ where
 		alpha: f32,
 	) -> Vec<C> {
 		self.window.render_elements(renderer, location, scale, alpha)
+	}
+}
+
+impl MappedWindow {
+	pub fn crop_render_elements(
+		&self,
+		renderer: &mut GlowRenderer,
+		rect: Rectangle<i32, Physical>,
+		scale: Scale<f64>,
+		alpha: f32,
+	) -> Vec<MaylandRenderElements> {
+		self.window
+			.render_elements(renderer, rect.loc, scale, alpha)
+			.into_iter()
+			.filter_map(|element| CropRenderElement::from_element(element, scale, rect))
+			.map(MaylandRenderElements::CropSurface)
+			.collect()
 	}
 }
 

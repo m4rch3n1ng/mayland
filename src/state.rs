@@ -13,6 +13,7 @@ use smithay::{
 			element::{
 				memory::MemoryRenderBufferRenderElement,
 				surface::{render_elements_from_surface_tree, WaylandSurfaceRenderElement},
+				utils::CropRenderElement,
 				Kind, RenderElementStates,
 			},
 			glow::GlowRenderer,
@@ -471,6 +472,7 @@ pub type MaylandRenderElements = OutputRenderElements<GlowRenderer>;
 render_elements! {
 	pub OutputRenderElements<R> where R: ImportAll + ImportMem;
 	DefaultPointer = MemoryRenderBufferRenderElement<R>,
+	CropSurface = CropRenderElement<WaylandSurfaceRenderElement<R>>,
 	Surface = WaylandSurfaceRenderElement<R>,
 }
 
@@ -479,6 +481,9 @@ impl<R: ImportAll + ImportMem> Debug for OutputRenderElements<R> {
 		match self {
 			OutputRenderElements::DefaultPointer(element) => {
 				f.debug_tuple("DefaultPointer").field(&element).finish()
+			}
+			OutputRenderElements::CropSurface(surface) => {
+				f.debug_tuple("CropSurface").field(&surface).finish()
 			}
 			OutputRenderElements::Surface(surface) => f.debug_tuple("Surface").field(&surface).finish(),
 			OutputRenderElements::_GenericCatcher(_) => f.write_str("_GenericCatcher"),

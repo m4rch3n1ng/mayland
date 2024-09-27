@@ -4,7 +4,7 @@ use crate::{
 	utils::{output_size, SizeExt},
 };
 use smithay::{
-	backend::renderer::{element::AsRenderElements, glow::GlowRenderer},
+	backend::renderer::glow::GlowRenderer,
 	output::Output,
 	utils::{Logical, Point, Rectangle, Size},
 };
@@ -280,35 +280,29 @@ impl Tiling {
 				let window_layout = self.layout.double;
 
 				let mut render = {
-					let window_location = window_layout.0.loc;
+					let mut window_rect = window_layout.0;
+					window_rect.loc = window1.render_location(window_rect.loc);
 
-					let window_render_location = window1
-						.render_location(window_location)
-						.to_physical_precise_round(scale);
-
-					window1.render_elements(renderer, window_render_location, scale.into(), 1.)
+					let window_render_location = window_rect.to_physical_precise_round(scale);
+					window1.crop_render_elements(renderer, window_render_location, scale.into(), 1.)
 				};
 
 				render.extend({
-					let window_location = window_layout.1.loc;
+					let mut window_rect = window_layout.1;
+					window_rect.loc = window2.render_location(window_rect.loc);
 
-					let window_render_location = window2
-						.render_location(window_location)
-						.to_physical_precise_round(scale);
-
-					window2.render_elements(renderer, window_render_location, scale.into(), 1.)
+					let window_render_location = window_rect.to_physical_precise_round(scale);
+					window2.crop_render_elements(renderer, window_render_location, scale.into(), 1.)
 				});
 
 				render
 			}
 			(Some(window), None) => {
-				let window_location = self.layout.single.loc;
+				let mut window_rect = self.layout.single;
+				window_rect.loc = window.render_location(window_rect.loc);
 
-				let window_render_location = window
-					.render_location(window_location)
-					.to_physical_precise_round(scale);
-
-				window.render_elements(renderer, window_render_location, scale.into(), 1.)
+				let window_render_location = window_rect.to_physical_precise_round(scale);
+				window.crop_render_elements(renderer, window_render_location, scale.into(), 1.)
 			}
 			(None, Some(_)) => unreachable!(),
 			(None, None) => vec![],
