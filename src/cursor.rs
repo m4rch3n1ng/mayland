@@ -28,7 +28,7 @@ pub struct Cursor {
 	theme: CursorTheme,
 	size: u32,
 
-	cache: HashMap<CursorIcon, Option<XCursor>>,
+	cache: HashMap<CursorIcon, XCursor>,
 }
 
 impl Cursor {
@@ -46,40 +46,21 @@ impl Cursor {
 		}
 	}
 
-	fn get_named_cursor(&mut self, icon: CursorIcon) -> Option<&mut XCursor> {
-		self.cache
-			.entry(icon)
-			.or_insert_with(|| {
-				// todo scale
-				let size = self.size;
+	fn get_named_cursor(&mut self, icon: CursorIcon) -> &mut XCursor {
+		self.cache.entry(icon).or_insert_with(|| {
+			// todo scale
+			let size = self.size;
 
-				if let Some(xcursor) = XCursor::load(&self.theme, icon.name(), size) {
-					Some(xcursor)
-				} else if icon == CursorIcon::Default {
-					let xcursor = XCursor::fallback_cursor();
-					Some(xcursor)
-				} else {
-					None
-				}
-			})
-			.as_mut()
-	}
-
-	fn get_default_cursor(&mut self) -> &mut XCursor {
-		self.get_named_cursor(CursorIcon::Default)
-			.expect("CursorIcon::Default should always be populated")
+			XCursor::load(&self.theme, icon, size)
+				.or_else(|| XCursor::load(&self.theme, CursorIcon::Default, size))
+				.unwrap_or_else(XCursor::fallback_cursor)
+		})
 	}
 
 	// todo scale
 	pub fn get_render_cursor(&mut self, _scale: i32) -> RenderCursor {
-		if let Some(xcursor) = self.icon.and_then(|icon| self.get_named_cursor(icon)) {
-			let xcursor = xcursor as *mut XCursor;
-
-			// SAFETY: see safety comment further down below.
-			//
-			// this code snippet also compiles normally
-			// with `-Zpolonius` and miri doesn't complain either.
-			let xcursor = unsafe { &mut *xcursor };
+		if let Some(icon) = self.icon {
+			let xcursor = self.get_named_cursor(icon);
 			return RenderCursor::Named(xcursor);
 		}
 
@@ -99,24 +80,7 @@ impl Cursor {
 				RenderCursor::Surface { hotspot, surface }
 			}
 			CursorImageStatus::Named(icon) => {
-				let xcursor = match self.get_named_cursor(icon) {
-					Some(xcursor) => xcursor as *mut XCursor,
-					None => self.get_default_cursor() as *mut XCursor,
-				};
-
-				// SAFETY: this shouldn't break the rust aliasing rules,
-				// as there is only one (1) mutable reference at a time,
-				// and the 'a reflects the actual lifetime of the data,
-				// which makes it a compiler error to borrow immutably twice.
-				//
-				// the pointer is also properly aligned, non-null and
-				// dereferenceable.
-				//
-				// i wouldn't normally use unsafe for something like this,
-				// but with `-Zpolonius` the code compiles even without
-				// any raw pointer fuckery.
-				// miri also seems happy with this code.
-				let xcursor = unsafe { &mut *xcursor };
+				let xcursor = self.get_named_cursor(icon);
 				RenderCursor::Named(xcursor)
 			}
 		}
@@ -174,8 +138,8 @@ pub struct XCursor {
 }
 
 impl XCursor {
-	fn load(theme: &CursorTheme, name: &str, size: u32) -> Option<Self> {
-		let icon_path = theme.load_icon(name)?;
+	fn load(theme: &CursorTheme, icon: CursorIcon, size: u32) -> Option<Self> {
+		let icon_path = theme.load_icon(icon.name())?;
 		let mut cursor_file = std::fs::File::open(icon_path).ok()?;
 		let mut cursor_data = Vec::new();
 		cursor_file.read_to_end(&mut cursor_data).ok()?;
