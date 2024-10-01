@@ -343,28 +343,24 @@ impl WaylandFocus for MappedWindow {
 
 impl From<&MappedWindow> for mayland_comm::workspace::Window {
 	fn from(window: &MappedWindow) -> Self {
-		let Some(toplevel) = window.window.toplevel() else {
-			// todo xwayland
-			return mayland_comm::workspace::Window {
-				title: None,
-				app_id: None,
-			};
-		};
+		match window.underlying_surface() {
+			WindowSurface::Wayland(toplevel) => {
+				let wl_surface = toplevel.wl_surface();
+				with_states(wl_surface, |states| {
+					let surface_data = states
+						.data_map
+						.get::<XdgToplevelSurfaceData>()
+						.unwrap()
+						.lock()
+						.unwrap();
 
-		let wl_surface = toplevel.wl_surface();
-		with_states(wl_surface, |states| {
-			let surface_data = states
-				.data_map
-				.get::<XdgToplevelSurfaceData>()
-				.unwrap()
-				.lock()
-				.unwrap();
-
-			mayland_comm::workspace::Window {
-				title: surface_data.title.clone(),
-				app_id: surface_data.app_id.clone(),
+					mayland_comm::workspace::Window {
+						title: surface_data.title.clone(),
+						app_id: surface_data.app_id.clone(),
+					}
+				})
 			}
-		})
+		}
 	}
 }
 
