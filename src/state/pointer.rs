@@ -1,5 +1,6 @@
 use super::State;
 use smithay::{
+	delegate_pointer_gestures, delegate_relative_pointer,
 	input::pointer::MotionEvent,
 	utils::{Logical, Point, SERIAL_COUNTER},
 };
@@ -35,3 +36,6 @@ impl State {
 		}
 	}
 }
+
+delegate_relative_pointer!(State);
+delegate_pointer_gestures!(State);

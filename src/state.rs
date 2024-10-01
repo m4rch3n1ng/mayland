@@ -45,6 +45,7 @@ use smithay::{
 		dmabuf::DmabufState,
 		output::OutputManagerState,
 		presentation::PresentationState,
+		relative_pointer::RelativePointerManagerState,
 		selection::{
 			data_device::DataDeviceState, primary_selection::PrimarySelectionState,
 			wlr_data_control::DataControlState,
@@ -152,6 +153,7 @@ pub struct Mayland {
 	pub presentation_state: PresentationState,
 	pub shm_state: ShmState,
 	pub cursor_shape_manager_state: CursorShapeManagerState,
+	pub relative_pointer_manager_state: RelativePointerManagerState,
 
 	// input
 	pub pointer: PointerHandle<State>,
@@ -205,6 +207,7 @@ impl Mayland {
 		let presentation_state = PresentationState::new::<State>(&display_handle, clock.id() as u32);
 		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
 		let cursor_shape_manager_state = CursorShapeManagerState::new::<State>(&display_handle);
+		let relative_pointer_manager_state = RelativePointerManagerState::new::<State>(&display_handle);
 
 		let keyboard = seat
 			.add_keyboard(
@@ -251,6 +254,7 @@ impl Mayland {
 			presentation_state,
 			shm_state,
 			cursor_shape_manager_state,
+			relative_pointer_manager_state,
 
 			pointer,
 			keyboard,
