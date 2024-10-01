@@ -20,10 +20,9 @@ impl State {
 			Action::Workspace(idx) => {
 				let location = self.mayland.workspaces.switch_to_workspace(idx);
 
-				// todo serious refactor
 				if let Some(location) = location {
-					self.mayland.queue_redraw_all();
 					self.move_cursor(location.to_f64());
+					self.mayland.queue_redraw_all();
 				}
 
 				self.reset_keyboard_focus();
