@@ -1,5 +1,5 @@
 use crate::{shell::focus::KeyboardFocusTarget, state::State, utils::spawn};
-use mayland_config::Action;
+use mayland_comm::Action;
 
 impl State {
 	pub fn handle_action(&mut self, action: Action) {
