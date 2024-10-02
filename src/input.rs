@@ -6,7 +6,7 @@ use crate::{
 	},
 	state::State,
 };
-use mayland_config::Action;
+use mayland_comm::Action;
 use smithay::{
 	backend::input::{
 		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState, KeyboardKeyEvent,

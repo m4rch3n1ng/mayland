@@ -1,5 +1,5 @@
-use crate::action::Action;
 use bitflags::bitflags;
+use mayland_comm::Action;
 use serde::{de::Visitor, Deserialize};
 use smithay::input::keyboard::{
 	keysyms::KEY_NoSymbol,

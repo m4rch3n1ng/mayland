@@ -1072,7 +1072,6 @@ dependencies = [
 name = "mayland-comm"
 version = "0.1.0"
 dependencies = [
- "mayland-config",
  "serde",
 ]
 
@@ -1085,6 +1084,7 @@ dependencies = [
  "bitflags 2.6.0",
  "dirs",
  "mayfig",
+ "mayland-comm",
  "serde",
  "smithay",
  "thiserror",

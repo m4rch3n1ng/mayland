@@ -1,5 +1,8 @@
-pub use mayland_config::Action;
 use serde::{Deserialize, Serialize};
+
+mod action;
+
+pub use self::action::Action;
 
 pub const MAYLAND_SOCKET_VAR: &str = "MAYLAND_SOCKET";
 
