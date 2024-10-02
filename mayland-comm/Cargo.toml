@@ -6,7 +6,6 @@ license = { workspace = true }
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
-mayland-config = { workspace = true }
 
 [lints]
 workspace = true

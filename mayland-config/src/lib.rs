@@ -3,12 +3,11 @@ use bind::CompMod;
 use serde::Deserialize;
 use std::{path::PathBuf, sync::LazyLock};
 
-mod action;
 pub mod bind;
 mod error;
 pub mod input;
 
-pub use self::{action::Action, bind::Binds, error::Error, input::Input};
+pub use self::{bind::Binds, error::Error, input::Input};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
