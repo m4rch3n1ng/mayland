@@ -9,88 +9,55 @@ use smithay::{
 	utils::{Logical, Point, Rectangle, Size},
 };
 
-enum Position {
-	Left,
-	Right,
-}
+type WindowLayout = (MappedWindow, Rectangle<i32, Logical>);
 
 #[derive(Debug)]
 struct Layout {
-	loc: Point<i32, Logical>,
-	size: Size<i32, Logical>,
-
+	rect: Rectangle<i32, Logical>,
 	gaps: i32,
 
+	/// split point between 0 and 1
 	ratio: f64,
-
 	split: Point<i32, Logical>,
-	single: Rectangle<i32, Logical>,
-	double: (Rectangle<i32, Logical>, Rectangle<i32, Logical>),
 }
 
 impl Layout {
-	fn new() -> Self {
-		let border = 25;
-		let gaps = 20;
-
-		let loc = Point::from((border, border));
-		let size = Size::from((0, 0));
-
-		let ratio = 0.5;
-
-		let split = loc;
-		let single = Rectangle { loc, size };
-		let double = (single, single);
+	fn new(border: i32, gaps: i32) -> Self {
+		let rect = Rectangle {
+			loc: Point::from((border, border)),
+			size: Size::from((0, 0)),
+		};
 
 		Layout {
-			loc,
-			size,
-
+			rect,
 			gaps,
 
-			ratio,
-
-			split,
-			single,
-			double,
+			ratio: 0.5,
+			split: Point::from((0, 0)),
 		}
 	}
 
 	fn resize(&mut self, size: Size<i32, Logical>) {
-		self.size = size;
+		self.rect.size = size;
 
-		// todo maybe inline
-		self.set_split();
-		self.set_single();
-		self.set_double();
-	}
-
-	fn set_split(&mut self) {
-		let x = self.size.w as f64 * self.ratio;
+		let x = self.rect.size.w as f64 * self.ratio;
 		let x = x.round() as i32;
 
 		let rel = Point::from((x, 0));
-		let split = self.loc + rel;
+		let split = self.rect.loc + rel;
 		self.split = split;
 	}
 
-	fn set_single(&mut self) {
-		self.single = Rectangle {
-			loc: self.loc,
-			size: self.size,
-		};
-	}
-
-	fn set_double(&mut self) {
+	fn double(&self) -> [Rectangle<i32, Logical>; 2] {
 		let split = self.split;
-		let rel_split = split - self.loc;
-		let size = self.size;
+		let rel_split = split - self.rect.loc;
+		let size = self.rect.size;
 
 		let gap = self.gaps / 2;
 
 		let one = {
 			let size = Size::from((rel_split.x - gap, size.h));
-			let loc = self.loc;
+			let loc = self.rect.loc;
 			Rectangle { loc, size }
 		};
 
@@ -100,8 +67,13 @@ impl Layout {
 			Rectangle { loc, size }
 		};
 
-		self.double = (one, two);
+		[one, two]
 	}
+}
+
+enum Position {
+	Left,
+	Right,
 }
 
 impl Layout {
@@ -117,192 +89,172 @@ impl Layout {
 
 #[derive(Debug)]
 pub struct Tiling {
-	size: Option<Size<i32, Logical>>,
 	layout: Layout,
-
 	border: i32,
 
-	one: Option<MappedWindow>,
-	two: Option<MappedWindow>,
+	windows: [Option<WindowLayout>; 2],
 }
 
 impl Tiling {
 	pub fn new() -> Self {
-		let layout = Layout::new();
+		let border = 20;
+		let gaps = 10;
+
+		let layout = Layout::new(border, gaps);
 
 		Tiling {
-			size: None,
 			layout,
+			border,
 
-			border: 25,
-
-			one: None,
-			two: None,
+			windows: [None, None],
 		}
 	}
 }
 
 impl Tiling {
-	pub fn map_output(&mut self, output: &Output) {
-		let output_size = output_size(output);
-		self.size = Some(output_size);
-
-		let layout_size = output_size.borderless(self.border);
-		self.layout.resize(layout_size);
-	}
-
-	pub fn unmap_output(&mut self) {
-		self.size = None;
-	}
-
-	fn resize_windows(&self) {
-		match (&self.one, &self.two) {
-			(Some(window1), Some(window2)) => {
-				let (one, two) = self.layout.double;
-
-				window1.resize(one.size);
-				window2.resize(two.size);
-			}
-			(Some(window), None) => {
-				let layout = self.layout.single;
-				window.resize(layout.size);
-			}
-			(None, Some(_)) => unreachable!(),
-			(None, None) => {}
-		}
-	}
-
-	pub fn resize_output(&mut self, output_size: Size<i32, Logical>) {
-		self.size = Some(output_size);
-
-		let layout_size = output_size.borderless(self.border);
-		self.layout.resize(layout_size);
-		self.resize_windows();
-	}
-}
-
-impl Tiling {
-	/// add [`MappedWindow`] if the tiling space isn't full, otherwise return it again
-	pub fn add_window(&mut self, mapped: MappedWindow, pointer: Point<f64, Logical>) -> Option<MappedWindow> {
-		if let Some(window) = &self.one {
-			if self.two.is_none() {
-				let (one, two) = self.layout.double;
-
+	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) -> Option<MappedWindow> {
+		match &mut self.windows {
+			[Some(_), Some(_)] => Some(window),
+			[None, Some(_)] => unreachable!(),
+			[Some(prev), empty @ None] => {
+				let [one, two] = self.layout.double();
 				let position = self.layout.position(pointer);
-				if let Position::Left = position {
-					window.resize(two.size);
-					mapped.resize(one.size);
 
-					let prev = self.one.replace(mapped);
-					self.two = prev;
-				} else {
-					window.resize(one.size);
-					mapped.resize(two.size);
+				match position {
+					Position::Left => {
+						prev.0.resize(two.size);
+						prev.1 = two;
 
-					self.two = Some(mapped);
+						window.resize(one.size);
+						*empty = Some((window, one));
+
+						self.windows.swap(0, 1);
+					}
+					Position::Right => {
+						prev.0.resize(one.size);
+						prev.1 = one;
+
+						window.resize(two.size);
+						*empty = Some((window, two));
+					}
 				}
 
 				None
-			} else {
-				Some(mapped)
 			}
-		} else {
-			let size = self.layout.single.size;
-			mapped.resize(size);
+			[empty @ None, None] => {
+				window.resize(self.layout.rect.size);
+				*empty = Some((window, self.layout.rect));
 
-			self.one = Some(mapped);
-			None
+				None
+			}
 		}
 	}
 
-	/// removes a [`MappedWindow`] from the tiling space if it exists
-	///
-	/// returns `true` if a window was removed, `false` otherwise
 	pub fn remove_window(&mut self, window: &MappedWindow) -> bool {
-		if self.one.as_ref().is_some_and(|current| current == window) {
-			self.one = self.two.take();
-			self.resize_windows();
+		match &mut self.windows {
+			[Some(w1), Some(w2)] if &w1.0 == window => {
+				w2.0.resize(self.layout.rect.size);
+				w2.1 = self.layout.rect;
 
-			true
-		} else if self.two.as_ref().is_some_and(|current| current == window) {
-			self.two = None;
-			self.resize_windows();
+				self.windows.swap(0, 1);
+				self.windows[1] = None;
 
-			true
-		} else {
-			false
+				true
+			}
+			[Some(w1), Some(w2)] if &w2.0 == window => {
+				w1.0.resize(self.layout.rect.size);
+				w1.1 = self.layout.rect;
+
+				self.windows[1] = None;
+				true
+			}
+			[None, Some(_)] => unreachable!(),
+			[Some(prev), None] if &prev.0 == window => {
+				self.windows[0] = None;
+				true
+			}
+			_ => false,
 		}
 	}
 
+	pub fn map_output(&mut self, output: &Output) {
+		let output_size = output_size(output);
+		let layout_size = output_size.borderless(self.border);
+		self.resize(layout_size);
+	}
+
+	pub fn resize_output(&mut self, output: &Output) {
+		let output_size = output_size(output);
+		let layout_size = output_size.borderless(self.border);
+		self.resize(layout_size);
+	}
+
+	fn resize(&mut self, size: Size<i32, Logical>) {
+		self.layout.resize(size);
+
+		match &mut self.windows {
+			[Some(w1), Some(w2)] => {
+				let [one, two] = self.layout.double();
+
+				w1.0.resize(one.size);
+				w1.1 = one;
+
+				w2.0.resize(two.size);
+				w2.1 = two;
+			}
+			[Some(window), None] => {
+				window.0.resize(self.layout.rect.size);
+				window.1 = self.layout.rect;
+			}
+			[None, Some(_)] => unreachable!(),
+			[None, None] => (),
+		}
+	}
+}
+
+impl Tiling {
 	pub fn has_window(&self, window: &MappedWindow) -> bool {
 		self.windows().any(|w| w == window)
 	}
 
 	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
-		self.one.iter().chain(self.two.iter())
+		self.windows.iter().flatten().map(|w| &w.0)
+	}
+
+	fn windows_geometry(&self) -> impl DoubleEndedIterator<Item = &(MappedWindow, Rectangle<i32, Logical>)> {
+		self.windows.iter().flatten()
 	}
 
 	pub fn window_under(
 		&self,
 		location: Point<f64, Logical>,
 	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
-		match (&self.one, &self.two) {
-			(Some(window1), Some(window2)) => {
+		match &self.windows {
+			[Some(w1), Some(w2)] => {
 				let position = self.layout.position(location);
 				match position {
-					Position::Left => {
-						let window_location = self.layout.double.0.loc;
-						let window_location = window1.render_location(window_location);
-						Some((window1, window_location))
-					}
-					Position::Right => {
-						let window_location = self.layout.double.1.loc;
-						let window_location = window2.render_location(window_location);
-						Some((window2, window_location))
-					}
+					Position::Left => Some((&w1.0, w1.1.loc)),
+					Position::Right => Some((&w2.0, w2.1.loc)),
 				}
 			}
-			(Some(window), None) => {
-				let window_location = self.layout.single.loc;
-				let window_location = window.render_location(window_location);
-				Some((window, window_location))
-			}
-			(None, Some(_)) => unreachable!(),
-			(None, None) => None,
+			[Some(window), None] => Some((&window.0, window.1.loc)),
+			[None, Some(_)] => unreachable!(),
+			[None, None] => None,
 		}
 	}
 }
 
 impl Tiling {
-	pub fn render(&self, renderer: &mut GlowRenderer, scale: f64) -> Vec<MaylandRenderElements> {
-		match (&self.one, &self.two) {
-			(Some(window1), Some(window2)) => {
-				let window_layout = self.layout.double;
+	pub fn render<'a>(
+		&self,
+		renderer: &'a mut GlowRenderer,
+		scale: f64,
+	) -> impl Iterator<Item = MaylandRenderElements> + use<'_, 'a> {
+		self.windows_geometry().flat_map(move |(window, geom)| {
+			let window_rect = window.render_rectangle(*geom);
 
-				let mut render = {
-					let window_rect = window1.render_rectangle(window_layout.0);
-
-					let window_render_location = window_rect.to_physical_precise_round(scale);
-					window1.crop_render_elements(renderer, window_render_location, scale.into(), 1.)
-				};
-
-				render.extend({
-					let window_rect = window2.render_rectangle(window_layout.1);
-
-					let window_render_location = window_rect.to_physical_precise_round(scale);
-					window2.crop_render_elements(renderer, window_render_location, scale.into(), 1.)
-				});
-
-				render
-			}
-			(Some(window), None) => {
-				let window_rect = window.render_rectangle(self.layout.single);
-
-				let window_render_location = window_rect.to_physical_precise_round(scale);
-				window.crop_render_elements(renderer, window_render_location, scale.into(), 1.)
-			}
-			(None, Some(_)) => unreachable!(),
-			(None, None) => vec![],
-		}
+			let window_render_location = window_rect.to_physical_precise_round(scale);
+			window.crop_render_elements(renderer, window_render_location, scale.into(), 1.)
+		})
 	}
 }

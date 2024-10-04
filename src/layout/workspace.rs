@@ -1,10 +1,5 @@
 use super::tiling::Tiling;
-use crate::{
-	shell::window::MappedWindow,
-	state::MaylandRenderElements,
-	utils::{output_size, RectExt},
-	State,
-};
+use crate::{shell::window::MappedWindow, state::MaylandRenderElements, utils::RectExt, State};
 use smithay::{
 	backend::renderer::{
 		element::{surface::WaylandSurfaceRenderElement, AsRenderElements},
@@ -13,7 +8,7 @@ use smithay::{
 	desktop::{layer_map_for_output, LayerMap, LayerSurface, Space},
 	input::pointer::PointerHandle,
 	output::Output,
-	utils::{Logical, Physical, Point, Rectangle, Scale, Size},
+	utils::{Logical, Physical, Point, Rectangle, Scale},
 	wayland::shell::wlr_layer::Layer,
 };
 use std::collections::{BTreeMap, HashMap};
@@ -136,11 +131,9 @@ impl WorkspaceManager {
 	}
 
 	pub fn resize_output(&mut self, output: &Output) {
-		let output_size = output_size(output);
-
 		let idx = &self.output_map[output];
 		let workspace = self.workspaces.get_mut(idx).unwrap();
-		workspace.resize_output(output_size);
+		workspace.resize_output(output);
 	}
 
 	pub fn refresh(&mut self) {
@@ -306,12 +299,11 @@ impl Workspace {
 	}
 
 	fn unmap_output(&mut self, output: &Output) {
-		self.tiling.unmap_output();
 		self.floating.unmap_output(output);
 	}
 
-	fn resize_output(&mut self, size: Size<i32, Logical>) {
-		self.tiling.resize_output(size);
+	fn resize_output(&mut self, output: &Output) {
+		self.tiling.resize_output(output);
 	}
 
 	fn outputs_for_window(&self, window: &MappedWindow) -> Vec<Output> {
