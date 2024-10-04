@@ -280,16 +280,14 @@ impl Tiling {
 				let window_layout = self.layout.double;
 
 				let mut render = {
-					let mut window_rect = window_layout.0;
-					window_rect.loc = window1.render_location(window_rect.loc);
+					let window_rect = window1.render_rectangle(window_layout.0);
 
 					let window_render_location = window_rect.to_physical_precise_round(scale);
 					window1.crop_render_elements(renderer, window_render_location, scale.into(), 1.)
 				};
 
 				render.extend({
-					let mut window_rect = window_layout.1;
-					window_rect.loc = window2.render_location(window_rect.loc);
+					let window_rect = window2.render_rectangle(window_layout.1);
 
 					let window_render_location = window_rect.to_physical_precise_round(scale);
 					window2.crop_render_elements(renderer, window_render_location, scale.into(), 1.)
@@ -298,8 +296,7 @@ impl Tiling {
 				render
 			}
 			(Some(window), None) => {
-				let mut window_rect = self.layout.single;
-				window_rect.loc = window.render_location(window_rect.loc);
+				let window_rect = window.render_rectangle(self.layout.single);
 
 				let window_render_location = window_rect.to_physical_precise_round(scale);
 				window.crop_render_elements(renderer, window_render_location, scale.into(), 1.)

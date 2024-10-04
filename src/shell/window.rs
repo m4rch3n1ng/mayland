@@ -74,6 +74,20 @@ impl MappedWindow {
 		let geometry = self.geometry();
 		location - geometry.loc
 	}
+
+	/// like [`MappedWindow::render_location`], but it also adds the location offset
+	/// to the size of the rectangle to make it work with cropped rendering
+	pub fn render_rectangle(&self, mut rect: Rectangle<i32, Logical>) -> Rectangle<i32, Logical> {
+		let geometry = self.geometry();
+
+		rect.loc -= geometry.loc;
+		rect.size = (rect.size.to_point() + geometry.loc).to_size();
+
+		assert!(rect.size.w >= 0, "size should be nonnegative");
+		assert!(rect.size.h >= 0, "size should be nonnegative");
+
+		rect
+	}
 }
 
 impl IsAlive for MappedWindow {
