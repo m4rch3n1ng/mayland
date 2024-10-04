@@ -310,7 +310,7 @@ regexes by default are full string matches, i.e. they add an implicit `$(?:<rege
 if you don't want that, then you will have to manually add the `.*?` to the beginning and end of you regex like `/.*?<regex>.*?/`.  
 if you are in regex mode, you can specify additional flags after the last slash, like `"/<regex>/<flags>"`.
 currently supported flags are `i` to enable case-insensitive matching and `v` to invert the match.
-you can enable multiple flags at the same time. 
+you can enable multiple flags at the same time.
 
 the `<windowrules>` struct currently has the following options:
 
