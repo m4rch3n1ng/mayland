@@ -8,6 +8,8 @@ use smithay::input::keyboard::{
 };
 use std::{collections::HashMap, fmt::Debug};
 
+mod action;
+
 /// defines what the modifier `"mod"` binds to
 ///
 /// set to [`CompMod::Alt`] in winit
@@ -41,12 +43,15 @@ impl<'de> Deserialize<'de> for Binds {
 	where
 		D: serde::Deserializer<'de>,
 	{
-		let mut map = HashMap::<Mapping, Action>::deserialize(deserializer)?;
+		let map = HashMap::<Mapping, self::action::Action>::deserialize(deserializer)?;
+		let map = map.into_iter().map(|(m, a)| (m, Action::from(a))).collect();
+
+		let mut binds = Binds(map);
 
 		// insert shortcut to close the compositor, if none is set
 		// so that you can always at least get out if your shortcuts are broken
-		if map.values().all(|action| *action != Action::Quit) {
-			map.insert(
+		if binds.0.values().all(|action| *action != Action::Quit) {
+			binds.0.insert(
 				Mapping {
 					mods: Modifiers::MOD,
 					key: Keysym::Escape,
@@ -55,7 +60,6 @@ impl<'de> Deserialize<'de> for Binds {
 			);
 		}
 
-		let binds = Binds(map);
 		Ok(binds)
 	}
 }
