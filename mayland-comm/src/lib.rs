@@ -8,6 +8,7 @@ pub const MAYLAND_SOCKET_VAR: &str = "MAYLAND_SOCKET";
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[serde(tag = "tag", content = "val")]
 pub enum Request {
 	Dispatch(Action),
 	Info,
@@ -15,6 +16,7 @@ pub enum Request {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[serde(tag = "tag", content = "val")]
 pub enum Response {
 	Dispatch,
 	Info(Info),
