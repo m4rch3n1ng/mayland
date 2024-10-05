@@ -3,7 +3,7 @@ use crate::shell::focus::{KeyboardFocusTarget, PointerFocusTarget};
 use smithay::{
 	backend::{allocator::dmabuf::Dmabuf, input::TabletToolDescriptor},
 	delegate_cursor_shape, delegate_data_control, delegate_data_device, delegate_dmabuf, delegate_output,
-	delegate_primary_selection, delegate_seat, delegate_xdg_decoration,
+	delegate_primary_selection, delegate_seat, delegate_viewporter, delegate_xdg_decoration,
 	input::{pointer::CursorImageStatus, Seat, SeatHandler, SeatState},
 	reexports::{
 		wayland_protocols::xdg::decoration::zv1::server::zxdg_toplevel_decoration_v1::Mode as DecorationMode,
@@ -135,3 +135,5 @@ impl XdgDecorationHandler for State {
 }
 
 delegate_xdg_decoration!(State);
+
+delegate_viewporter!(State);

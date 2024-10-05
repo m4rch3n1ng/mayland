@@ -56,6 +56,7 @@ use smithay::{
 		},
 		shm::ShmState,
 		socket::ListeningSocketSource,
+		viewporter::ViewporterState,
 	},
 };
 use std::{
@@ -154,6 +155,7 @@ pub struct Mayland {
 	pub shm_state: ShmState,
 	pub cursor_shape_manager_state: CursorShapeManagerState,
 	pub relative_pointer_manager_state: RelativePointerManagerState,
+	pub viewporter_state: ViewporterState,
 
 	// input
 	pub pointer: PointerHandle<State>,
@@ -209,6 +211,7 @@ impl Mayland {
 		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
 		let cursor_shape_manager_state = CursorShapeManagerState::new::<State>(&display_handle);
 		let relative_pointer_manager_state = RelativePointerManagerState::new::<State>(&display_handle);
+		let viewporter_state = ViewporterState::new::<State>(&display_handle);
 
 		let keyboard = seat
 			.add_keyboard(
@@ -256,6 +259,7 @@ impl Mayland {
 			shm_state,
 			cursor_shape_manager_state,
 			relative_pointer_manager_state,
+			viewporter_state,
 
 			pointer,
 			keyboard,
