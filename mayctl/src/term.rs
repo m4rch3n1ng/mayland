@@ -150,6 +150,7 @@ pub(crate) fn get_response_name(response: &Response) -> &'static str {
 		Response::Err(_) => unreachable!("the error case should have been handled first"),
 		Response::Dispatch => "dispatch",
 		Response::Reload => "reload",
+		Response::Devices(_) => "devices",
 		Response::Outputs(_) => "outputs",
 		Response::Workspaces(_) => "workspaces",
 	}

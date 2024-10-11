@@ -97,6 +97,22 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) {
 			let () = rx.recv().await.unwrap();
 			Response::Reload
 		}
+		Ok(Request::Devices) => {
+			let (tx, rx) = async_channel::bounded(1);
+			state.event_loop.insert_idle(move |state| {
+				let devices = state
+					.mayland
+					.devices
+					.iter()
+					.map(mayland_comm::Device::from)
+					.collect();
+
+				let _ = tx.send_blocking(devices);
+			});
+
+			let devices = rx.recv().await.unwrap();
+			Response::Devices(devices)
+		}
 		Ok(Request::Outputs) => {
 			let (tx, rx) = async_channel::bounded(1);
 			state.event_loop.insert_idle(move |state| {

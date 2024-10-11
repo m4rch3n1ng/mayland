@@ -30,6 +30,8 @@ pub enum Cmd {
 	},
 	/// reload compositor config
 	Reload,
+	/// request device info from the compositor
+	Devices,
 	/// request output info from the compositor
 	Outputs,
 	/// request workspace info from the compositor
@@ -62,6 +64,7 @@ impl From<Cmd> for Request {
 		match value {
 			Cmd::Dispatch { dispatch: action } => Request::Dispatch(mayland_comm::Action::from(action)),
 			Cmd::Reload => Request::Reload,
+			Cmd::Devices => Request::Devices,
 			Cmd::Outputs => Request::Outputs,
 			Cmd::Workspaces => Request::Workspaces,
 		}

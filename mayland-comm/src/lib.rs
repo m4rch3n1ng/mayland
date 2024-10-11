@@ -14,6 +14,7 @@ pub const MAYLAND_SOCKET_VAR: &str = "MAYLAND_SOCKET";
 pub enum Request {
 	Dispatch(Action),
 	Reload,
+	Devices,
 	Outputs,
 	Workspaces,
 }
@@ -25,8 +26,31 @@ pub enum Response {
 	Err(Error),
 	Dispatch,
 	Reload,
+	Devices(Vec<Device>),
 	Outputs(Vec<Output>),
 	Workspaces(Vec<Workspace>),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Device {
+	pub r#type: device::Type,
+	pub name: String,
+}
+
+pub mod device {
+	use serde::{Deserialize, Serialize};
+
+	#[derive(Debug, Serialize, Deserialize)]
+	#[serde(rename_all = "kebab-case")]
+	pub enum Type {
+		Keyboard,
+		Touchpad,
+		Pointer,
+		Touch,
+		Tablet,
+		TabletPad,
+		Switch,
+	}
 }
 
 #[derive(Debug, Serialize, Deserialize)]

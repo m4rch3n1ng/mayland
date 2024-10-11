@@ -77,3 +77,22 @@ impl InputDevice {
 			&& !self.is_trackpoint()
 	}
 }
+
+impl From<&InputDevice> for mayland_comm::Device {
+	fn from(device: &InputDevice) -> Self {
+		let r#type = match device.r#type {
+			InputDeviceType::Keyboard => mayland_comm::device::Type::Keyboard,
+			InputDeviceType::Pointer if device.is_touchpad() => mayland_comm::device::Type::Touchpad,
+			InputDeviceType::Pointer => mayland_comm::device::Type::Pointer,
+			InputDeviceType::Touch => mayland_comm::device::Type::Touch,
+			InputDeviceType::TabletTool => mayland_comm::device::Type::Tablet,
+			InputDeviceType::TabletPad => mayland_comm::device::Type::TabletPad,
+			InputDeviceType::Switch => mayland_comm::device::Type::Switch,
+		};
+
+		mayland_comm::Device {
+			name: device.handle.name().to_owned(),
+			r#type,
+		}
+	}
+}
