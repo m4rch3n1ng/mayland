@@ -522,13 +522,20 @@ impl Udev {
 
 impl State {
 	fn handle_libinput_event(&mut self, event: &mut InputEvent<LibinputInputBackend>) {
-		if let InputEvent::DeviceAdded { device } = event {
-			let devices = InputDevice::new(device);
-			for mut device in devices {
-				let config = &self.mayland.config;
-				apply_libinput_settings(&config.input, &mut device);
-				self.mayland.devices.insert(device);
+		match event {
+			InputEvent::DeviceAdded { device } => {
+				let devices = InputDevice::new(device);
+				for mut device in devices {
+					let config = &self.mayland.config;
+
+					apply_libinput_settings(&config.input, &mut device);
+					self.mayland.devices.insert(device);
+				}
 			}
+			InputEvent::DeviceRemoved { device } => {
+				self.mayland.devices.retain(|dev| &dev.handle != device);
+			}
+			_ => (),
 		}
 	}
 }

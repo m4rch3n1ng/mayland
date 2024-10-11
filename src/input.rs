@@ -30,8 +30,8 @@ pub mod device;
 impl State {
 	pub fn handle_input_event<I: InputBackend>(&mut self, event: InputEvent<I>) {
 		match event {
-			InputEvent::DeviceAdded { .. } => tracing::info!("device added"),
-			InputEvent::DeviceRemoved { .. } => tracing::info!("devices removed"),
+			InputEvent::DeviceAdded { .. } => (),
+			InputEvent::DeviceRemoved { .. } => (),
 
 			InputEvent::Keyboard { event, .. } => self.on_keyboard::<I>(event),
 			InputEvent::PointerMotion { event } => self.on_pointer_move::<I>(event),
