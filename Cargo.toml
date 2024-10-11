@@ -28,6 +28,7 @@ edition = { workspace = true }
 [dependencies]
 chrono = { version = "0.4.38", features = ["clock", "std"] }
 dirs = { workspace = true }
+indexmap = "2.6.0"
 input = { version = "0.9.1", default-features = false, features = ["libinput_1_21"] }
 libc = "0.2.161"
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }

@@ -24,6 +24,8 @@ use smithay::{
 	wayland::{input_method::InputMethodSeat, shell::wlr_layer::Layer as WlrLayer},
 };
 
+pub mod device;
+
 impl State {
 	pub fn handle_input_event<I: InputBackend>(&mut self, event: InputEvent<I>) {
 		match event {

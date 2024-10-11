@@ -1,5 +1,8 @@
 use super::BACKGROUND_COLOR;
-use crate::state::{Mayland, MaylandRenderElements, State};
+use crate::{
+	input::device::InputDevice,
+	state::{Mayland, MaylandRenderElements, State},
+};
 use libc::dev_t;
 use smithay::{
 	backend::{
@@ -518,57 +521,64 @@ impl Udev {
 }
 
 impl State {
-	fn handle_libinput_event(&self, event: &mut InputEvent<LibinputInputBackend>) {
+	fn handle_libinput_event(&mut self, event: &mut InputEvent<LibinputInputBackend>) {
 		if let InputEvent::DeviceAdded { device } = event {
-			let config = &self.mayland.config;
-
-			let is_touchpad = device.config_tap_finger_count() > 0;
-			if is_touchpad {
-				let conf = &config.input.touchpad;
-
-				let _ = device.config_tap_set_enabled(conf.tap);
-				let _ = device.config_tap_set_drag_enabled(conf.tap_and_drag);
-				let _ = device.config_tap_set_drag_lock_enabled(conf.tap_drag_lock);
-
-				let _ = device.config_dwt_set_enabled(conf.dwt);
-				let _ = device.config_dwtp_set_enabled(conf.dwtp);
-
-				if let Some(click_method) = conf.click_method {
-					let _ = device.config_click_set_method(click_method);
-				} else if let Some(default_click_method) = device.config_click_default_method() {
-					let _ = device.config_click_set_method(default_click_method);
-				}
-
-				let _ = device.config_middle_emulation_set_enabled(conf.middle_emulation);
-				if let Some(tap_button_map) = conf.tap_button_map {
-					let _ = device.config_tap_set_button_map(tap_button_map);
-				} else if let Some(default_tap_button_map) = device.config_tap_default_button_map() {
-					let _ = device.config_tap_set_button_map(default_tap_button_map);
-				}
-				let _ = device.config_left_handed_set(conf.left_handed);
-
-				let _ = device.config_scroll_set_natural_scroll_enabled(conf.natural_scroll);
-				if let Some(scroll_method) = conf.scroll_method {
-					let _ = device.config_scroll_set_method(scroll_method);
-				} else if let Some(default_scroll_method) = device.config_scroll_default_method() {
-					let _ = device.config_scroll_set_method(default_scroll_method);
-				}
-
-				let accel_speed = conf.accel_speed.clamp(-1., 1.);
-				if accel_speed != conf.accel_speed {
-					tracing::warn!(
-						"invalid accel_speed {}, clamping to {}",
-						conf.accel_speed,
-						accel_speed
-					);
-				}
-				let _ = device.config_accel_set_speed(accel_speed);
-				if let Some(accel_profile) = conf.accel_profile {
-					let _ = device.config_accel_set_profile(accel_profile);
-				} else if let Some(default_accel_profile) = device.config_accel_default_profile() {
-					let _ = device.config_accel_set_profile(default_accel_profile);
-				}
+			let devices = InputDevice::new(device);
+			for mut device in devices {
+				let config = &self.mayland.config;
+				apply_libinput_settings(&config.input, &mut device);
+				self.mayland.devices.insert(device);
 			}
+		}
+	}
+}
+
+pub fn apply_libinput_settings(config: &mayland_config::Input, device: &mut InputDevice) {
+	if device.is_touchpad() {
+		let conf = &config.touchpad;
+		let device = &mut device.handle;
+
+		let _ = device.config_tap_set_enabled(conf.tap);
+		let _ = device.config_tap_set_drag_enabled(conf.tap_and_drag);
+		let _ = device.config_tap_set_drag_lock_enabled(conf.tap_drag_lock);
+
+		let _ = device.config_dwt_set_enabled(conf.dwt);
+		let _ = device.config_dwtp_set_enabled(conf.dwtp);
+
+		if let Some(click_method) = conf.click_method {
+			let _ = device.config_click_set_method(click_method);
+		} else if let Some(default_click_method) = device.config_click_default_method() {
+			let _ = device.config_click_set_method(default_click_method);
+		}
+
+		let _ = device.config_middle_emulation_set_enabled(conf.middle_emulation);
+		if let Some(tap_button_map) = conf.tap_button_map {
+			let _ = device.config_tap_set_button_map(tap_button_map);
+		} else if let Some(default_tap_button_map) = device.config_tap_default_button_map() {
+			let _ = device.config_tap_set_button_map(default_tap_button_map);
+		}
+		let _ = device.config_left_handed_set(conf.left_handed);
+
+		let _ = device.config_scroll_set_natural_scroll_enabled(conf.natural_scroll);
+		if let Some(scroll_method) = conf.scroll_method {
+			let _ = device.config_scroll_set_method(scroll_method);
+		} else if let Some(default_scroll_method) = device.config_scroll_default_method() {
+			let _ = device.config_scroll_set_method(default_scroll_method);
+		}
+
+		let accel_speed = conf.accel_speed.clamp(-1., 1.);
+		if accel_speed != conf.accel_speed {
+			tracing::warn!(
+				"invalid accel_speed {}, clamping to {}",
+				conf.accel_speed,
+				accel_speed
+			);
+		}
+		let _ = device.config_accel_set_speed(accel_speed);
+		if let Some(accel_profile) = conf.accel_profile {
+			let _ = device.config_accel_set_profile(accel_profile);
+		} else if let Some(default_accel_profile) = device.config_accel_default_profile() {
+			let _ = device.config_accel_set_profile(default_accel_profile);
 		}
 	}
 }

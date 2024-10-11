@@ -2,9 +2,11 @@ use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
 	cursor::{Cursor, RenderCursor},
 	error::MaylandError,
+	input::device::InputDevice,
 	layout::workspace::WorkspaceManager,
 	shell::window::UnmappedSurface,
 };
+use indexmap::IndexSet;
 use mayland_config::{bind::CompMod, Config};
 use smithay::{
 	backend::{
@@ -158,6 +160,7 @@ pub struct Mayland {
 	pub viewporter_state: ViewporterState,
 
 	// input
+	pub devices: IndexSet<InputDevice>,
 	pub pointer: PointerHandle<State>,
 	pub keyboard: KeyboardHandle<State>,
 	pub cursor: Cursor,
@@ -213,6 +216,7 @@ impl Mayland {
 		let relative_pointer_manager_state = RelativePointerManagerState::new::<State>(&display_handle);
 		let viewporter_state = ViewporterState::new::<State>(&display_handle);
 
+		let devices = IndexSet::new();
 		let keyboard = seat
 			.add_keyboard(
 				config.input.keyboard.xkb_config(),
@@ -261,6 +265,7 @@ impl Mayland {
 			relative_pointer_manager_state,
 			viewporter_state,
 
+			devices,
 			pointer,
 			keyboard,
 			cursor,
