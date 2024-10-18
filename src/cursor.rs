@@ -1,3 +1,4 @@
+use kcursor::{CursorTheme, Image};
 use smithay::{
 	backend::{allocator::Fourcc, renderer::element::memory::MemoryRenderBuffer},
 	input::pointer::{CursorIcon, CursorImageStatus, CursorImageSurfaceData},
@@ -5,8 +6,7 @@ use smithay::{
 	utils::{Logical, Physical, Point, Transform},
 	wayland::compositor::with_states,
 };
-use std::{cell::OnceCell, collections::HashMap, fmt::Debug, io::Read, time::Duration};
-use xcursor::{CursorTheme, parser::Image};
+use std::{cell::OnceCell, collections::HashMap, fmt::Debug, time::Duration};
 
 const FALLBACK_CURSOR_DATA: &[u8] = include_bytes!("../resources/cursor.rgba");
 
@@ -25,7 +25,7 @@ pub struct Cursor {
 	/// manually set the [`CursorIcon`] to override what the applications provide
 	pub icon: Option<CursorIcon>,
 
-	theme: CursorTheme,
+	theme: Option<CursorTheme>,
 	size: u32,
 
 	cache: HashMap<CursorIcon, XCursor>,
@@ -64,8 +64,12 @@ impl Cursor {
 			// todo scale
 			let size = self.size;
 
-			XCursor::load(&self.theme, icon, size)
-				.or_else(|| XCursor::load(&self.theme, CursorIcon::Default, size))
+			let Some(theme) = &self.theme else {
+				return XCursor::fallback_cursor();
+			};
+
+			XCursor::load(theme, icon, size)
+				.or_else(|| XCursor::load(theme, CursorIcon::Default, size))
 				.unwrap_or_else(XCursor::fallback_cursor)
 		})
 	}
@@ -103,11 +107,11 @@ impl Cursor {
 fn load_cursor_theme(
 	config: &mayland_config::Cursor,
 	environment: &mut HashMap<String, String>,
-) -> (CursorTheme, u32) {
+) -> (Option<CursorTheme>, u32) {
 	let theme_name = (config.xcursor_theme.clone())
 		.or_else(|| std::env::var("XCURSOR_THEME").ok())
 		.unwrap_or_else(|| "default".to_owned());
-	let theme = CursorTheme::load(&theme_name);
+	let theme = CursorTheme::load(&theme_name).or_else(|| CursorTheme::load("default"));
 
 	let size = (config.xcursor_size)
 		.or_else(|| std::env::var("XCURSOR_SIZE").ok().and_then(|s| s.parse().ok()))
@@ -140,7 +144,7 @@ impl Frame {
 	pub fn buffer(&self) -> &MemoryRenderBuffer {
 		self.buffer.get_or_init(|| {
 			MemoryRenderBuffer::from_slice(
-				&self.image.pixels_rgba,
+				&self.image.pixels,
 				Fourcc::Argb8888,
 				(self.image.width as i32, self.image.height as i32),
 				1,
@@ -159,22 +163,10 @@ pub struct XCursor {
 
 impl XCursor {
 	fn load(theme: &CursorTheme, icon: CursorIcon, size: u32) -> Option<Self> {
-		let icon_path = theme.load_icon(icon.name())?;
-		let mut cursor_file = std::fs::File::open(icon_path).ok()?;
-		let mut cursor_data = Vec::new();
-		cursor_file.read_to_end(&mut cursor_data).ok()?;
+		let cursor = theme.icon(icon)?;
+		let images = cursor.frames(size)?;
 
-		let mut images = xcursor::parser::parse_xcursor(&cursor_data)?;
-
-		let (width, height) = images
-			.iter()
-			.min_by_key(|image| u32::abs_diff(image.size, size))
-			.map(|image| (image.width, image.height))
-			.unwrap();
-
-		images.retain(|image| image.width == width && image.height == height);
-
-		let animation_duration = images.iter().fold(0, |acc, image| acc + image.delay);
+		let animation_duration = images.iter().map(|img| img.delay).sum::<u32>();
 		let frames = images.into_iter().map(Frame::new).collect();
 
 		Some(XCursor {
@@ -184,17 +176,16 @@ impl XCursor {
 	}
 
 	fn fallback_cursor() -> Self {
-		let icon = Image {
+		let image = Image {
 			size: 32,
 			width: 64,
 			height: 64,
 			xhot: 1,
 			yhot: 1,
 			delay: 0,
-			pixels_rgba: Vec::from(FALLBACK_CURSOR_DATA),
-			pixels_argb: Vec::new(),
+			pixels: Vec::from(FALLBACK_CURSOR_DATA),
 		};
-		let frame = Frame::new(icon);
+		let frame = Frame::new(image);
 
 		XCursor {
 			frames: vec![frame],
