@@ -50,7 +50,8 @@ futures-util = { version = "0.3.31", default-features = false, features = ["std"
 indexmap = "2.9.0"
 input = { version = "0.9.1", default-features = false, features = ["libinput_1_21"] }
 jiff = "0.2.10"
-libc = "0.2.172"
+kcursor = { git = "https://github.com/m4rch3n1ng/kcursor" }
+libc = "0.2.169"
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 mayland-config = { workspace = true }
 mayland-comm = { workspace = true }
@@ -58,7 +59,6 @@ serde_json = { workspace = true }
 tracing = "0.1.41"
 tracing-journald = "0.3.1"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
-xcursor = "0.3.8"
 
 [dependencies.smithay]
 workspace = true
