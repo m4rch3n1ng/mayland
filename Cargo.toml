@@ -38,6 +38,7 @@ tracing = "0.1.40"
 tracing-journald = "0.3.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 xcursor = "0.3.8"
+kcursor = { git = "https://github.com/m4rch3n1ng/kcursor" }
 
 [dependencies.smithay]
 workspace = true
