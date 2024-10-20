@@ -383,8 +383,8 @@ impl Workspace {
 		layer_map: &'o LayerMap,
 		output_scale: f64,
 	) -> (
-		impl Iterator<Item = (&'o LayerSurface, Point<i32, Physical>)>,
-		impl Iterator<Item = (&'o LayerSurface, Point<i32, Physical>)>,
+		impl Iterator<Item = LayerSurfacePoint<'o>>,
+		impl Iterator<Item = LayerSurfacePoint<'o>>,
 	) {
 		let upper = layer_map
 			.layers()
@@ -407,6 +407,8 @@ impl Workspace {
 		(lower, upper)
 	}
 }
+
+type LayerSurfacePoint<'a> = (&'a LayerSurface, Point<i32, Physical>);
 
 impl Workspace {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {

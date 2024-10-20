@@ -268,7 +268,7 @@ impl<'de> Deserialize<'de> for Mapping {
 
 struct MappingVisitor;
 
-impl<'de> Visitor<'de> for MappingVisitor {
+impl Visitor<'_> for MappingVisitor {
 	type Value = Mapping;
 
 	fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
