@@ -63,7 +63,7 @@ use smithay::{
 		viewporter::ViewporterState,
 		xwayland_shell::XWaylandShellState,
 	},
-	xwayland::{X11Wm, XWayland, XWaylandEvent},
+	xwayland::X11Wm,
 };
 use std::{
 	collections::{HashMap, HashSet},
@@ -429,42 +429,6 @@ impl Mayland {
 		};
 
 		Ok(mayland)
-	}
-
-	fn start_xwayland(&mut self) {
-		let (xwayland, xclient) = XWayland::spawn(
-			&self.display_handle,
-			None,
-			std::iter::empty::<(String, String)>(),
-			true,
-			std::process::Stdio::null(),
-			std::process::Stdio::null(),
-			|_| {},
-		)
-		.unwrap();
-
-		self.loop_handle
-			.insert_source(xwayland, move |event, _, state| match event {
-				XWaylandEvent::Ready {
-					x11_socket,
-					display_number,
-				} => {
-					let xwm = X11Wm::start_wm(state.mayland.loop_handle.clone(), x11_socket, xclient.clone())
-						.unwrap();
-
-					state.mayland.xwm = Some(xwm);
-					state.mayland.xdisplay = Some(display_number);
-
-					state
-						.mayland
-						.environment
-						.insert("DISPLAY".to_owned(), format!(":{}", display_number));
-				}
-				XWaylandEvent::Error => {
-					tracing::warn!("xwayland crashed on startup");
-				}
-			})
-			.unwrap();
 	}
 }
 
