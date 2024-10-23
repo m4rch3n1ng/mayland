@@ -13,7 +13,7 @@ use smithay::{
 
 impl Mayland {
 	pub fn start_xwayland(&mut self) {
-		let (xwayland, xclient) = XWayland::spawn(
+		let (xwayland, xclient) = match XWayland::spawn(
 			&self.display_handle,
 			None,
 			std::iter::empty::<(String, String)>(),
@@ -21,8 +21,13 @@ impl Mayland {
 			std::process::Stdio::null(),
 			std::process::Stdio::null(),
 			|_| {},
-		)
-		.unwrap();
+		) {
+			Ok((xwayland, xclient)) => (xwayland, xclient),
+			Err(err) => {
+				tracing::error!(?err, "failed to start xwayland");
+				return;
+			}
+		};
 
 		self.loop_handle
 			.insert_source(xwayland, move |event, _, state| match event {
@@ -30,8 +35,14 @@ impl Mayland {
 					x11_socket,
 					display_number,
 				} => {
-					let xwm = X11Wm::start_wm(state.mayland.loop_handle.clone(), x11_socket, xclient.clone())
-						.unwrap();
+					let loop_handle = state.mayland.loop_handle.clone();
+					let xwm = match X11Wm::start_wm(loop_handle, x11_socket, xclient.clone()) {
+						Ok(xwm) => xwm,
+						Err(err) => {
+							tracing::error!(?err, "failed to start xwm");
+							return;
+						}
+					};
 
 					state.mayland.xwm = Some(xwm);
 					state.mayland.xdisplay = Some(display_number);
