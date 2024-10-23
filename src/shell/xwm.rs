@@ -1,5 +1,5 @@
 use super::window::UnmappedSurface;
-use crate::{shell::window::MappedWindow, State};
+use crate::{shell::window::MappedWindow, state::Mayland, State};
 use smithay::{
 	delegate_xwayland_shell,
 	reexports::x11rb::protocol::xproto,
@@ -7,9 +7,47 @@ use smithay::{
 	wayland::xwayland_shell::{XWaylandShellHandler, XWaylandShellState},
 	xwayland::{
 		xwm::{self, Reorder, XwmId},
-		X11Surface, X11Wm, XwmHandler,
+		X11Surface, X11Wm, XWayland, XWaylandEvent, XwmHandler,
 	},
 };
+
+impl Mayland {
+	pub fn start_xwayland(&mut self) {
+		let (xwayland, xclient) = XWayland::spawn(
+			&self.display_handle,
+			None,
+			std::iter::empty::<(String, String)>(),
+			true,
+			std::process::Stdio::null(),
+			std::process::Stdio::null(),
+			|_| {},
+		)
+		.unwrap();
+
+		self.loop_handle
+			.insert_source(xwayland, move |event, _, state| match event {
+				XWaylandEvent::Ready {
+					x11_socket,
+					display_number,
+				} => {
+					let xwm = X11Wm::start_wm(state.mayland.loop_handle.clone(), x11_socket, xclient.clone())
+						.unwrap();
+
+					state.mayland.xwm = Some(xwm);
+					state.mayland.xdisplay = Some(display_number);
+
+					state
+						.mayland
+						.environment
+						.insert("DISPLAY".to_owned(), format!(":{}", display_number));
+				}
+				XWaylandEvent::Error => {
+					tracing::warn!("xwayland crashed on startup");
+				}
+			})
+			.unwrap();
+	}
+}
 
 impl XWaylandShellHandler for State {
 	fn xwayland_shell_state(&mut self) -> &mut XWaylandShellState {
