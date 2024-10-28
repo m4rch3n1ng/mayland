@@ -524,7 +524,7 @@ impl State {
 	fn handle_libinput_event(&mut self, event: &mut InputEvent<LibinputInputBackend>) {
 		match event {
 			InputEvent::DeviceAdded { device } => {
-				let devices = InputDevice::new(device);
+				let devices = InputDevice::split(device);
 				for mut device in devices {
 					let config = &self.mayland.config;
 

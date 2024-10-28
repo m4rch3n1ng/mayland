@@ -17,55 +17,26 @@ pub struct InputDevice {
 }
 
 impl InputDevice {
-	pub fn new(dev: &libinput::Device) -> Vec<Self> {
+	pub fn split(dev: &libinput::Device) -> Vec<Self> {
 		let mut devices = vec![];
 
-		if dev.has_capability(DeviceCapability::Keyboard) {
-			let device = InputDevice {
-				handle: dev.clone(),
-				r#type: InputDeviceType::Keyboard,
-			};
-			devices.push(device);
-		}
+		const TYPES: [(DeviceCapability, InputDeviceType); 6] = [
+			(DeviceCapability::Pointer, InputDeviceType::Pointer),
+			(DeviceCapability::Keyboard, InputDeviceType::Keyboard),
+			(DeviceCapability::Touch, InputDeviceType::Touch),
+			(DeviceCapability::TabletTool, InputDeviceType::TabletTool),
+			(DeviceCapability::TabletPad, InputDeviceType::TabletPad),
+			(DeviceCapability::Switch, InputDeviceType::Switch),
+		];
 
-		if dev.has_capability(DeviceCapability::Pointer) {
-			let device = InputDevice {
-				handle: dev.clone(),
-				r#type: InputDeviceType::Pointer,
-			};
-			devices.push(device);
-		}
-
-		if dev.has_capability(DeviceCapability::Touch) {
-			let device = InputDevice {
-				handle: dev.clone(),
-				r#type: InputDeviceType::Touch,
-			};
-			devices.push(device);
-		}
-
-		if dev.has_capability(DeviceCapability::TabletTool) {
-			let device = InputDevice {
-				handle: dev.clone(),
-				r#type: InputDeviceType::TabletTool,
-			};
-			devices.push(device);
-		}
-
-		if dev.has_capability(DeviceCapability::TabletPad) {
-			let device = InputDevice {
-				handle: dev.clone(),
-				r#type: InputDeviceType::TabletPad,
-			};
-			devices.push(device);
-		}
-
-		if dev.has_capability(DeviceCapability::Switch) {
-			let device = InputDevice {
-				handle: dev.clone(),
-				r#type: InputDeviceType::Switch,
-			};
-			devices.push(device);
+		for (cap, r#type) in TYPES {
+			if dev.has_capability(cap) {
+				let device = InputDevice {
+					handle: dev.clone(),
+					r#type,
+				};
+				devices.push(device);
+			}
 		}
 
 		devices
