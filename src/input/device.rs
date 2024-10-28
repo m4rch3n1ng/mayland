@@ -43,6 +43,38 @@ impl InputDevice {
 	}
 
 	pub fn is_touchpad(&self) -> bool {
+		// this is how niri checks for touchpads
 		self.r#type == InputDeviceType::Pointer && self.handle.config_tap_finger_count() > 0
+	}
+
+	fn is_trackball(&self) -> bool {
+		// this is how mutter checks for trackballs
+
+		// SAFETY: https://github.com/Smithay/input.rs/issues/76
+		if let Some(udev_device) = unsafe { self.handle.udev_device() } {
+			self.r#type == InputDeviceType::Pointer
+				&& udev_device.property_value("ID_INPUT_TRACKBALL").is_some()
+		} else {
+			false
+		}
+	}
+
+	fn is_trackpoint(&self) -> bool {
+		// this is how mutter checks for trackpoints
+
+		// SAFETY: https://github.com/Smithay/input.rs/issues/76
+		if let Some(udev_device) = unsafe { self.handle.udev_device() } {
+			self.r#type == InputDeviceType::Pointer
+				&& udev_device.property_value("ID_INPUT_POINTINGSTICK").is_some()
+		} else {
+			false
+		}
+	}
+
+	pub fn is_mouse(&self) -> bool {
+		self.r#type == InputDeviceType::Pointer
+			&& !self.is_touchpad()
+			&& !self.is_trackball()
+			&& !self.is_trackpoint()
 	}
 }

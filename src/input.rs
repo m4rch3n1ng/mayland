@@ -426,5 +426,7 @@ pub fn apply_libinput_settings(config: &mayland_config::Input, device: &mut Inpu
 		} else if let Some(default_accel_profile) = device.config_accel_default_profile() {
 			let _ = device.config_accel_set_profile(default_accel_profile);
 		}
+	} else if device.is_mouse() {
+		tracing::debug!("todo mouse config");
 	}
 }
