@@ -6,17 +6,15 @@ license = { workspace = true }
 
 [dependencies]
 annotate-snippets = "0.11.4"
-anstream = "0.6.15"
+anstream = "0.6.17"
 bitflags = "2.6.0"
 dirs = { workspace = true }
-serde = { version = "1.0.210", features = ["derive"] }
+serde = { version = "1.0.214", features = ["derive"] }
 smithay = { workspace = true, features = ["backend_libinput"] }
 thiserror = { workspace = true }
 
 [dependencies.mayfig]
 git = "https://github.com/m4rch3n1ng/mayfig.git"
-branch = "main"
-version = "0.1.0"
 
 [lints]
 workspace = true
