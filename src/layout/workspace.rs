@@ -161,11 +161,7 @@ impl WorkspaceManager {
 impl WorkspaceManager {
 	pub fn update_active_output(&mut self, location: Point<f64, Logical>) {
 		if let Some(output) = self.output_space.output_under(location).next() {
-			if self
-				.active_output
-				.as_ref()
-				.map_or(true, |active| active != output)
-			{
+			if self.active_output.as_ref().is_none_or(|active| active != output) {
 				self.active_output = Some(output.clone());
 			}
 		}

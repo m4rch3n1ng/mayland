@@ -332,7 +332,7 @@ impl State {
 			.focus
 			.as_ref()
 			.zip(window.wl_surface())
-			.map_or(true, |(focus, wl)| !focus.0.same_client_as(&wl.id()))
+			.is_none_or(|(focus, wl)| !focus.0.same_client_as(&wl.id()))
 		{
 			return;
 		}
@@ -365,7 +365,7 @@ impl State {
 			.focus
 			.as_ref()
 			.zip(window.wl_surface())
-			.map_or(true, |(focus, wl)| !focus.0.same_client_as(&wl.id()))
+			.is_none_or(|(focus, wl)| !focus.0.same_client_as(&wl.id()))
 		{
 			return;
 		}
