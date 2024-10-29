@@ -38,7 +38,6 @@ use std::{
 	path::{Path, PathBuf},
 	time::Duration,
 };
-use tracing::{error, info};
 
 type GbmDrmCompositor =
 	DrmCompositor<GbmAllocator<DrmDeviceFd>, GbmDevice<DrmDeviceFd>, OutputPresentationFeedback, DrmDeviceFd>;
@@ -148,11 +147,11 @@ impl Udev {
 							let output_state = mayland.output_state.get_mut(output).unwrap();
 							output_state.waiting_for_vblank = true;
 						}
-						Err(err) => error!("error queueing frame {:?}", err),
+						Err(err) => tracing::error!("error queueing frame {:?}", err),
 					}
 				}
 			}
-			Err(err) => error!("error rendering frame {:?}", err),
+			Err(err) => tracing::error!("error rendering frame {:?}", err),
 		};
 	}
 
@@ -172,7 +171,7 @@ impl Udev {
 		output_device
 			.glow
 			.import_dmabuf(dmabuf, None)
-			.inspect_err(|err| error!("error importing dmabuf: {:?}", err))
+			.inspect_err(|err| tracing::error!("error importing dmabuf: {:?}", err))
 			.is_ok()
 	}
 }
@@ -182,7 +181,7 @@ impl Udev {
 		match event {
 			UdevEvent::Added { device_id, path } => {
 				if !self.session.is_active() {
-					info!("session inactive");
+					tracing::info!("session inactive");
 					return;
 				}
 
@@ -190,7 +189,7 @@ impl Udev {
 			}
 			UdevEvent::Changed { device_id } => {
 				if !self.session.is_active() {
-					info!("session inactive");
+					tracing::info!("session inactive");
 					return;
 				}
 
@@ -198,7 +197,7 @@ impl Udev {
 			}
 			UdevEvent::Removed { device_id } => {
 				if !self.session.is_active() {
-					info!("session inactive");
+					tracing::info!("session inactive");
 					return;
 				}
 
@@ -232,7 +231,7 @@ impl Udev {
 
 	fn device_added(&mut self, device_id: dev_t, path: &Path, mayland: &mut Mayland) {
 		if path != self.primary_gpu_path {
-			info!("skipping non-primary gpu");
+			tracing::info!("skipping non-primary gpu");
 			return;
 		}
 
@@ -309,7 +308,7 @@ impl Udev {
 							}
 							Ok(None) => {}
 							Err(err) => {
-								error!("error marking frame as submitted {}", err);
+								tracing::error!("error marking frame as submitted {}", err);
 							}
 						}
 
@@ -329,7 +328,7 @@ impl Udev {
 
 						state.mayland.queue_redraw(output);
 					}
-					DrmEvent::Error(error) => error!("drm error {:?}", error),
+					DrmEvent::Error(error) => tracing::error!("drm error {:?}", error),
 				}
 			})
 			.unwrap();
@@ -413,7 +412,7 @@ impl Udev {
 
 	fn connector_connected(&mut self, connector: connector::Info, crtc: crtc::Handle, mayland: &mut Mayland) {
 		let output_name = format!("{}-{}", connector.interface().as_str(), connector.interface_id());
-		info!("connecting connector: {}", output_name);
+		tracing::info!("connecting connector: {}", output_name);
 
 		let mode = connector
 			.modes()
@@ -496,11 +495,11 @@ impl Udev {
 		crtc: crtc::Handle,
 		mayland: &mut Mayland,
 	) {
-		info!("disconnecting connector {:?}", connector);
+		tracing::info!("disconnecting connector {:?}", connector);
 		let device = self.output_device.as_mut().unwrap();
 
 		if device.surfaces.remove(&crtc).is_none() {
-			info!("crtc wasn't enabled");
+			tracing::info!("crtc wasn't enabled");
 			return;
 		}
 

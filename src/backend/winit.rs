@@ -11,7 +11,6 @@ use smithay::{
 	utils::{Rectangle, Transform},
 	wayland::dmabuf::DmabufFeedbackBuilder,
 };
-use tracing::{error, info};
 
 #[derive(Debug)]
 pub struct Winit {
@@ -67,7 +66,7 @@ impl Winit {
 			.bind_wl_display(&mayland.display_handle)
 			.is_ok()
 		{
-			info!("EGL hardware-acceleration enabled");
+			tracing::info!("EGL hardware-acceleration enabled");
 		};
 
 		let damage_tracker = OutputDamageTracker::from_output(&output);
@@ -111,7 +110,7 @@ impl Winit {
 		self.backend
 			.renderer()
 			.import_dmabuf(dmabuf, None)
-			.inspect_err(|err| error!("error importing dmabuf: {:?}", err))
+			.inspect_err(|err| tracing::error!("error importing dmabuf: {:?}", err))
 			.is_ok()
 	}
 
