@@ -15,7 +15,11 @@ use std::collections::{BTreeMap, HashMap};
 
 #[derive(Debug)]
 pub struct WorkspaceManager {
-	space: Space<MappedWindow>,
+	/// output space
+	///
+	/// only used to map the outputs to keep track
+	/// of their position
+	output_space: Space<MappedWindow>,
 
 	active_output: Option<Output>,
 	output_map: HashMap<Output, usize>,
@@ -25,7 +29,7 @@ pub struct WorkspaceManager {
 
 impl WorkspaceManager {
 	pub fn new() -> Self {
-		let space = Space::default();
+		let output_space = Space::default();
 
 		let active_output = None;
 		let output_map = HashMap::new();
@@ -34,7 +38,7 @@ impl WorkspaceManager {
 		let workspaces = BTreeMap::from([(0, workspace)]);
 
 		WorkspaceManager {
-			space,
+			output_space,
 			active_output,
 			output_map,
 			workspaces,
@@ -57,7 +61,7 @@ impl WorkspaceManager {
 		if let Some(output) = self.output_map.iter().find(|(_, &w)| w == idx).map(|(o, _)| o) {
 			self.active_output = Some(output.clone());
 
-			let rect = self.space.output_geometry(output).unwrap();
+			let rect = self.output_space.output_geometry(output).unwrap();
 			let center = rect.center();
 			Some(center)
 		} else {
@@ -95,14 +99,14 @@ impl WorkspaceManager {
 impl WorkspaceManager {
 	pub fn add_output(&mut self, output: &Output) {
 		let x = self
-			.space
+			.output_space
 			.outputs()
-			.map(|output| self.space.output_geometry(output).unwrap())
+			.map(|output| self.output_space.output_geometry(output).unwrap())
 			.map(|geom| geom.loc.x + geom.size.w)
 			.max()
 			.unwrap_or(0);
 
-		self.space.map_output(output, (x, 0));
+		self.output_space.map_output(output, (x, 0));
 
 		let idx = (0..usize::MAX)
 			.find(|n| self.output_map.values().all(|v| n != v))
@@ -119,7 +123,7 @@ impl WorkspaceManager {
 	}
 
 	pub fn remove_output(&mut self, output: &Output) {
-		self.space.unmap_output(output);
+		self.output_space.unmap_output(output);
 
 		let idx = self.output_map.remove(output).unwrap();
 		let workspace = self.workspaces.get_mut(&idx).unwrap();
@@ -137,7 +141,7 @@ impl WorkspaceManager {
 	}
 
 	pub fn refresh(&mut self) {
-		self.space.refresh();
+		self.output_space.refresh();
 
 		let workspace = self.workspace_mut();
 		workspace.refresh();
@@ -156,7 +160,7 @@ impl WorkspaceManager {
 
 impl WorkspaceManager {
 	pub fn update_active_output(&mut self, location: Point<f64, Logical>) {
-		if let Some(output) = self.space.output_under(location).next() {
+		if let Some(output) = self.output_space.output_under(location).next() {
 			if self
 				.active_output
 				.as_ref()
@@ -179,7 +183,7 @@ impl WorkspaceManager {
 	pub fn relative_cursor_location(&mut self, pointer: &PointerHandle<State>) -> Point<f64, Physical> {
 		let absolute_location = pointer.current_location();
 		let location = if let Some(active) = &self.active_output {
-			let geometry = self.space.output_geometry(active).unwrap();
+			let geometry = self.output_space.output_geometry(active).unwrap();
 			absolute_location - geometry.loc.to_f64()
 		} else {
 			absolute_location
@@ -191,7 +195,7 @@ impl WorkspaceManager {
 
 impl WorkspaceManager {
 	pub fn outputs(&self) -> impl Iterator<Item = &Output> {
-		self.space.outputs()
+		self.output_space.outputs()
 	}
 
 	pub fn outputs_for_window(&self, window: &MappedWindow) -> Vec<Output> {
@@ -200,11 +204,11 @@ impl WorkspaceManager {
 	}
 
 	pub fn output_geometry(&self, output: &Output) -> Option<Rectangle<i32, Logical>> {
-		self.space.output_geometry(output)
+		self.output_space.output_geometry(output)
 	}
 
 	pub fn output_under<P: Into<Point<f64, Logical>>>(&self, point: P) -> impl Iterator<Item = &Output> {
-		self.space.output_under(point)
+		self.output_space.output_under(point)
 	}
 }
 
@@ -265,7 +269,7 @@ impl WorkspaceManager {
 		location: Point<f64, Logical>,
 	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
 		if let Some(active) = &self.active_output {
-			let output_geo = self.space.output_geometry(active).unwrap();
+			let output_geo = self.output_space.output_geometry(active).unwrap();
 			let location = location - output_geo.loc.to_f64();
 
 			let workspace = self.workspace();
