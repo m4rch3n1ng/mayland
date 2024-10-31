@@ -7,8 +7,9 @@ pub mod bind;
 pub mod decoration;
 mod error;
 pub mod input;
+pub mod windowrules;
 
-pub use self::{bind::Binds, decoration::Decoration, error::Error, input::Input};
+pub use self::{bind::Binds, decoration::Decoration, error::Error, input::Input, windowrules::WindowRules};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
@@ -17,6 +18,7 @@ pub struct Config {
 	pub cursor: Cursor,
 	pub decoration: Decoration,
 	pub bind: Binds,
+	pub windowrules: WindowRules,
 }
 
 #[derive(Debug, Default, Deserialize)]
