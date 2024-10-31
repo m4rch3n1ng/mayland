@@ -9,9 +9,11 @@ mod error;
 pub mod input;
 pub mod layout;
 pub mod outputs;
+pub mod windowrules;
 
 pub use self::{
 	bind::Binds, decoration::Decoration, error::Error, input::Input, layout::Layout, outputs::Outputs,
+	windowrules::WindowRules,
 };
 
 #[derive(Debug, Default, Deserialize)]
@@ -23,6 +25,7 @@ pub struct Config {
 	pub decoration: Decoration,
 	pub layout: Layout,
 	pub bind: Binds,
+	pub windowrules: WindowRules,
 }
 
 #[derive(Debug, Default, Deserialize)]

@@ -479,7 +479,7 @@ impl Workspace {
 			Point::from((0, 0))
 		};
 
-		if window.is_non_resizable() {
+		if window.is_non_resizable() || window.windowrules.floating.unwrap_or(false) {
 			self.floating.map_element(window, center, true);
 		} else if let Some(window) = self.tiling.add_window(window, pointer) {
 			self.floating.map_element(window, center, true);
