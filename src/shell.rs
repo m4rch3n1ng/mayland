@@ -70,7 +70,9 @@ impl CompositorHandler for State {
 
 					if is_mapped {
 						let unmapped = self.mayland.unmapped_windows.remove(idx);
-						let mapped = MappedWindow::from(unmapped);
+
+						let windowrules = unmapped.windowrules(&self.mayland.config.windowrules);
+						let mapped = MappedWindow::new(unmapped, windowrules);
 
 						mapped.window.on_commit();
 

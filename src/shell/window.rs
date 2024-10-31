@@ -1,5 +1,6 @@
 use super::grab::ResizeState;
 use crate::{render::MaylandRenderElements, state::State};
+use mayland_config::windowrules::WindowRule;
 use smithay::{
 	backend::renderer::{
 		element::{surface::WaylandSurfaceRenderElement, utils::CropRenderElement, AsRenderElements},
@@ -34,6 +35,9 @@ use std::{
 #[derive(Debug, Clone)]
 pub struct MappedWindow {
 	pub window: Window,
+
+	pub windowrules: WindowRule,
+
 	pub resize_state: Arc<Mutex<Option<ResizeState>>>,
 }
 
@@ -59,9 +63,13 @@ impl MappedWindow {
 }
 
 impl MappedWindow {
-	pub fn new(window: Window) -> Self {
+	pub fn new(unmapped: UnmappedSurface, windowrules: WindowRule) -> Self {
+		let window = unmapped.0;
 		MappedWindow {
 			window,
+
+			windowrules,
+
 			resize_state: Arc::new(Mutex::new(None)),
 		}
 	}
@@ -217,12 +225,6 @@ impl MappedWindow {
 impl PartialEq<WlSurface> for MappedWindow {
 	fn eq(&self, other: &WlSurface) -> bool {
 		self.wl_surface().is_some_and(|w| &*w == other)
-	}
-}
-
-impl From<UnmappedSurface> for MappedWindow {
-	fn from(unmapped: UnmappedSurface) -> Self {
-		MappedWindow::new(unmapped.0)
 	}
 }
 
@@ -415,6 +417,21 @@ pub struct UnmappedSurface(Window);
 impl UnmappedSurface {
 	pub fn toplevel(&self) -> Option<&ToplevelSurface> {
 		self.0.toplevel()
+	}
+
+	pub fn windowrules(&self, windowrules: &mayland_config::WindowRules) -> WindowRule {
+		match self.0.underlying_surface() {
+			WindowSurface::Wayland(xdg) => with_states(xdg.wl_surface(), |states| {
+				let surface_data = states
+					.data_map
+					.get::<XdgToplevelSurfaceData>()
+					.unwrap()
+					.lock()
+					.unwrap();
+
+				windowrules.compute(surface_data.app_id.as_deref(), surface_data.title.as_deref())
+			}),
+		}
 	}
 }
 

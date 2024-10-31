@@ -78,3 +78,9 @@ bind {
 	"mod 5" = "workspace" [ 4 ]
 	"mod 6" = "workspace" [ 5 ]
 }
+
+windowrules {
+	app_id [ "org.gnome.Nautilus" ] {
+		floating = true
+	}
+}
