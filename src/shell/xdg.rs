@@ -101,7 +101,9 @@ impl State {
 
 				if is_mapped {
 					let unmapped = self.mayland.unmapped_windows.remove(idx);
-					let mapped = MappedWindow::new(unmapped);
+
+					let windowrules = unmapped.windowrules(&self.mayland.config.windowrules);
+					let mapped = MappedWindow::new(unmapped, windowrules);
 
 					mapped.on_commit();
 

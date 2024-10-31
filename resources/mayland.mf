@@ -99,3 +99,9 @@ bind {
 	"XF86AudioRaiseVolume" = "spawn" [ "wpctl" "set-volume" "-l" "1" "@DEFAULT_AUDIO_SINK@" "5%+" ]
 	"XF86AudioLowerVolume" = "spawn" [ "wpctl" "set-volume" "-l" "1" "@DEFAULT_AUDIO_SINK@" "5%-" ]
 }
+
+windowrules {
+	app_id [ "org.gnome.Nautilus" ] {
+		floating = true
+	}
+}
