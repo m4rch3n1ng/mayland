@@ -201,6 +201,9 @@ where
 		scale: Scale<f64>,
 		alpha: f32,
 	) -> Vec<C> {
+		let opacity = self.windowrules.opacity.unwrap_or(1.).clamp(0., 1.);
+		let alpha = opacity * alpha;
+
 		self.window.render_elements(renderer, location, scale, alpha)
 	}
 }
@@ -213,8 +216,7 @@ impl MappedWindow {
 		scale: Scale<f64>,
 		alpha: f32,
 	) -> Vec<MaylandRenderElements> {
-		self.window
-			.render_elements(renderer, rect.loc, scale, alpha)
+		self.render_elements(renderer, rect.loc, scale, alpha)
 			.into_iter()
 			.filter_map(|element| CropRenderElement::from_element(element, scale, rect))
 			.map(MaylandRenderElements::CropSurface)
