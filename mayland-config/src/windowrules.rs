@@ -11,6 +11,7 @@ impl WindowRules {
 			.filter_map(|(matcher, rule)| matcher.r#match(app_id, title).then_some(rule))
 			.fold(WindowRule::default(), |acc, cur| WindowRule {
 				floating: acc.floating.or(cur.floating),
+				opacity: acc.opacity.or(cur.opacity),
 			})
 	}
 }
@@ -40,4 +41,6 @@ impl Matcher {
 pub struct WindowRule {
 	// * rules applied at initial configure * //
 	pub floating: Option<bool>,
+	// * rules applied at render * //
+	pub opacity: Option<f32>,
 }
