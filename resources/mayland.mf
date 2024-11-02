@@ -103,5 +103,6 @@ bind {
 windowrules {
 	app_id [ "org.gnome.Nautilus" ] {
 		floating = true
+		opacity = 0.8
 	}
 }
