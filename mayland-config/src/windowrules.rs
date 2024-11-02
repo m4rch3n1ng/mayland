@@ -20,6 +20,7 @@ impl WindowRules {
 pub enum Matcher {
 	AppId(String),
 	Title(String),
+	Match(String, String),
 }
 
 impl Matcher {
@@ -27,6 +28,9 @@ impl Matcher {
 		match self {
 			Matcher::AppId(a) => app_id.is_some_and(|app_id| a == app_id),
 			Matcher::Title(t) => title.is_some_and(|title| t == title),
+			Matcher::Match(a, t) => {
+				app_id.is_some_and(|app_id| a == app_id) && title.is_some_and(|title| t == title)
+			}
 		}
 	}
 }
@@ -34,5 +38,6 @@ impl Matcher {
 #[derive(Debug, Clone, Copy, Default, Deserialize)]
 #[serde(default)]
 pub struct WindowRule {
+	// * rules applied at initial configure * //
 	pub floating: Option<bool>,
 }
