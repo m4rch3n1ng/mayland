@@ -34,7 +34,14 @@ fn main() {
 		}
 		Request::Workspaces => {
 			let Response::Workspaces(workspaces) = reply else { panic!() };
-			println!("{:#?}", workspaces);
+
+			for (i, workspace) in workspaces.iter().enumerate() {
+				if i != 0 {
+					println!();
+				}
+
+				print!("{}", workspace);
+			}
 		}
 	}
 }

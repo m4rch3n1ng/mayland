@@ -32,7 +32,32 @@ pub struct Workspace {
 }
 
 pub mod workspace {
+	use super::Workspace;
 	use serde::{Deserialize, Serialize};
+	use std::fmt::Display;
+
+	impl Display for Workspace {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+			if let Some(output) = &self.output {
+				writeln!(f, "workspace {} @ {:?}", self.idx, output)?;
+			} else {
+				writeln!(f, "workspace {}", self.idx)?;
+			}
+
+			writeln!(f, "    active: {}", self.active)?;
+
+			for window in &self.windows {
+				match (&window.app_id, &window.title) {
+					(Some(app_id), Some(title)) => writeln!(f, "    window {:?} @ {:?}", app_id, title)?,
+					(Some(app_id), None) => writeln!(f, "    window {:?}", app_id)?,
+					(None, Some(title)) => writeln!(f, "    window @ {:?}", title)?,
+					(None, None) => writeln!(f, "    window")?,
+				}
+			}
+
+			Ok(())
+		}
+	}
 
 	#[derive(Debug, Serialize, Deserialize)]
 	pub struct Window {
