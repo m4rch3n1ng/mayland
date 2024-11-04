@@ -227,8 +227,6 @@ impl Mayland {
 		let pointer = seat.add_pointer();
 		let cursor = Cursor::new(&mut environment);
 
-		let suppressed_keys = HashSet::new();
-
 		let mayland = Mayland {
 			config,
 			environment,
@@ -271,7 +269,7 @@ impl Mayland {
 			cursor,
 
 			comp_mod,
-			suppressed_keys,
+			suppressed_keys: HashSet::new(),
 		};
 
 		Ok(mayland)

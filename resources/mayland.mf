@@ -19,14 +19,14 @@ input {
 		dwt = true
 		dwtp = true
 
+		natural_scroll = true
+		# scroll_method = "two_finger"
+
 		click_method = "clickfinger"
 
 		middle_emulation = true
 		tap_button_map = "left_right_middle"
 		left_handed = false
-
-		natural_scroll = true
-		# scroll_method = "two_finger"
 
 		accel_speed = 0
 		# accel_profile = "adaptive"

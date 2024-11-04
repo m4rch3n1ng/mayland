@@ -64,6 +64,10 @@ pub struct Touchpad {
 	pub dwt: bool,
 	pub dwtp: bool,
 
+	pub natural_scroll: bool,
+	#[serde(with = "scroll_method")]
+	pub scroll_method: Option<ScrollMethod>,
+
 	#[serde(with = "click_method")]
 	pub click_method: Option<ClickMethod>,
 
@@ -71,10 +75,6 @@ pub struct Touchpad {
 	#[serde(with = "tap_button_map")]
 	pub tap_button_map: Option<TapButtonMap>,
 	pub left_handed: bool,
-
-	pub natural_scroll: bool,
-	#[serde(with = "scroll_method")]
-	pub scroll_method: Option<ScrollMethod>,
 
 	pub accel_speed: f64,
 	#[serde(with = "accel_profile")]
@@ -91,14 +91,14 @@ impl Default for Touchpad {
 			dwt: true,
 			dwtp: true,
 
+			natural_scroll: true,
+			scroll_method: None,
+
 			click_method: None,
 
 			middle_emulation: true,
 			tap_button_map: None,
 			left_handed: false,
-
-			natural_scroll: true,
-			scroll_method: None,
 
 			accel_speed: 0.0,
 			accel_profile: None,

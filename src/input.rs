@@ -392,6 +392,13 @@ pub fn apply_libinput_settings(config: &mayland_config::Input, device: &mut Inpu
 		let _ = device.config_dwt_set_enabled(conf.dwt);
 		let _ = device.config_dwtp_set_enabled(conf.dwtp);
 
+		let _ = device.config_scroll_set_natural_scroll_enabled(conf.natural_scroll);
+		if let Some(scroll_method) = conf.scroll_method {
+			let _ = device.config_scroll_set_method(scroll_method);
+		} else if let Some(default_scroll_method) = device.config_scroll_default_method() {
+			let _ = device.config_scroll_set_method(default_scroll_method);
+		}
+
 		if let Some(click_method) = conf.click_method {
 			let _ = device.config_click_set_method(click_method);
 		} else if let Some(default_click_method) = device.config_click_default_method() {
@@ -405,13 +412,6 @@ pub fn apply_libinput_settings(config: &mayland_config::Input, device: &mut Inpu
 			let _ = device.config_tap_set_button_map(default_tap_button_map);
 		}
 		let _ = device.config_left_handed_set(conf.left_handed);
-
-		let _ = device.config_scroll_set_natural_scroll_enabled(conf.natural_scroll);
-		if let Some(scroll_method) = conf.scroll_method {
-			let _ = device.config_scroll_set_method(scroll_method);
-		} else if let Some(default_scroll_method) = device.config_scroll_default_method() {
-			let _ = device.config_scroll_set_method(default_scroll_method);
-		}
 
 		let accel_speed = conf.accel_speed.clamp(-1., 1.);
 		if accel_speed != conf.accel_speed {
