@@ -31,6 +31,16 @@ input {
 		accel_speed = 0
 		# accel_profile = "adaptive"
 	}
+
+	mouse {
+		natural_scroll = false
+
+		middle_emulation = false
+		left_handed = false
+
+		accel_profile = 0
+		# accel_profile = "adaptive"
+	}
 }
 
 cursor {

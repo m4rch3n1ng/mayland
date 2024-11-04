@@ -7,6 +7,7 @@ use smithay::reexports::input::{AccelProfile, ClickMethod, ScrollMethod, TapButt
 pub struct Input {
 	pub keyboard: Keyboard,
 	pub touchpad: Touchpad,
+	pub mouse: Mouse,
 }
 
 #[derive(Debug, Deserialize)]
@@ -98,6 +99,32 @@ impl Default for Touchpad {
 
 			middle_emulation: true,
 			tap_button_map: None,
+			left_handed: false,
+
+			accel_speed: 0.0,
+			accel_profile: None,
+		}
+	}
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Mouse {
+	pub natural_scroll: bool,
+
+	pub middle_emulation: bool,
+	pub left_handed: bool,
+
+	pub accel_speed: f64,
+	#[serde(with = "accel_profile")]
+	pub accel_profile: Option<AccelProfile>,
+}
+
+impl Default for Mouse {
+	fn default() -> Self {
+		Mouse {
+			natural_scroll: false,
+
+			middle_emulation: false,
 			left_handed: false,
 
 			accel_speed: 0.0,
