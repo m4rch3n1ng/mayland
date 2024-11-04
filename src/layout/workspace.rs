@@ -477,17 +477,25 @@ impl Workspace {
 	}
 }
 
-impl From<&Workspace> for mayland_comm::Workspace {
-	fn from(workspace: &Workspace) -> Self {
-		let windows = workspace
+impl Workspace {
+	/// get info for [`mayland_comm::Workspace`]
+	pub fn comm_info(&self, workspaces: &WorkspaceManager) -> mayland_comm::Workspace {
+		let windows = self
 			.windows()
 			.map(mayland_comm::workspace::Window::from)
 			.collect();
-		let output = workspace.output.as_ref().map(|output| output.name());
+		let output = self.output.as_ref().map(|output| output.name());
+
+		let active = match &self.output {
+			Some(output) => workspaces.is_active_output(output),
+			None => false,
+		};
 
 		mayland_comm::Workspace {
-			idx: workspace.idx,
+			idx: self.idx,
 			output,
+
+			active,
 			windows,
 		}
 	}

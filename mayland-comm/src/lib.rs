@@ -26,6 +26,8 @@ pub enum Response {
 pub struct Workspace {
 	pub idx: usize,
 	pub output: Option<String>,
+
+	pub active: bool,
 	pub windows: Vec<workspace::Window>,
 }
 

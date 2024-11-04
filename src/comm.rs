@@ -80,7 +80,7 @@ async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async
 					.workspaces
 					.workspaces
 					.values()
-					.map(mayland_comm::Workspace::from)
+					.map(|workspace| workspace.comm_info(&state.mayland.workspaces))
 					.collect();
 
 				let _ = tx.send_blocking(workspaces);
