@@ -63,6 +63,22 @@ impl MappedWindow {
 			}
 		}
 	}
+
+	/// move xwayland windows
+	///
+	/// unlike wayland, x windows have to be configured with their
+	/// new location when the window is moved.
+	pub fn xmove(&self, point: Point<i32, Logical>) {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(_) => (),
+			WindowSurface::X11(x11) => {
+				let mut rect = x11.geometry();
+				rect.loc = point;
+
+				x11.configure(rect).unwrap();
+			}
+		}
+	}
 }
 
 impl MappedWindow {

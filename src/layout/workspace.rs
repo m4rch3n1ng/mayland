@@ -457,6 +457,7 @@ impl Workspace {
 
 	pub fn floating_move(&mut self, window: MappedWindow, location: Point<i32, Logical>) {
 		if self.is_floating(&window) {
+			window.xmove(location);
 			self.floating.map_element(window, location, true);
 		}
 	}
