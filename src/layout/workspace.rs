@@ -167,6 +167,8 @@ impl WorkspaceManager {
 		}
 	}
 
+	/// is the [`MappedWindow`] in the floating space of the currently
+	/// active [`Workspace`]?
 	pub fn is_floating(&mut self, window: &MappedWindow) -> bool {
 		let workspace = self.workspace();
 		workspace.is_floating(window)
@@ -432,7 +434,7 @@ impl Workspace {
 		}
 	}
 
-	pub fn has_window(&mut self, window: &MappedWindow) -> bool {
+	pub fn has_window(&self, window: &MappedWindow) -> bool {
 		self.windows().any(|w| w == window)
 	}
 
