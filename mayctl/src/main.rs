@@ -73,7 +73,11 @@ fn main() -> Term {
 				unexpected!(response, "devices")
 			};
 
-			dbg!(devices);
+			if cli.json {
+				stringify(&devices);
+			} else {
+				prettify(&devices);
+			}
 		}
 		Request::Outputs => {
 			let Response::Outputs(outputs) = response else {

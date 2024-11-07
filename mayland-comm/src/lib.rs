@@ -38,7 +38,18 @@ pub struct Device {
 }
 
 pub mod device {
+	use super::Device;
 	use serde::{Deserialize, Serialize};
+	use std::fmt::Display;
+
+	impl Display for Device {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+			writeln!(f, "device {:?}", self.name)?;
+			writeln!(f, "    type: {}", self.r#type)?;
+
+			Ok(())
+		}
+	}
 
 	#[derive(Debug, Serialize, Deserialize)]
 	#[serde(rename_all = "kebab-case")]
@@ -50,6 +61,20 @@ pub mod device {
 		Tablet,
 		TabletPad,
 		Switch,
+	}
+
+	impl Display for Type {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+			match self {
+				Type::Keyboard => f.write_str("keyboard"),
+				Type::Touchpad => f.write_str("touchpad"),
+				Type::Pointer => f.write_str("pointer"),
+				Type::Touch => f.write_str("touch"),
+				Type::Tablet => f.write_str("tablet"),
+				Type::TabletPad => f.write_str("tablet-pad"),
+				Type::Switch => f.write_str("switch"),
+			}
+		}
 	}
 }
 
