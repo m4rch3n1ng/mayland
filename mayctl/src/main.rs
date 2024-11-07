@@ -2,6 +2,7 @@ use self::cli::Cli;
 use clap::Parser;
 use mayland_comm::{Request, Response, MAYLAND_SOCKET_VAR};
 use std::{
+	fmt::Display,
 	io::{BufRead, BufReader, Write},
 	net::Shutdown,
 	os::unix::net::UnixStream,
@@ -34,14 +35,17 @@ fn main() {
 		}
 		Request::Workspaces => {
 			let Response::Workspaces(workspaces) = reply else { panic!() };
-
-			for (i, workspace) in workspaces.iter().enumerate() {
-				if i != 0 {
-					println!();
-				}
-
-				print!("{}", workspace);
-			}
+			prettify(&workspaces);
 		}
+	}
+}
+
+fn prettify<T: Display>(t: &[T]) {
+	for (i, t) in t.iter().enumerate() {
+		if i != 0 {
+			println!();
+		}
+
+		print!("{}", t);
 	}
 }
