@@ -33,8 +33,10 @@ pub enum Response {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Device {
-	pub r#type: device::Type,
 	pub name: String,
+	pub r#type: device::Type,
+	pub vid: u32,
+	pub pid: u32,
 }
 
 pub mod device {
@@ -46,6 +48,8 @@ pub mod device {
 		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 			writeln!(f, "device {:?}", self.name)?;
 			writeln!(f, "    type: {}", self.r#type)?;
+			writeln!(f, "    vid: {:#06x}", self.vid)?;
+			writeln!(f, "    pid: {:#06x}", self.pid)?;
 
 			Ok(())
 		}

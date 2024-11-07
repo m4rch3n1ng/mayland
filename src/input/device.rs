@@ -93,6 +93,8 @@ impl From<&InputDevice> for mayland_comm::Device {
 		mayland_comm::Device {
 			name: device.handle.name().to_owned(),
 			r#type,
+			vid: device.handle.id_vendor(),
+			pid: device.handle.id_product(),
 		}
 	}
 }
