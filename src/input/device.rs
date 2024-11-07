@@ -18,8 +18,6 @@ pub struct InputDevice {
 
 impl InputDevice {
 	pub fn split(dev: &libinput::Device) -> Vec<Self> {
-		let mut devices = vec![];
-
 		const TYPES: [(DeviceCapability, InputDeviceType); 6] = [
 			(DeviceCapability::Pointer, InputDeviceType::Pointer),
 			(DeviceCapability::Keyboard, InputDeviceType::Keyboard),
@@ -28,6 +26,8 @@ impl InputDevice {
 			(DeviceCapability::TabletPad, InputDeviceType::TabletPad),
 			(DeviceCapability::Switch, InputDeviceType::Switch),
 		];
+
+		let mut devices = vec![];
 
 		for (cap, r#type) in TYPES {
 			if dev.has_capability(cap) {

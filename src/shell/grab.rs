@@ -39,7 +39,7 @@ impl ResizeCorner {
 	}
 
 	pub fn delta(
-		&self,
+		self,
 		initial_window_size: Size<i32, Logical>,
 		window_size: Size<i32, Logical>,
 	) -> Option<Point<i32, Logical>> {

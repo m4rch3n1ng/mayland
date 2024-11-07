@@ -332,7 +332,7 @@ impl Workspace {
 		let layer_map = layer_map_for_output(output);
 		let output_scale = output.current_scale().fractional_scale();
 
-		let (lower, upper) = self.layer_elements(&layer_map, output_scale);
+		let (lower, upper) = Workspace::layer_elements(&layer_map, output_scale);
 
 		render_elements.extend(upper.flat_map(|(surface, location)| {
 			AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(
@@ -372,13 +372,12 @@ impl Workspace {
 		render_elements.into_iter()
 	}
 
-	fn layer_elements<'o>(
-		&self,
-		layer_map: &'o LayerMap,
+	fn layer_elements(
+		layer_map: &LayerMap,
 		output_scale: f64,
 	) -> (
-		impl Iterator<Item = LayerSurfacePoint<'o>>,
-		impl Iterator<Item = LayerSurfacePoint<'o>>,
+		impl Iterator<Item = LayerSurfacePoint>,
+		impl Iterator<Item = LayerSurfacePoint>,
 	) {
 		let upper = layer_map
 			.layers()
