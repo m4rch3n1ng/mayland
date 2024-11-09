@@ -233,8 +233,14 @@ impl Tiling {
 			[Some(w1), Some(w2)] => {
 				let position = self.layout.position(location);
 				match position {
-					Position::Left => Some((&w1.0, w1.1.loc)),
-					Position::Right => Some((&w2.0, w2.1.loc)),
+					Position::Left => {
+						let loc = w1.0.render_location(w1.1.loc);
+						Some((&w1.0, loc))
+					}
+					Position::Right => {
+						let loc = w2.0.render_location(w2.1.loc);
+						Some((&w2.0, loc))
+					}
 				}
 			}
 			[Some(window), None] => Some((&window.0, window.1.loc)),
