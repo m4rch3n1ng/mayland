@@ -61,7 +61,7 @@ pub mod workspace {
 
 	#[derive(Debug, Serialize, Deserialize)]
 	pub struct Window {
-		pub title: Option<String>,
 		pub app_id: Option<String>,
+		pub title: Option<String>,
 	}
 }

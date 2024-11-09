@@ -355,8 +355,8 @@ impl From<&MappedWindow> for mayland_comm::workspace::Window {
 						.unwrap();
 
 					mayland_comm::workspace::Window {
-						title: surface_data.title.clone(),
 						app_id: surface_data.app_id.clone(),
+						title: surface_data.title.clone(),
 					}
 				})
 			}
