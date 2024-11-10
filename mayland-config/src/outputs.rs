@@ -1,7 +1,7 @@
 use serde::{de::Visitor, Deserialize};
 use std::{cmp::Ordering, collections::HashMap};
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Deserialize)]
 pub struct Outputs(HashMap<String, Output>);
 
 #[derive(Debug, Clone)]
@@ -45,7 +45,7 @@ impl Outputs {
 	}
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub struct Output {
 	pub mode: Option<Mode>,
@@ -53,7 +53,7 @@ pub struct Output {
 	pub position: Option<[i32; 2]>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Mode {
 	pub width: u16,
 	pub height: u16,

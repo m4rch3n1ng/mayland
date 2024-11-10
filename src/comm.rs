@@ -72,6 +72,21 @@ async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async
 			let () = rx.recv().await.unwrap();
 			Response::Dispatch
 		}
+		Ok(Request::Reload) => {
+			let Ok(config) = mayland_config::Config::read(mayland_config::bind::CompMod::Meta) else {
+				tracing::error!("failed to read config");
+				return;
+			};
+
+			let (tx, rx) = async_channel::bounded(1);
+			event_loop.insert_idle(move |state| {
+				state.reload_config(config);
+				let _ = tx.send_blocking(());
+			});
+
+			let () = rx.recv().await.unwrap();
+			Response::Reload
+		}
 		Ok(Request::Workspaces) => {
 			let (tx, rx) = async_channel::bounded(1);
 			event_loop.insert_idle(move |state| {

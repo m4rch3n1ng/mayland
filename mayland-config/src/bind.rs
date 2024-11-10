@@ -35,7 +35,7 @@ impl PartialEq<CompMod> for ModifiersState {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Binds(HashMap<Mapping, Action>);
 
 impl<'de> Deserialize<'de> for Binds {

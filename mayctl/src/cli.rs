@@ -28,6 +28,8 @@ pub enum Cmd {
 		#[command(subcommand)]
 		dispatch: Dispatch,
 	},
+	/// reload compositor config
+	Reload,
 	/// request workspace info from the compositor
 	Workspaces,
 }
@@ -55,6 +57,7 @@ impl From<Cmd> for Request {
 		match value {
 			Cmd::Dispatch { dispatch: action } => Request::Dispatch(mayland_comm::Action::from(action)),
 			Cmd::Workspaces => Request::Workspaces,
+			Cmd::Reload => Request::Reload,
 		}
 	}
 }

@@ -13,6 +13,7 @@ pub const MAYLAND_SOCKET_VAR: &str = "MAYLAND_SOCKET";
 #[serde(tag = "tag", content = "val")]
 pub enum Request {
 	Dispatch(Action),
+	Reload,
 	Workspaces,
 }
 
@@ -22,6 +23,7 @@ pub enum Request {
 pub enum Response {
 	Err(Error),
 	Dispatch,
+	Reload,
 	Workspaces(Vec<Workspace>),
 }
 

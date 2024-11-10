@@ -1,7 +1,7 @@
 use serde::{de::Visitor, Deserialize};
 use smithay::backend::renderer::Color32F;
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub struct Decoration {
 	pub background: Color,
@@ -17,7 +17,7 @@ impl Default for Decoration {
 	}
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub struct Focus {
 	pub active: Color,
@@ -35,7 +35,7 @@ impl Default for Focus {
 	}
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Color([u8; 3]);
 
 impl Color {

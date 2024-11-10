@@ -1,7 +1,7 @@
 use regex::{Regex, RegexBuilder};
 use serde::{de::Visitor, Deserialize};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 pub struct WindowRules(Vec<(Matcher, WindowRule)>);
 
 impl<'de> Deserialize<'de> for WindowRules {
@@ -43,7 +43,7 @@ impl WindowRules {
 	}
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize)]
 #[serde(default)]
 pub struct WindowRule {
 	// * rules applied at initial configure * //
@@ -51,6 +51,10 @@ pub struct WindowRule {
 	// * rules applied at render * //
 	pub opacity: Option<f32>,
 }
+
+/// all values are parsed with [`mayfig`],
+/// which does not support nan floats
+impl Eq for WindowRule {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]

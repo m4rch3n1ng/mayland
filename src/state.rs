@@ -2,7 +2,7 @@ use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
 	comm::MaySocket,
 	cursor::{Cursor, RenderCursor},
-	input::device::InputDevice,
+	input::{apply_libinput_settings, device::InputDevice},
 	layout::workspace::WorkspaceManager,
 	render::MaylandRenderElements,
 	shell::{focus::KeyboardFocusTarget, window::UnmappedSurface},
@@ -118,6 +118,38 @@ impl State {
 			let xkb = self.mayland.seat.get_keyboard().unwrap();
 			xkb.set_keymap_from_string(self, keymap).unwrap();
 		}
+	}
+
+	pub fn reload_config(&mut self, config: Config) {
+		if self.mayland.config == config {
+			return;
+		}
+
+		if self.mayland.config.input != config.input {
+			for mut device in self.mayland.devices.iter().cloned() {
+				apply_libinput_settings(&config.input, &mut device);
+			}
+
+			if self.mayland.config.input.keyboard != config.input.keyboard {
+				let xkb_config = config.input.keyboard.xkb_config();
+
+				let xkb = self.mayland.seat.get_keyboard().unwrap();
+				xkb.set_xkb_config(self, xkb_config).unwrap();
+				if let Some(xkb_file) = config.input.keyboard.xkb_file.as_deref() {
+					let keymap = std::fs::read_to_string(xkb_file).unwrap();
+					xkb.set_keymap_from_string(self, keymap).unwrap();
+				}
+			}
+		}
+
+		if self.mayland.config.decoration.background != config.decoration.background {
+			for output_state in self.mayland.output_state.values_mut() {
+				output_state.background.set_color(config.decoration.background);
+			}
+		}
+
+		self.mayland.config = config;
+		self.mayland.queue_redraw_all();
 	}
 
 	pub fn refresh_and_redraw(&mut self) {

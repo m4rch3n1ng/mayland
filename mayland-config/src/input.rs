@@ -2,7 +2,7 @@ use serde::Deserialize;
 use smithay::input::keyboard::XkbConfig;
 use smithay::reexports::input::{AccelProfile, ClickMethod, ScrollMethod, TapButtonMap};
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub struct Input {
 	pub keyboard: Keyboard,
@@ -10,7 +10,7 @@ pub struct Input {
 	pub mouse: Mouse,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub struct Keyboard {
 	#[serde(deserialize_with = "deserialize_path")]
@@ -55,7 +55,7 @@ impl Default for Keyboard {
 	}
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 #[serde(default)]
 pub struct Touchpad {
 	pub tap: bool,
@@ -82,6 +82,10 @@ pub struct Touchpad {
 	pub accel_profile: Option<AccelProfile>,
 }
 
+/// all values are parsed with [`mayfig`],
+/// which does not support nan floats
+impl Eq for Touchpad {}
+
 impl Default for Touchpad {
 	fn default() -> Self {
 		Touchpad {
@@ -107,7 +111,7 @@ impl Default for Touchpad {
 	}
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 #[serde(default)]
 pub struct Mouse {
 	pub natural_scroll: bool,
@@ -119,6 +123,10 @@ pub struct Mouse {
 	#[serde(with = "accel_profile")]
 	pub accel_profile: Option<AccelProfile>,
 }
+
+/// all values are parsed with [`mayfig`],
+/// which does not support nan floats
+impl Eq for Mouse {}
 
 impl Default for Mouse {
 	fn default() -> Self {

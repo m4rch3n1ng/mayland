@@ -15,7 +15,7 @@ pub use self::{
 	windowrules::WindowRules,
 };
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub struct Config {
 	pub input: Input,
@@ -27,7 +27,7 @@ pub struct Config {
 	pub windowrules: WindowRules,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub struct Cursor {
 	pub xcursor_theme: Option<String>,
@@ -55,7 +55,7 @@ impl Config {
 		}
 	}
 
-	fn read(comp: CompMod) -> Result<Self, Error> {
+	pub fn read(comp: CompMod) -> Result<Self, Error> {
 		let file = match std::fs::read_to_string(&*CONFIG_PATH) {
 			Ok(file) => file,
 			Err(err) if matches!(err.kind(), std::io::ErrorKind::NotFound) => return Err(Error::NotFound),

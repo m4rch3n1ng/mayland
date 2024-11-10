@@ -52,6 +52,10 @@ fn main() -> Term {
 			ensure_matches!(response, Response::Dispatch, "dispatch");
 			println!("ok dispatch");
 		}
+		Request::Reload => {
+			ensure_matches!(response, Response::Reload, "reload");
+			println!("ok reload");
+		}
 		Request::Workspaces => {
 			let Response::Workspaces(workspaces) = response else {
 				unexpected!(response, "workspaces")
