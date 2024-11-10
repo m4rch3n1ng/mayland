@@ -417,7 +417,9 @@ type LayerSurfacePoint<'a> = (&'a LayerSurface, Point<i32, Physical>);
 
 impl Workspace {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
-		if let Some(window) = self.tiling.add_window(window, pointer) {
+		if window.is_non_resizable() {
+			self.floating.map_element(window, (0, 0), true);
+		} else if let Some(window) = self.tiling.add_window(window, pointer) {
 			self.floating.map_element(window, (0, 0), true);
 		}
 	}

@@ -21,7 +21,7 @@ use smithay::{
 	wayland::{
 		compositor::with_states,
 		seat::WaylandFocus,
-		shell::xdg::{ToplevelSurface, XdgToplevelSurfaceData},
+		shell::xdg::{SurfaceCachedState, ToplevelSurface, XdgToplevelSurfaceData},
 	},
 };
 use std::{
@@ -91,6 +91,21 @@ impl MappedWindow {
 		assert!(rect.size.h >= 0, "size should be nonnegative");
 
 		rect
+	}
+
+	/// check if surface is non-resizable
+	pub fn is_non_resizable(&self) -> bool {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => {
+				let (min, max) = with_states(xdg.wl_surface(), |states| {
+					let mut guard = states.cached_state.get::<SurfaceCachedState>();
+					let data = guard.current();
+					(data.min_size, data.max_size)
+				});
+
+				min.w > 0 && min.h > 0 && min == max
+			}
+		}
 	}
 }
 
