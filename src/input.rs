@@ -40,16 +40,16 @@ impl State {
 			InputEvent::PointerButton { event } => self.on_pointer_button::<I>(event),
 			InputEvent::PointerAxis { event } => self.on_pointer_axis::<I>(event),
 
-			InputEvent::GestureSwipeBegin { .. } => tracing::info!("gesture swipe begin"),
-			InputEvent::GestureSwipeUpdate { .. } => tracing::info!("gesture swipe update"),
-			InputEvent::GestureSwipeEnd { .. } => tracing::info!("gesture swipe end"),
+			InputEvent::GestureSwipeBegin { .. } => (),
+			InputEvent::GestureSwipeUpdate { .. } => (),
+			InputEvent::GestureSwipeEnd { .. } => (),
 
-			InputEvent::GesturePinchBegin { .. } => tracing::info!("gesture pinch begin"),
-			InputEvent::GesturePinchUpdate { .. } => tracing::info!("gesture pinch update"),
-			InputEvent::GesturePinchEnd { .. } => tracing::info!("gesture pinch end"),
+			InputEvent::GesturePinchBegin { .. } => (),
+			InputEvent::GesturePinchUpdate { .. } => (),
+			InputEvent::GesturePinchEnd { .. } => (),
 
-			InputEvent::GestureHoldBegin { .. } => tracing::info!("gesture hold begin"),
-			InputEvent::GestureHoldEnd { .. } => tracing::info!("gesture hold end"),
+			InputEvent::GestureHoldBegin { .. } => (),
+			InputEvent::GestureHoldEnd { .. } => (),
 
 			InputEvent::TouchDown { .. } => tracing::info!("touch down"),
 			InputEvent::TouchMotion { .. } => tracing::info!("touch motion"),
