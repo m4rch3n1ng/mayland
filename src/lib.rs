@@ -3,7 +3,7 @@ pub use state::State;
 
 mod action;
 mod backend;
-pub mod comm;
+mod comm;
 mod cursor;
 mod error;
 mod input;
