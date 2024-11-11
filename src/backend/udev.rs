@@ -1,7 +1,8 @@
 use super::BACKGROUND_COLOR;
 use crate::{
 	input::{apply_libinput_settings, device::InputDevice},
-	state::{Mayland, MaylandRenderElements, State},
+	render::MaylandRenderElements,
+	state::{Mayland, State},
 };
 use libc::dev_t;
 use smithay::{

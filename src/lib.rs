@@ -8,6 +8,7 @@ mod cursor;
 mod error;
 mod input;
 mod layout;
+mod render;
 mod shell;
 mod state;
 mod utils;

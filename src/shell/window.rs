@@ -1,5 +1,5 @@
 use super::grab::ResizeState;
-use crate::state::{MaylandRenderElements, State};
+use crate::{render::MaylandRenderElements, state::State};
 use smithay::{
 	backend::renderer::{
 		element::{surface::WaylandSurfaceRenderElement, utils::CropRenderElement, AsRenderElements},

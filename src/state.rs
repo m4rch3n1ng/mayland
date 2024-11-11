@@ -5,6 +5,7 @@ use crate::{
 	error::MaylandError,
 	input::device::InputDevice,
 	layout::workspace::WorkspaceManager,
+	render::MaylandRenderElements,
 	shell::window::UnmappedSurface,
 };
 use calloop::futures::Scheduler;
@@ -16,13 +17,10 @@ use smithay::{
 		input::Keycode,
 		renderer::{
 			element::{
-				memory::MemoryRenderBufferRenderElement,
-				surface::{render_elements_from_surface_tree, WaylandSurfaceRenderElement},
-				utils::CropRenderElement,
-				Kind, RenderElementStates,
+				memory::MemoryRenderBufferRenderElement, surface::render_elements_from_surface_tree, Kind,
+				RenderElementStates,
 			},
 			glow::GlowRenderer,
-			ImportAll, ImportMem,
 		},
 	},
 	desktop::{
@@ -42,7 +40,6 @@ use smithay::{
 			Display, DisplayHandle,
 		},
 	},
-	render_elements,
 	utils::{Clock, Monotonic},
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
@@ -497,27 +494,3 @@ pub struct ClientState {
 }
 
 impl ClientData for ClientState {}
-
-pub type MaylandRenderElements = OutputRenderElements<GlowRenderer>;
-
-render_elements! {
-	pub OutputRenderElements<R> where R: ImportAll + ImportMem;
-	DefaultPointer = MemoryRenderBufferRenderElement<R>,
-	CropSurface = CropRenderElement<WaylandSurfaceRenderElement<R>>,
-	Surface = WaylandSurfaceRenderElement<R>,
-}
-
-impl<R: ImportAll + ImportMem> Debug for OutputRenderElements<R> {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		match self {
-			OutputRenderElements::DefaultPointer(element) => {
-				f.debug_tuple("DefaultPointer").field(&element).finish()
-			}
-			OutputRenderElements::CropSurface(surface) => {
-				f.debug_tuple("CropSurface").field(&surface).finish()
-			}
-			OutputRenderElements::Surface(surface) => f.debug_tuple("Surface").field(&surface).finish(),
-			OutputRenderElements::_GenericCatcher(_) => f.write_str("_GenericCatcher"),
-		}
-	}
-}

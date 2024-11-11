@@ -1,5 +1,5 @@
 use self::{udev::Udev, winit::Winit};
-use crate::state::{Mayland, MaylandRenderElements};
+use crate::{render::MaylandRenderElements, state::Mayland};
 use smithay::{
 	backend::{allocator::dmabuf::Dmabuf, renderer::glow::GlowRenderer},
 	output::Output,
