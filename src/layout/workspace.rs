@@ -1,11 +1,16 @@
 use super::tiling::Tiling;
-use crate::{shell::window::MappedWindow, state::MaylandRenderElements, utils::RectExt, State};
+use crate::{
+	shell::window::MappedWindow,
+	state::MaylandRenderElements,
+	utils::{output_size, RectExt, SizeExt},
+	State,
+};
 use smithay::{
 	backend::renderer::{
 		element::{surface::WaylandSurfaceRenderElement, AsRenderElements},
 		glow::GlowRenderer,
 	},
-	desktop::{layer_map_for_output, LayerMap, LayerSurface, Space},
+	desktop::{layer_map_for_output, space::SpaceElement, LayerMap, LayerSurface, Space},
 	input::pointer::PointerHandle,
 	output::Output,
 	utils::{Logical, Physical, Point, Rectangle, Scale},
@@ -335,10 +340,20 @@ impl Workspace {
 
 impl Workspace {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
+		let center = if let Some(output) = &self.output {
+			let window_geom = window.geometry();
+			let window_center = window_geom.size.center();
+
+			let output_center = output_size(output).center();
+			output_center - window_center
+		} else {
+			Point::from((0, 0))
+		};
+
 		if window.is_non_resizable() {
-			self.floating.map_element(window, (0, 0), true);
+			self.floating.map_element(window, center, true);
 		} else if let Some(window) = self.tiling.add_window(window, pointer) {
-			self.floating.map_element(window, (0, 0), true);
+			self.floating.map_element(window, center, true);
 		}
 	}
 

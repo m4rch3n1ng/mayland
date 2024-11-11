@@ -24,12 +24,18 @@ impl<Kind> RectExt<i32, Kind> for Rectangle<i32, Kind> {
 
 pub trait SizeExt<N: Coordinate, Kind> {
 	fn borderless(&self, border: N) -> Size<N, Kind>;
+
+	fn center(&self) -> Point<N, Kind>;
 }
 
-impl<N: Coordinate, Kind> SizeExt<N, Kind> for Size<N, Kind> {
-	fn borderless(&self, border: N) -> Size<N, Kind> {
-		let border = border + border;
+impl<Kind> SizeExt<i32, Kind> for Size<i32, Kind> {
+	fn borderless(&self, border: i32) -> Size<i32, Kind> {
+		let border = 2 * border;
 		Size::from((self.w.saturating_sub(border), self.h.saturating_sub(border)))
+	}
+
+	fn center(&self) -> Point<i32, Kind> {
+		Point::from((self.w / 2, self.h / 2))
 	}
 }
 
