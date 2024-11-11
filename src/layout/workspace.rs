@@ -334,6 +334,72 @@ impl Workspace {
 }
 
 impl Workspace {
+	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
+		if window.is_non_resizable() {
+			self.floating.map_element(window, (0, 0), true);
+		} else if let Some(window) = self.tiling.add_window(window, pointer) {
+			self.floating.map_element(window, (0, 0), true);
+		}
+	}
+
+	pub fn remove_window(&mut self, window: &MappedWindow) {
+		if !self.tiling.remove_window(window) {
+			self.floating.unmap_elem(window);
+		}
+	}
+
+	/// is the [`MappedWindow`] in the floating space?
+	pub fn is_floating(&self, window: &MappedWindow) -> bool {
+		self.floating.elements().any(|w| w == window)
+	}
+
+	pub fn floating_move(&mut self, window: MappedWindow, location: Point<i32, Logical>) {
+		if self.is_floating(&window) {
+			self.floating.map_element(window, location, true);
+		}
+	}
+
+	pub fn raise_window(&mut self, window: &MappedWindow, activate: bool) {
+		if !self.tiling.has_window(window) {
+			self.floating.raise_element(window, activate);
+		}
+	}
+
+	pub fn has_window(&self, window: &MappedWindow) -> bool {
+		self.windows().any(|w| w == window)
+	}
+
+	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
+		self.floating.elements().chain(self.tiling.windows())
+	}
+
+	pub fn window_location(&self, window: &MappedWindow) -> Option<Point<i32, Logical>> {
+		self.floating.element_location(window)
+	}
+
+	pub fn window_geometry(&self, window: &MappedWindow) -> Option<Rectangle<i32, Logical>> {
+		self.floating.element_geometry(window)
+	}
+
+	pub fn window_under(
+		&self,
+		location: Point<f64, Logical>,
+	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
+		self.floating
+			.element_under(location)
+			.or_else(|| self.tiling.window_under(location))
+			.or_else(|| {
+				self.floating.elements().next_back().map(|w| {
+					let location = self.floating.element_location(w).unwrap();
+					(w, w.render_location(location))
+				})
+			})
+	}
+}
+
+type LayerSurfacePoint<'a> = (&'a LayerSurface, Point<i32, Physical>);
+
+impl Workspace {
 	fn render_elements(
 		&self,
 		renderer: &mut GlowRenderer,
@@ -410,72 +476,6 @@ impl Workspace {
 			});
 
 		(lower, upper)
-	}
-}
-
-type LayerSurfacePoint<'a> = (&'a LayerSurface, Point<i32, Physical>);
-
-impl Workspace {
-	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
-		if window.is_non_resizable() {
-			self.floating.map_element(window, (0, 0), true);
-		} else if let Some(window) = self.tiling.add_window(window, pointer) {
-			self.floating.map_element(window, (0, 0), true);
-		}
-	}
-
-	pub fn remove_window(&mut self, window: &MappedWindow) {
-		if !self.tiling.remove_window(window) {
-			self.floating.unmap_elem(window);
-		}
-	}
-
-	/// is the [`MappedWindow`] in the floating space?
-	pub fn is_floating(&self, window: &MappedWindow) -> bool {
-		self.floating.elements().any(|w| w == window)
-	}
-
-	pub fn floating_move(&mut self, window: MappedWindow, location: Point<i32, Logical>) {
-		if self.is_floating(&window) {
-			self.floating.map_element(window, location, true);
-		}
-	}
-
-	pub fn raise_window(&mut self, window: &MappedWindow, activate: bool) {
-		if !self.tiling.has_window(window) {
-			self.floating.raise_element(window, activate);
-		}
-	}
-
-	pub fn has_window(&self, window: &MappedWindow) -> bool {
-		self.windows().any(|w| w == window)
-	}
-
-	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
-		self.floating.elements().chain(self.tiling.windows())
-	}
-
-	pub fn window_location(&self, window: &MappedWindow) -> Option<Point<i32, Logical>> {
-		self.floating.element_location(window)
-	}
-
-	pub fn window_geometry(&self, window: &MappedWindow) -> Option<Rectangle<i32, Logical>> {
-		self.floating.element_geometry(window)
-	}
-
-	pub fn window_under(
-		&self,
-		location: Point<f64, Logical>,
-	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
-		self.floating
-			.element_under(location)
-			.or_else(|| self.tiling.window_under(location))
-			.or_else(|| {
-				self.floating.elements().next_back().map(|w| {
-					let location = self.floating.element_location(w).unwrap();
-					(w, w.render_location(location))
-				})
-			})
 	}
 }
 
