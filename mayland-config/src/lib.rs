@@ -4,15 +4,17 @@ use serde::Deserialize;
 use std::{path::PathBuf, sync::LazyLock};
 
 pub mod bind;
+pub mod decoration;
 mod error;
 pub mod input;
 
-pub use self::{bind::Binds, error::Error, input::Input};
+pub use self::{bind::Binds, decoration::Decoration, error::Error, input::Input};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct Config {
 	pub input: Input,
+	pub decoration: Decoration,
 	pub bind: Binds,
 }
 

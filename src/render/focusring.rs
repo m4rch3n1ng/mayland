@@ -12,8 +12,13 @@ use std::borrow::BorrowMut;
 pub struct FocusRing;
 
 impl FocusRing {
-	pub fn unfocussed(renderer: &mut GlowRenderer, mut area: Rectangle<i32, Logical>) -> PixelShaderElement {
-		let thickness = 4;
+	pub fn element(
+		renderer: &mut GlowRenderer,
+		mut area: Rectangle<i32, Logical>,
+		color: [f32; 3],
+		thickness: u8,
+	) -> PixelShaderElement {
+		let thickness = i32::from(thickness);
 		area.loc -= (thickness, thickness).into();
 		area.size += (thickness * 2, thickness * 2).into();
 
@@ -24,7 +29,7 @@ impl FocusRing {
 			None,
 			1.0,
 			vec![
-				Uniform::new("color", [1.0, 0.0, 1.0]),
+				Uniform::new("color", color),
 				Uniform::new("thickness", thickness as f32),
 			],
 			Kind::Unspecified,

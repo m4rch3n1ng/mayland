@@ -162,10 +162,12 @@ impl WorkspaceManager {
 		&self,
 		renderer: &mut GlowRenderer,
 		output: &Output,
+		decoration: &mayland_config::Decoration,
+		focus: Option<MappedWindow>,
 	) -> impl Iterator<Item = MaylandRenderElements> {
 		let idx = &self.output_map[output];
 		let workspace = &self.workspaces[idx];
-		workspace.render_elements(renderer, output)
+		workspace.render_elements(renderer, output, decoration, focus)
 	}
 }
 
@@ -425,6 +427,8 @@ impl Workspace {
 		&self,
 		renderer: &mut GlowRenderer,
 		output: &Output,
+		decoration: &mayland_config::Decoration,
+		focus: Option<MappedWindow>,
 	) -> impl Iterator<Item = MaylandRenderElements> {
 		let mut render_elements = Vec::new();
 
@@ -454,11 +458,18 @@ impl Workspace {
 			let elements = window.render_elements(renderer, window_render_location, 1.0.into(), 1.0);
 			render_elements.extend(elements);
 
-			let focus_ring = FocusRing::unfocussed(renderer, geometry);
+			let color = if focus.as_ref().is_some_and(|focus| focus == window) {
+				decoration.focus.active
+			} else {
+				decoration.focus.inactive
+			};
+
+			let focus_ring =
+				FocusRing::element(renderer, geometry, color.as_f32s(), decoration.focus.thickness);
 			render_elements.push(MaylandRenderElements::FocusElement(focus_ring));
 		}
 
-		render_elements.extend(self.tiling.render(renderer, output_scale));
+		render_elements.extend(self.tiling.render(renderer, output_scale, decoration, focus));
 
 		render_elements.extend(lower.flat_map(|(surface, location)| {
 			AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(

@@ -251,18 +251,27 @@ impl Tiling {
 }
 
 impl Tiling {
-	pub fn render<'a>(
+	pub fn render<'a, 'b>(
 		&self,
 		renderer: &'a mut GlowRenderer,
 		scale: f64,
-	) -> impl Iterator<Item = MaylandRenderElements> + use<'_, 'a> {
+		decoration: &'b mayland_config::Decoration,
+		focus: Option<MappedWindow>,
+	) -> impl Iterator<Item = MaylandRenderElements> + use<'_, 'a, 'b> {
 		self.windows_geometry().flat_map(move |(window, geom)| {
 			let window_rect = window.render_rectangle(*geom);
 
 			let render_location = window_rect.to_physical_precise_round(scale);
 			let mut elements = window.crop_render_elements(renderer, render_location, scale.into(), 1.);
 
-			let focus_ring = FocusRing::unfocussed(renderer, window_rect);
+			let color = if focus.as_ref().is_some_and(|focus| focus == window) {
+				decoration.focus.active
+			} else {
+				decoration.focus.inactive
+			};
+
+			let focus_ring =
+				FocusRing::element(renderer, window_rect, color.as_f32s(), decoration.focus.thickness);
 			elements.push(MaylandRenderElements::FocusElement(focus_ring));
 
 			elements

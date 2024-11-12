@@ -6,7 +6,7 @@ use crate::{
 	input::device::InputDevice,
 	layout::workspace::WorkspaceManager,
 	render::MaylandRenderElements,
-	shell::window::UnmappedSurface,
+	shell::{focus::KeyboardFocusTarget, window::UnmappedSurface},
 };
 use calloop::futures::Scheduler;
 use indexmap::IndexSet;
@@ -368,7 +368,14 @@ impl Mayland {
 			elements.extend(pointer_element);
 		}
 
-		let workspace_elements = self.workspaces.render_elements(renderer, output);
+		let focus = self.keyboard.current_focus().and_then(|focus| match focus {
+			KeyboardFocusTarget::Window(mapped) => Some(mapped),
+			_ => None,
+		});
+
+		let workspace_elements =
+			self.workspaces
+				.render_elements(renderer, output, &self.config.decoration, focus);
 		elements.extend(workspace_elements);
 
 		elements
