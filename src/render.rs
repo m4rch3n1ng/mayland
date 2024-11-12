@@ -9,6 +9,10 @@ use smithay::backend::renderer::{
 };
 use std::fmt::Debug;
 
+mod focusring;
+
+pub use focusring::FocusRing;
+
 pub type MaylandRenderElements = OutputRenderElements<GlowRenderer>;
 
 pub enum OutputRenderElements<R>
