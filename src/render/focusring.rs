@@ -1,14 +1,13 @@
+use super::shaders::Shaders;
 use smithay::{
 	backend::renderer::{
 		element::Kind,
-		gles::{element::PixelShaderElement, GlesRenderer, Uniform, UniformName, UniformType},
+		gles::{element::PixelShaderElement, Uniform},
 		glow::GlowRenderer,
 	},
 	utils::{Logical, Rectangle},
 };
 use std::borrow::BorrowMut;
-
-pub static OUTLINE_SHADER: &str = include_str!("./shaders/focusring.frag");
 
 pub struct FocusRing;
 
@@ -18,19 +17,9 @@ impl FocusRing {
 		area.loc -= (thickness, thickness).into();
 		area.size += (thickness * 2, thickness * 2).into();
 
-		let gles: &mut GlesRenderer = renderer.borrow_mut();
-		let shader = gles
-			.compile_custom_pixel_shader(
-				OUTLINE_SHADER,
-				&[
-					UniformName::new("color", UniformType::_3f),
-					UniformName::new("thickness", UniformType::_1f),
-				],
-			)
-			.unwrap();
-
+		let shaders = Shaders::get(renderer.borrow_mut());
 		PixelShaderElement::new(
-			shader,
+			shaders.border,
 			area,
 			None,
 			1.0,

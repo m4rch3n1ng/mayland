@@ -14,6 +14,7 @@ use smithay::{
 use std::fmt::Debug;
 
 mod focusring;
+pub mod shaders;
 
 pub use focusring::FocusRing;
 

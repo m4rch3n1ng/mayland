@@ -1,6 +1,6 @@
 use super::BACKGROUND_COLOR;
 use crate::{
-	render::MaylandRenderElements,
+	render::{shaders, MaylandRenderElements},
 	state::{Mayland, State},
 };
 use smithay::{
@@ -14,6 +14,7 @@ use smithay::{
 	utils::{Rectangle, Transform},
 	wayland::dmabuf::DmabufFeedbackBuilder,
 };
+use std::borrow::BorrowMut;
 
 #[derive(Debug)]
 pub struct Winit {
@@ -25,6 +26,7 @@ pub struct Winit {
 impl Winit {
 	pub fn init(mayland: &mut Mayland) -> Self {
 		let (mut backend, winit_evt) = winit::init::<GlowRenderer>().unwrap();
+		shaders::init(backend.renderer().borrow_mut());
 
 		let mode = Mode {
 			size: backend.window_size(),

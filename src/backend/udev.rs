@@ -1,7 +1,7 @@
 use super::BACKGROUND_COLOR;
 use crate::{
 	input::{apply_libinput_settings, device::InputDevice},
-	render::MaylandRenderElements,
+	render::{shaders, MaylandRenderElements},
 	state::{Mayland, State},
 };
 use libc::dev_t;
@@ -38,6 +38,7 @@ use smithay_drm_extras::{
 	drm_scanner::{DrmScanEvent, DrmScanner},
 };
 use std::{
+	borrow::BorrowMut,
 	collections::HashMap,
 	path::{Path, PathBuf},
 	time::Duration,
@@ -257,6 +258,7 @@ impl Udev {
 
 		// SAFETY: the egl context is only active in this thread
 		let mut glow = unsafe { GlowRenderer::new(egl_context) }.unwrap();
+		shaders::init(glow.borrow_mut());
 
 		glow.bind_wl_display(&mayland.display_handle).unwrap();
 
