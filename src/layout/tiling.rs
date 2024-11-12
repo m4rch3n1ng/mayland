@@ -1,5 +1,5 @@
 use crate::{
-	render::MaylandRenderElements,
+	render::{FocusRing, MaylandRenderElements},
 	shell::window::MappedWindow,
 	utils::{output_size, SizeExt},
 };
@@ -259,8 +259,13 @@ impl Tiling {
 		self.windows_geometry().flat_map(move |(window, geom)| {
 			let window_rect = window.render_rectangle(*geom);
 
-			let window_render_location = window_rect.to_physical_precise_round(scale);
-			window.crop_render_elements(renderer, window_render_location, scale.into(), 1.)
+			let render_location = window_rect.to_physical_precise_round(scale);
+			let mut elements = window.crop_render_elements(renderer, render_location, scale.into(), 1.);
+
+			let focus_ring = FocusRing::unfocussed(renderer, window_rect);
+			elements.push(MaylandRenderElements::FocusElement(focus_ring));
+
+			elements
 		})
 	}
 }

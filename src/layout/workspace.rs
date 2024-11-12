@@ -1,6 +1,6 @@
 use super::tiling::Tiling;
 use crate::{
-	render::MaylandRenderElements,
+	render::{FocusRing, MaylandRenderElements},
 	shell::window::MappedWindow,
 	utils::{output_size, RectExt, SizeExt},
 	State,
@@ -445,13 +445,17 @@ impl Workspace {
 			.map(MaylandRenderElements::Surface)
 		}));
 
-		if let Some(output_geo) = self.floating.output_geometry(output) {
-			render_elements.extend(
-				self.floating
-					.render_elements_for_region(renderer, &output_geo, output_scale, 1.)
-					.into_iter()
-					.map(MaylandRenderElements::Surface),
-			);
+		for window in self.floating.elements().rev() {
+			let geometry = self.floating.element_geometry(window).unwrap();
+
+			let render_location = window.render_location(geometry.loc);
+
+			let window_render_location = render_location.to_physical_precise_round(1.0);
+			let elements = window.render_elements(renderer, window_render_location, 1.0.into(), 1.0);
+			render_elements.extend(elements);
+
+			let focus_ring = FocusRing::unfocussed(renderer, geometry);
+			render_elements.push(MaylandRenderElements::FocusElement(focus_ring));
 		}
 
 		render_elements.extend(self.tiling.render(renderer, output_scale));

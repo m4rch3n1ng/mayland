@@ -1,8 +1,5 @@
 use super::grab::ResizeState;
-use crate::{
-	render::{FocusRing, MaylandRenderElements},
-	state::State,
-};
+use crate::{render::MaylandRenderElements, state::State};
 use smithay::{
 	backend::renderer::{
 		element::{surface::WaylandSurfaceRenderElement, utils::CropRenderElement, AsRenderElements},
@@ -178,18 +175,12 @@ impl MappedWindow {
 		scale: Scale<f64>,
 		alpha: f32,
 	) -> Vec<MaylandRenderElements> {
-		let mut elements = self
-			.window
+		self.window
 			.render_elements(renderer, rect.loc, scale, alpha)
 			.into_iter()
 			.filter_map(|element| CropRenderElement::from_element(element, scale, rect))
 			.map(MaylandRenderElements::CropSurface)
-			.collect::<Vec<_>>();
-
-		let focus_ring = FocusRing::unfocussed(renderer, rect.to_logical(1));
-		elements.push(MaylandRenderElements::FocusElement(focus_ring));
-
-		elements
+			.collect()
 	}
 }
 
