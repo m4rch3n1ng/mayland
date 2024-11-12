@@ -33,6 +33,14 @@ input {
 	}
 }
 
+decoration {
+	focus {
+		# active = "#021caf"
+		# inactive = "#71717a"
+		# thickness = 4
+	}
+}
+
 bind {
 	"mod escape" = "quit"
 	"mod q" = "close"
