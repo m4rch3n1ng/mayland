@@ -1,7 +1,7 @@
 use crate::{
 	render::{FocusRing, MaylandRenderElements},
 	shell::window::MappedWindow,
-	utils::{output_size, SizeExt},
+	utils::{output_size, RectExt, SizeExt},
 };
 use smithay::{
 	backend::renderer::glow::GlowRenderer,
@@ -48,6 +48,10 @@ impl Layout {
 		self.split = split;
 	}
 
+	fn single(&self) -> Rectangle<i32, Logical> {
+		self.rect.borderless(4)
+	}
+
 	fn double(&self) -> [Rectangle<i32, Logical>; 2] {
 		let split = self.split;
 		let rel_split = split - self.rect.loc;
@@ -58,13 +62,17 @@ impl Layout {
 		let one = {
 			let size = Size::from((rel_split.x - gap, size.h));
 			let loc = self.rect.loc;
-			Rectangle { loc, size }
+
+			let rect = Rectangle { loc, size };
+			rect.borderless(4)
 		};
 
 		let two = {
 			let size = Size::from((size.w - one.size.w - self.gaps, size.h));
 			let loc = Point::from((split.x + gap, split.y));
-			Rectangle { loc, size }
+
+			let rect = Rectangle { loc, size };
+			rect.borderless(4)
 		};
 
 		[one, two]
@@ -142,8 +150,9 @@ impl Tiling {
 				None
 			}
 			[empty @ None, None] => {
-				window.resize(self.layout.rect.size);
-				*empty = Some((window, self.layout.rect));
+				let one = self.layout.single();
+				window.resize(one.size);
+				*empty = Some((window, one));
 
 				None
 			}
@@ -153,8 +162,9 @@ impl Tiling {
 	pub fn remove_window(&mut self, window: &MappedWindow) -> bool {
 		match &mut self.windows {
 			[Some(w1), Some(w2)] if &w1.0 == window => {
-				w2.0.resize(self.layout.rect.size);
-				w2.1 = self.layout.rect;
+				let one = self.layout.single();
+				w2.0.resize(one.size);
+				w2.1 = one;
 
 				self.windows.swap(0, 1);
 				self.windows[1] = None;
@@ -162,8 +172,9 @@ impl Tiling {
 				true
 			}
 			[Some(w1), Some(w2)] if &w2.0 == window => {
-				w1.0.resize(self.layout.rect.size);
-				w1.1 = self.layout.rect;
+				let one = self.layout.single();
+				w1.0.resize(one.size);
+				w1.1 = one;
 
 				self.windows[1] = None;
 				true
@@ -203,8 +214,9 @@ impl Tiling {
 				w2.1 = two;
 			}
 			[Some(window), None] => {
-				window.0.resize(self.layout.rect.size);
-				window.1 = self.layout.rect;
+				let one = self.layout.single();
+				window.0.resize(one.size);
+				window.1 = one;
 			}
 			[None, Some(_)] => unreachable!(),
 			[None, None] => (),

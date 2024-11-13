@@ -9,10 +9,20 @@ use std::{
 };
 
 pub trait RectExt<N, Kind> {
+	fn borderless(&self, border: N) -> Rectangle<N, Kind>;
+
 	fn center(&self) -> Point<N, Kind>;
 }
 
 impl<Kind> RectExt<i32, Kind> for Rectangle<i32, Kind> {
+	fn borderless(&self, border: i32) -> Rectangle<i32, Kind> {
+		let mut rect = *self;
+		rect.loc += Point::from((border, border));
+		rect.size -= Size::from((2 * border, 2 * border));
+
+		rect
+	}
+
 	fn center(&self) -> Point<i32, Kind> {
 		let mut location = self.loc;
 		location.x += self.size.w / 2;
