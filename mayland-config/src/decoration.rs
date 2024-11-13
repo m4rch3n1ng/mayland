@@ -1,6 +1,6 @@
 use serde::{de::Visitor, Deserialize};
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, Deserialize)]
 #[serde(default)]
 pub struct Decoration {
 	pub focus: Focus,

@@ -14,7 +14,10 @@ type WindowLayout = (MappedWindow, Rectangle<i32, Logical>);
 #[derive(Debug)]
 struct Layout {
 	rect: Rectangle<i32, Logical>,
+
 	gaps: i32,
+	/// thickness of the focus ring
+	ring: i32,
 
 	/// split point between 0 and 1
 	ratio: f64,
@@ -22,7 +25,7 @@ struct Layout {
 }
 
 impl Layout {
-	fn new(border: i32, gaps: i32) -> Self {
+	fn new(border: i32, gaps: i32, decoration: &mayland_config::Decoration) -> Self {
 		let rect = Rectangle {
 			loc: Point::from((border, border)),
 			size: Size::from((0, 0)),
@@ -31,6 +34,8 @@ impl Layout {
 		Layout {
 			rect,
 			gaps,
+
+			ring: i32::from(decoration.focus.thickness),
 
 			ratio: 0.5,
 			split: Point::from((0, 0)),
@@ -49,7 +54,7 @@ impl Layout {
 	}
 
 	fn single(&self) -> Rectangle<i32, Logical> {
-		self.rect.borderless(4)
+		self.rect.borderless(self.ring)
 	}
 
 	fn double(&self) -> [Rectangle<i32, Logical>; 2] {
@@ -64,7 +69,7 @@ impl Layout {
 			let loc = self.rect.loc;
 
 			let rect = Rectangle { loc, size };
-			rect.borderless(4)
+			rect.borderless(self.ring)
 		};
 
 		let two = {
@@ -72,7 +77,7 @@ impl Layout {
 			let loc = Point::from((split.x + gap, split.y));
 
 			let rect = Rectangle { loc, size };
-			rect.borderless(4)
+			rect.borderless(self.ring)
 		};
 
 		[one, two]
@@ -104,11 +109,11 @@ pub struct Tiling {
 }
 
 impl Tiling {
-	pub fn new() -> Self {
+	pub fn new(decoration: &mayland_config::Decoration) -> Self {
 		let border = 20;
 		let gaps = 10;
 
-		let layout = Layout::new(border, gaps);
+		let layout = Layout::new(border, gaps, decoration);
 
 		Tiling {
 			layout,

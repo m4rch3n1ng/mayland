@@ -30,23 +30,29 @@ pub struct WorkspaceManager {
 	output_map: HashMap<Output, usize>,
 
 	pub workspaces: BTreeMap<usize, Workspace>,
+
+	decoration: mayland_config::Decoration,
 }
 
 impl WorkspaceManager {
-	pub fn new() -> Self {
+	pub fn new(decoration: &mayland_config::Decoration) -> Self {
 		let output_space = Space::default();
 
 		let active_output = None;
 		let output_map = HashMap::new();
 
-		let workspace = Workspace::new(0);
+		let workspace = Workspace::new(0, decoration);
 		let workspaces = BTreeMap::from([(0, workspace)]);
 
 		WorkspaceManager {
 			output_space,
+
 			active_output,
 			output_map,
+
 			workspaces,
+
+			decoration: *decoration,
 		}
 	}
 }
@@ -74,7 +80,10 @@ impl WorkspaceManager {
 				prev.unmap_output(active_output);
 			}
 
-			let workspace = self.workspaces.entry(idx).or_insert_with(|| Workspace::new(idx));
+			let workspace = self
+				.workspaces
+				.entry(idx)
+				.or_insert_with(|| Workspace::new(idx, &self.decoration));
 			workspace.map_output(active_output);
 			*self.output_map.get_mut(active_output).unwrap() = idx;
 
@@ -120,7 +129,10 @@ impl WorkspaceManager {
 
 		self.output_map.insert(output.clone(), idx);
 
-		let workspace = self.workspaces.entry(idx).or_insert_with(|| Workspace::new(idx));
+		let workspace = self
+			.workspaces
+			.entry(idx)
+			.or_insert_with(|| Workspace::new(idx, &self.decoration));
 		workspace.map_output(output);
 
 		if self.active_output.is_none() {
@@ -162,12 +174,11 @@ impl WorkspaceManager {
 		&self,
 		renderer: &mut GlowRenderer,
 		output: &Output,
-		decoration: &mayland_config::Decoration,
 		focus: Option<MappedWindow>,
 	) -> impl Iterator<Item = MaylandRenderElements> {
 		let idx = &self.output_map[output];
 		let workspace = &self.workspaces[idx];
-		workspace.render_elements(renderer, output, decoration, focus)
+		workspace.render_elements(renderer, output, &self.decoration, focus)
 	}
 }
 
@@ -302,8 +313,8 @@ pub struct Workspace {
 }
 
 impl Workspace {
-	fn new(idx: usize) -> Self {
-		let tiling = Tiling::new();
+	fn new(idx: usize, decoration: &mayland_config::Decoration) -> Self {
+		let tiling = Tiling::new(decoration);
 		let floating = Space::default();
 
 		Workspace {
