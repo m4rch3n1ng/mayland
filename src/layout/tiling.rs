@@ -68,19 +68,17 @@ impl Layout {
 			let size = Size::from((rel_split.x - gap, size.h));
 			let loc = self.rect.loc;
 
-			let rect = Rectangle { loc, size };
-			rect.borderless(self.ring)
+			Rectangle { loc, size }
 		};
 
 		let two = {
 			let size = Size::from((size.w - one.size.w - self.gaps, size.h));
 			let loc = Point::from((split.x + gap, split.y));
 
-			let rect = Rectangle { loc, size };
-			rect.borderless(self.ring)
+			Rectangle { loc, size }
 		};
 
-		[one, two]
+		[one.borderless(self.ring), two.borderless(self.ring)]
 	}
 }
 
