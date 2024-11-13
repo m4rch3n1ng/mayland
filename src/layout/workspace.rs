@@ -102,7 +102,8 @@ impl WorkspaceManager {
 }
 
 impl WorkspaceManager {
-	pub fn add_output(&mut self, output: &Output) {
+	#[must_use = "you have to reposition the cursor"]
+	pub fn add_output(&mut self, output: &Output) -> Option<Point<i32, Logical>> {
 		let x = self
 			.output_space
 			.outputs()
@@ -119,12 +120,17 @@ impl WorkspaceManager {
 
 		self.output_map.insert(output.clone(), idx);
 
-		if self.active_output.is_none() {
-			self.active_output = Some(output.clone());
-		}
-
 		let workspace = self.workspaces.entry(idx).or_insert_with(|| Workspace::new(idx));
 		workspace.map_output(output);
+
+		if self.active_output.is_none() {
+			self.active_output = Some(output.clone());
+
+			let output_size = output_size(output);
+			Some(output_size.center())
+		} else {
+			None
+		}
 	}
 
 	pub fn remove_output(&mut self, output: &Output) {
