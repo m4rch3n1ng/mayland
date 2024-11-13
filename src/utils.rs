@@ -1,7 +1,7 @@
 use crate::state::Mayland;
 use smithay::{
 	output::Output,
-	utils::{Coordinate, Logical, Point, Rectangle, Size},
+	utils::{Logical, Point, Rectangle, Size},
 };
 use std::{
 	os::unix::process::CommandExt,
@@ -18,21 +18,20 @@ impl<Kind> RectExt<i32, Kind> for Rectangle<i32, Kind> {
 	fn borderless(&self, border: i32) -> Rectangle<i32, Kind> {
 		let mut rect = *self;
 		rect.loc += Point::from((border, border));
-		rect.size -= Size::from((2 * border, 2 * border));
+		rect.size = rect.size.borderless(border);
 
 		rect
 	}
 
 	fn center(&self) -> Point<i32, Kind> {
 		let mut location = self.loc;
-		location.x += self.size.w / 2;
-		location.y += self.size.h / 2;
+		location += self.size.center();
 
 		location
 	}
 }
 
-pub trait SizeExt<N: Coordinate, Kind> {
+pub trait SizeExt<N, Kind> {
 	fn borderless(&self, border: N) -> Size<N, Kind>;
 
 	fn center(&self) -> Point<N, Kind>;
@@ -40,8 +39,7 @@ pub trait SizeExt<N: Coordinate, Kind> {
 
 impl<Kind> SizeExt<i32, Kind> for Size<i32, Kind> {
 	fn borderless(&self, border: i32) -> Size<i32, Kind> {
-		let border = 2 * border;
-		Size::from((self.w.saturating_sub(border), self.h.saturating_sub(border)))
+		*self - Size::from((2 * border, 2 * border))
 	}
 
 	fn center(&self) -> Point<i32, Kind> {
