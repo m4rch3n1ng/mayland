@@ -57,7 +57,7 @@ fn prettify<T: Display>(t: &[T]) {
 }
 
 fn stringify<T: Serialize>(v: &T) {
-	let mut stdout = std::io::stdout();
+	let mut stdout = std::io::stdout().lock();
 
 	// i would like to use a tab, but this is called depression:    vvvv
 	let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
