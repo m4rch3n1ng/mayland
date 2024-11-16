@@ -39,8 +39,17 @@ impl Default for Focus {
 pub struct Color([u8; 3]);
 
 impl Color {
+	/// default active border color
+	///
+	/// tailwind "fuchsia-700"
 	const ACTIVE: Color = Color([0xa2, 0x1c, 0xaf]);
+	/// default inactive border color
+	///
+	/// tailwind "zinc-500"
 	const INACTIVE: Color = Color([0x71, 0x71, 0x7a]);
+	/// default background color
+	///
+	/// css "teal"
 	const BACKGROUND: Color = Color([0x00, 0x80, 0x80]);
 }
 
