@@ -10,14 +10,14 @@ uniform float thickness;
 void main() {
 	vec2 location = v_coords * size;
 
-	float smoothedAlpha = 0.0;
+	float b_alpha = 0.0;
 	if (location.y <= thickness
 		|| location.x <= thickness
 		|| size.x - location.x <= thickness
 		|| size.y - location.y <= thickness) {
-		smoothedAlpha = 1.0;
+		b_alpha = 1.0;
 	}
 
-	vec4 mix_color = vec4(color, alpha) * smoothedAlpha;
+	vec4 mix_color = vec4(color, alpha) * b_alpha;
 	gl_FragColor = mix_color;
 }

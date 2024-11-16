@@ -5,7 +5,7 @@ use smithay::{
 		gles::{element::PixelShaderElement, Uniform},
 		glow::GlowRenderer,
 	},
-	utils::{Logical, Rectangle},
+	utils::{Logical, Point, Rectangle, Size},
 };
 use std::borrow::BorrowMut;
 
@@ -18,9 +18,9 @@ impl FocusRing {
 		color: [f32; 3],
 		thickness: u8,
 	) -> PixelShaderElement {
-		let thickness = i32::from(thickness);
-		area.loc -= (thickness, thickness).into();
-		area.size += (thickness * 2, thickness * 2).into();
+		let t = i32::from(thickness);
+		area.loc -= Point::from((t, t));
+		area.size += Size::from((t * 2, t * 2));
 
 		let shaders = Shaders::get(renderer.borrow_mut());
 		PixelShaderElement::new(
@@ -30,7 +30,7 @@ impl FocusRing {
 			1.0,
 			vec![
 				Uniform::new("color", color),
-				Uniform::new("thickness", thickness as f32),
+				Uniform::new("thickness", f32::from(thickness)),
 			],
 			Kind::Unspecified,
 		)
