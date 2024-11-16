@@ -53,6 +53,8 @@ cursor {
 }
 
 decoration {
+	# background = "#008080"
+
 	focus {
 		# active = "#021caf"
 		# inactive = "#71717a"

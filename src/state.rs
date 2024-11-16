@@ -1,5 +1,5 @@
 use crate::{
-	backend::{udev::Udev, winit::Winit, Backend, BACKGROUND_COLOR},
+	backend::{udev::Udev, winit::Winit, Backend},
 	comm::MaySocket,
 	cursor::{Cursor, RenderCursor},
 	error::MaylandError,
@@ -310,12 +310,13 @@ impl Mayland {
 			});
 		}
 
+		let background_color = self.config.decoration.background;
 		let size = output_size(&output);
 		let state = OutputState {
 			global: output.create_global::<State>(&self.display_handle),
 			queued: None,
 			waiting_for_vblank: false,
-			background: SolidColorBuffer::new(size, BACKGROUND_COLOR),
+			background: SolidColorBuffer::new(size, background_color),
 		};
 
 		let prev = self.output_state.insert(output, state);

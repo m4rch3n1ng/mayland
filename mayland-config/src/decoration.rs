@@ -1,9 +1,20 @@
 use serde::{de::Visitor, Deserialize};
+use smithay::backend::renderer::Color32F;
 
-#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(default)]
 pub struct Decoration {
+	pub background: Color,
 	pub focus: Focus,
+}
+
+impl Default for Decoration {
+	fn default() -> Self {
+		Decoration {
+			background: Color::BACKGROUND,
+			focus: Focus::default(),
+		}
+	}
 }
 
 #[derive(Debug, Clone, Copy, Deserialize)]
@@ -30,6 +41,7 @@ pub struct Color([u8; 3]);
 impl Color {
 	const ACTIVE: Color = Color([0xa2, 0x1c, 0xaf]);
 	const INACTIVE: Color = Color([0x71, 0x71, 0x7a]);
+	const BACKGROUND: Color = Color([0x00, 0x80, 0x80]);
 }
 
 impl Color {
@@ -45,6 +57,17 @@ impl Color {
 impl<'de> Deserialize<'de> for Color {
 	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
 		deserializer.deserialize_str(ColorVis)
+	}
+}
+
+impl From<Color> for Color32F {
+	fn from(color: Color) -> Self {
+		Color32F::new(
+			color.0[0] as f32 / 255.0,
+			color.0[1] as f32 / 255.0,
+			color.0[2] as f32 / 255.0,
+			1.0,
+		)
 	}
 }
 
