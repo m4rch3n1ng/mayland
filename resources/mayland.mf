@@ -33,14 +33,6 @@ input {
 	}
 }
 
-decoration {
-	focus {
-		# active = "#021caf"
-		# inactive = "#71717a"
-		# thickness = 4
-	}
-}
-
 cursor {
 	# if this isn't set mayland will read from the
 	# XCURSOR_THEME and the XCURSOR_SIZE env var
@@ -48,6 +40,14 @@ cursor {
 
 	# xcursor_theme = "Bibata-Modern-Classic"
 	# xcursor_size = 24
+}
+
+decoration {
+	focus {
+		# active = "#021caf"
+		# inactive = "#71717a"
+		# thickness = 4
+	}
 }
 
 bind {
