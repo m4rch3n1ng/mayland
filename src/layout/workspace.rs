@@ -266,9 +266,11 @@ impl WorkspaceManager {
 		}
 	}
 
-	pub fn raise_window(&mut self, window: &MappedWindow, activate: bool) {
+	/// activate [`MappedWindow`] with [`MappedWindow::set_activate`],
+	/// and raise it to the top if floating.
+	pub fn activate_window(&mut self, window: &MappedWindow) {
 		let workspace = self.workspace_mut();
-		workspace.raise_window(window, activate);
+		workspace.activate_window(window);
 	}
 
 	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
@@ -393,9 +395,11 @@ impl Workspace {
 		}
 	}
 
-	pub fn raise_window(&mut self, window: &MappedWindow, activate: bool) {
-		if !self.tiling.has_window(window) {
-			self.floating.raise_element(window, activate);
+	pub fn activate_window(&mut self, window: &MappedWindow) {
+		if self.is_floating(window) {
+			self.floating.raise_element(window, true);
+		} else if self.tiling.has_window(window) {
+			self.tiling.activate_window(window);
 		}
 	}
 

@@ -327,7 +327,7 @@ impl State {
 	}
 
 	fn set_window_focus(&mut self, window: MappedWindow, keyboard: &KeyboardHandle<State>, serial: Serial) {
-		self.mayland.workspaces.raise_window(&window, true);
+		self.mayland.workspaces.activate_window(&window);
 		keyboard.set_focus(self, Some(KeyboardFocusTarget::from(window)), serial);
 	}
 

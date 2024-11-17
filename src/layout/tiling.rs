@@ -5,6 +5,7 @@ use crate::{
 };
 use smithay::{
 	backend::renderer::glow::GlowRenderer,
+	desktop::space::SpaceElement,
 	output::Output,
 	utils::{Logical, Point, Rectangle, Size},
 };
@@ -124,6 +125,10 @@ impl Tiling {
 
 impl Tiling {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) -> Option<MappedWindow> {
+		for w in self.windows() {
+			w.set_activate(false);
+		}
+
 		match &mut self.windows {
 			[Some(_), Some(_)] => Some(window),
 			[None, Some(_)] => unreachable!(),
@@ -137,6 +142,8 @@ impl Tiling {
 						prev.1 = two;
 
 						window.resize(one.size);
+						window.set_activate(true);
+
 						*empty = Some((window, one));
 
 						self.windows.swap(0, 1);
@@ -146,6 +153,8 @@ impl Tiling {
 						prev.1 = one;
 
 						window.resize(two.size);
+						window.set_activate(true);
+
 						*empty = Some((window, two));
 					}
 				}
@@ -154,7 +163,10 @@ impl Tiling {
 			}
 			[empty @ None, None] => {
 				let one = self.layout.single();
+
 				window.resize(one.size);
+				window.set_activate(true);
+
 				*empty = Some((window, one));
 
 				None
@@ -188,6 +200,16 @@ impl Tiling {
 				true
 			}
 			_ => false,
+		}
+	}
+
+	pub fn activate_window(&mut self, window: &MappedWindow) {
+		for w in self.windows() {
+			if w == window {
+				w.set_activate(true);
+			} else {
+				w.set_activate(false);
+			}
 		}
 	}
 
