@@ -25,6 +25,8 @@ pub struct Winit {
 impl Winit {
 	pub fn init(mayland: &mut Mayland) -> Self {
 		let (mut backend, winit_evt) = winit::init::<GlowRenderer>().unwrap();
+		backend.window().set_cursor_visible(false);
+
 		shaders::init(backend.renderer().borrow_mut());
 
 		let mode = Mode {
