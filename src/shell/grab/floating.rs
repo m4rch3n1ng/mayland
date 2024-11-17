@@ -11,9 +11,7 @@ use smithay::{
 		},
 		SeatHandler,
 	},
-	reexports::{
-		wayland_protocols::xdg::shell::server::xdg_toplevel::State as TopLevelState, wayland_server::Resource,
-	},
+	reexports::{wayland_protocols::xdg::shell::server::xdg_toplevel, wayland_server::Resource},
 	utils::{IsAlive, Logical, Point, Serial, Size},
 	wayland::seat::WaylandFocus,
 };
@@ -183,7 +181,7 @@ impl PointerGrab<State> for ResizeGrab {
 		match self.window.window.underlying_surface() {
 			WindowSurface::Wayland(xdg) => {
 				xdg.with_pending_state(|state| {
-					state.states.set(TopLevelState::Resizing);
+					state.states.set(xdg_toplevel::State::Resizing);
 					state.size = Some(self.new_window_size);
 				});
 				xdg.send_pending_configure();
@@ -217,7 +215,7 @@ impl PointerGrab<State> for ResizeGrab {
 			match self.window.window.underlying_surface() {
 				WindowSurface::Wayland(xdg) => {
 					xdg.with_pending_state(|state| {
-						state.states.unset(TopLevelState::Resizing);
+						state.states.unset(xdg_toplevel::State::Resizing);
 						state.size = Some(self.new_window_size);
 					});
 					xdg.send_pending_configure();
