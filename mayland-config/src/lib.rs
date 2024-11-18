@@ -8,13 +8,17 @@ pub mod decoration;
 mod error;
 pub mod input;
 pub mod layout;
+pub mod outputs;
 
-pub use self::{bind::Binds, decoration::Decoration, error::Error, input::Input, layout::Layout};
+pub use self::{
+	bind::Binds, decoration::Decoration, error::Error, input::Input, layout::Layout, outputs::Outputs,
+};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct Config {
 	pub input: Input,
+	pub output: Outputs,
 	pub cursor: Cursor,
 	pub decoration: Decoration,
 	pub layout: Layout,

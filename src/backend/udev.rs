@@ -24,7 +24,7 @@ use smithay::{
 	output::{Mode, Output, OutputModeSource, PhysicalProperties, Subpixel},
 	reexports::{
 		calloop::{Dispatcher, RegistrationToken},
-		drm::control::{connector, crtc, ModeTypeFlags},
+		drm::control::{self, connector, crtc, ModeFlags, ModeTypeFlags},
 		gbm::Modifier,
 		input::Libinput,
 		rustix::fs::OFlags,
@@ -402,17 +402,13 @@ impl Udev {
 		let output_name = format!("{}-{}", connector.interface().as_str(), connector.interface_id());
 		tracing::info!("connecting connector: {}", output_name);
 
-		let mode = connector
-			.modes()
-			.iter()
-			.filter(|m| m.mode_type().contains(ModeTypeFlags::PREFERRED))
-			.max_by_key(|m| m.vrefresh())
-			.unwrap();
+		let config = mayland.config.output.get_output(&output_name);
+		let mode = pick_mode(&connector, config.and_then(|conf| conf.mode));
 
 		let device = self.output_device.as_mut().unwrap();
 		let surface = device
 			.drm
-			.create_surface(crtc, *mode, &[connector.handle()])
+			.create_surface(crtc, mode, &[connector.handle()])
 			.unwrap();
 
 		let mut planes = surface.planes().clone();
@@ -448,7 +444,7 @@ impl Udev {
 			},
 		);
 
-		let wl_mode = Mode::from(*mode);
+		let wl_mode = Mode::from(mode);
 		output.change_current_state(Some(wl_mode), None, None, None);
 		output.set_preferred(wl_mode);
 
@@ -556,6 +552,59 @@ impl Udev {
 
 		mayland.queue_redraw(output);
 	}
+}
+
+fn pick_mode(connector: &connector::Info, target: Option<mayland_config::outputs::Mode>) -> control::Mode {
+	// try to match a mode from config
+	if let Some(target) = target {
+		let modes = connector
+			.modes()
+			.iter()
+			.filter(|m| m.size() == (target.width, target.height))
+			.filter(|m| !m.flags().contains(ModeFlags::INTERLACE));
+
+		let mode = if let Some(refresh) = target.refresh {
+			// get the one with the closest refresh rates
+			modes.min_by_key(|m| i32::abs_diff(Mode::from(**m).refresh, refresh))
+		} else {
+			// get the one with the highest refresh rate
+			modes.max_by_key(|m| m.vrefresh())
+		};
+
+		if let Some(mode) = mode {
+			return *mode;
+		} else {
+			tracing::warn!("couldn't find matching mode");
+		}
+	}
+
+	// try to get a preferred mode
+	if let Some(mode) = connector
+		.modes()
+		.iter()
+		.filter(|m| m.mode_type().contains(ModeTypeFlags::PREFERRED))
+		.max_by_key(|m| (m.size(), m.vrefresh()))
+	{
+		return *mode;
+	}
+
+	// pick the highest quality one that's not interlaced
+	if let Some(mode) = connector
+		.modes()
+		.iter()
+		.filter(|mode| !mode.flags().contains(ModeFlags::INTERLACE))
+		.max_by_key(|m| (m.size(), m.vrefresh()))
+	{
+		return *mode;
+	}
+
+	// just pick the highest quality one
+	if let Some(mode) = connector.modes().iter().max_by_key(|m| (m.size(), m.vrefresh())) {
+		return *mode;
+	}
+
+	// what
+	panic!("no modes available for this output?");
 }
 
 impl State {
