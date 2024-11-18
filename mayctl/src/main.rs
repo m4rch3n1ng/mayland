@@ -73,7 +73,11 @@ fn main() -> Term {
 				unexpected!(response, "outputs")
 			};
 
-			dbg!(outputs);
+			if cli.json {
+				stringify(&outputs);
+			} else {
+				prettify(&outputs);
+			}
 		}
 		Request::Workspaces => {
 			let Response::Workspaces(workspaces) = response else {

@@ -36,13 +36,32 @@ pub struct Output {
 }
 
 pub mod output {
+	use super::Output;
 	use serde::{Deserialize, Serialize};
+	use std::fmt::Display;
+
+	impl Display for Output {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+			writeln!(f, "output {:?}", self.name)?;
+			if let Some(mode) = &self.mode {
+				writeln!(f, "    mode: {}", mode)?;
+			}
+
+			Ok(())
+		}
+	}
 
 	#[derive(Debug, Serialize, Deserialize)]
 	pub struct Mode {
 		pub w: u16,
 		pub h: u16,
 		pub refresh: u32,
+	}
+
+	impl Display for Mode {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+			write!(f, "{}x{}@{:.3}", self.w, self.h, self.refresh as f64 / 1000.)
+		}
 	}
 }
 
