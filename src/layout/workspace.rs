@@ -67,7 +67,7 @@ impl WorkspaceManager {
 			return None;
 		}
 
-		if let Some(output) = self.output_map.iter().find(|(_, &w)| w == idx).map(|(o, _)| o) {
+		if let Some(output) = self.output_map.iter().find(|&(_, &w)| w == idx).map(|(o, _)| o) {
 			self.active_output = Some(output.clone());
 
 			let rect = self.output_space.output_geometry(output).unwrap();
@@ -173,7 +173,7 @@ impl WorkspaceManager {
 		renderer: &mut GlowRenderer,
 		output: &Output,
 		focus: Option<MappedWindow>,
-	) -> impl Iterator<Item = MaylandRenderElements> {
+	) -> impl Iterator<Item = MaylandRenderElements> + use<> {
 		let idx = &self.output_map[output];
 		let workspace = &self.workspaces[idx];
 		workspace.render_elements(renderer, output, &self.decoration, focus)
@@ -444,7 +444,7 @@ impl Workspace {
 		output: &Output,
 		decoration: &mayland_config::Decoration,
 		focus: Option<MappedWindow>,
-	) -> impl Iterator<Item = MaylandRenderElements> {
+	) -> impl Iterator<Item = MaylandRenderElements> + use<> {
 		let mut render_elements = Vec::new();
 
 		let layer_map = layer_map_for_output(output);
