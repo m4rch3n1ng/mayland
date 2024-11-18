@@ -96,6 +96,16 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) {
 			let () = rx.recv().await.unwrap();
 			Response::Reload
 		}
+		Ok(Request::Outputs) => {
+			let (tx, rx) = async_channel::bounded(1);
+			state.event_loop.insert_idle(move |state| {
+				let outputs = state.backend.comm_outputs();
+				let _ = tx.send_blocking(outputs);
+			});
+
+			let outputs = rx.recv().await.unwrap();
+			Response::Outputs(outputs)
+		}
 		Ok(Request::Workspaces) => {
 			let (tx, rx) = async_channel::bounded(1);
 			state.event_loop.insert_idle(move |state| {

@@ -30,6 +30,8 @@ pub enum Cmd {
 	},
 	/// reload compositor config
 	Reload,
+	/// request output info from the compositor
+	Outputs,
 	/// request workspace info from the compositor
 	Workspaces,
 }
@@ -56,6 +58,7 @@ impl From<Cmd> for Request {
 	fn from(value: Cmd) -> Self {
 		match value {
 			Cmd::Dispatch { dispatch: action } => Request::Dispatch(mayland_comm::Action::from(action)),
+			Cmd::Outputs => Request::Outputs,
 			Cmd::Workspaces => Request::Workspaces,
 			Cmd::Reload => Request::Reload,
 		}

@@ -68,6 +68,13 @@ fn main() -> Term {
 			ensure_matches!(response, Response::Reload, "reload");
 			println!("ok reload");
 		}
+		Request::Outputs => {
+			let Response::Outputs(outputs) = response else {
+				unexpected!(response, "outputs")
+			};
+
+			dbg!(outputs);
+		}
 		Request::Workspaces => {
 			let Response::Workspaces(workspaces) = response else {
 				unexpected!(response, "workspaces")

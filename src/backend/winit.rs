@@ -128,6 +128,20 @@ impl Winit {
 			.inspect_err(|err| tracing::error!("error importing dmabuf: {:?}", err))
 			.is_ok()
 	}
+
+	pub fn comm_outputs(&self) -> Vec<mayland_comm::Output> {
+		let mode = mayland_comm::output::Mode {
+			w: self.backend.window_size().w.clamp(0, u16::MAX as i32) as u16,
+			h: self.backend.window_size().h.clamp(0, u16::MAX as i32) as u16,
+			refresh: 60_000,
+		};
+
+		let output = mayland_comm::Output {
+			name: self.output.name(),
+			mode: Some(mode),
+		};
+		vec![output]
+	}
 }
 
 impl State {

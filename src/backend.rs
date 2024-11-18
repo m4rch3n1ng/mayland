@@ -43,6 +43,13 @@ impl Backend {
 		}
 	}
 
+	pub fn comm_outputs(&self) -> Vec<mayland_comm::Output> {
+		match self {
+			Backend::Udev(udev) => udev.comm_outputs(),
+			Backend::Winit(winit) => winit.comm_outputs(),
+		}
+	}
+
 	pub fn winit(&mut self) -> &mut Winit {
 		match self {
 			Backend::Udev(_udev) => unreachable!("should only be called in winit context"),

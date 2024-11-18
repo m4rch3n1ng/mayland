@@ -14,6 +14,7 @@ pub const MAYLAND_SOCKET_VAR: &str = "MAYLAND_SOCKET";
 pub enum Request {
 	Dispatch(Action),
 	Reload,
+	Outputs,
 	Workspaces,
 }
 
@@ -24,7 +25,25 @@ pub enum Response {
 	Err(Error),
 	Dispatch,
 	Reload,
+	Outputs(Vec<Output>),
 	Workspaces(Vec<Workspace>),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Output {
+	pub name: String,
+	pub mode: Option<output::Mode>,
+}
+
+pub mod output {
+	use serde::{Deserialize, Serialize};
+
+	#[derive(Debug, Serialize, Deserialize)]
+	pub struct Mode {
+		pub w: u16,
+		pub h: u16,
+		pub refresh: u32,
+	}
 }
 
 #[derive(Debug, Serialize, Deserialize)]

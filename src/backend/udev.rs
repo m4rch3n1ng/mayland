@@ -189,6 +189,29 @@ impl Udev {
 			.inspect_err(|err| tracing::error!("error importing dmabuf: {:?}", err))
 			.is_ok()
 	}
+
+	pub fn comm_outputs(&self) -> Vec<mayland_comm::Output> {
+		let mut outputs = Vec::new();
+
+		if let Some(device) = &self.output_device {
+			for (connector, crtc) in device.drm_scanner.crtcs() {
+				let name = format!("{}-{}", connector.interface().as_str(), connector.interface_id());
+
+				let surface = device.surfaces.get(&crtc);
+				let mode = surface.map(|surface| surface.pending_mode());
+				let mode = mode.map(|mode| mayland_comm::output::Mode {
+					w: mode.size().0,
+					h: mode.size().1,
+					refresh: Mode::from(mode).refresh as u32,
+				});
+
+				let output = mayland_comm::Output { name, mode };
+				outputs.push(output);
+			}
+		}
+
+		outputs
+	}
 }
 
 impl Udev {
