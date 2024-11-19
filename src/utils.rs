@@ -57,6 +57,18 @@ pub fn output_size(output: &Output) -> Size<i32, Logical> {
 		.to_logical(output_scale)
 }
 
+pub fn logical_output(output: &Output) -> mayland_comm::output::Logical {
+	let size = output_size(output);
+	let point = output.current_location();
+
+	mayland_comm::output::Logical {
+		x: point.x,
+		y: point.y,
+		w: size.w,
+		h: size.h,
+	}
+}
+
 pub fn spawn(spawn: Vec<String>, mayland: &Mayland) {
 	let [command, args @ ..] = &*spawn else {
 		panic!("spawn commands cannot be empty");

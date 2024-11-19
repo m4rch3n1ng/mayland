@@ -99,7 +99,7 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) {
 		Ok(Request::Outputs) => {
 			let (tx, rx) = async_channel::bounded(1);
 			state.event_loop.insert_idle(move |state| {
-				let outputs = state.backend.comm_outputs();
+				let outputs = state.backend.comm_outputs(&state.mayland);
 				let _ = tx.send_blocking(outputs);
 			});
 

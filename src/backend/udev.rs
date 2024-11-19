@@ -2,6 +2,7 @@ use crate::{
 	input::{apply_libinput_settings, device::InputDevice},
 	render::{shaders, MaylandRenderElements},
 	state::{Mayland, State},
+	utils::logical_output,
 };
 use libc::dev_t;
 use mayland_config::outputs::OutputInfo;
@@ -190,7 +191,7 @@ impl Udev {
 			.is_ok()
 	}
 
-	pub fn comm_outputs(&self) -> Vec<mayland_comm::Output> {
+	pub fn comm_outputs(&self, mayland: &Mayland) -> Vec<mayland_comm::Output> {
 		let mut outputs = Vec::new();
 
 		if let Some(device) = &self.output_device {
@@ -220,6 +221,15 @@ impl Udev {
 					})
 					.collect();
 
+				let logical = mayland
+					.workspaces
+					.outputs()
+					.find(|output| {
+						let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
+						udev_state.device_id == device.id && udev_state.crtc == crtc
+					})
+					.map(logical_output);
+
 				let output_info = output_info(&device.drm, connector);
 				let size = connector.size();
 
@@ -230,6 +240,7 @@ impl Udev {
 					model: output_info.model,
 					serial: output_info.serial,
 					size,
+					logical,
 					modes,
 				};
 				outputs.push(output);

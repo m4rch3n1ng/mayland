@@ -1,6 +1,7 @@
 use crate::{
 	render::{shaders, MaylandRenderElements},
 	state::{Mayland, State},
+	utils::logical_output,
 };
 use mayland_config::outputs::OutputInfo;
 use smithay::{
@@ -142,6 +143,7 @@ impl Winit {
 		};
 
 		let physical = self.output.physical_properties();
+		let logical = logical_output(&self.output);
 
 		let output = mayland_comm::Output {
 			name: self.output.name(),
@@ -150,6 +152,7 @@ impl Winit {
 			model: physical.model,
 			serial: None,
 			size: None,
+			logical: Some(logical),
 			modes: vec![mode],
 		};
 		vec![output]

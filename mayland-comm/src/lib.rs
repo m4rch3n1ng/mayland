@@ -37,6 +37,7 @@ pub struct Output {
 	pub model: String,
 	pub serial: Option<String>,
 	pub size: Option<(u32, u32)>,
+	pub logical: Option<output::Logical>,
 	pub modes: Vec<output::Mode>,
 }
 
@@ -52,6 +53,11 @@ pub mod output {
 				writeln!(f, "    mode: {}", mode)?;
 			}
 
+			if let Some(logical) = self.logical {
+				writeln!(f, "    mapped at: {},{}", logical.x, logical.y)?;
+				writeln!(f, "    mapped size: {}x{}", logical.w, logical.h)?;
+			}
+
 			writeln!(f, "    make: {}", self.make)?;
 			writeln!(f, "    model: {}", self.model)?;
 			if let Some(serial) = &self.serial {
@@ -60,7 +66,7 @@ pub mod output {
 
 			if let Some((width, height)) = self.size {
 				let inches = (width.pow(2) as f64 + height.pow(2) as f64).sqrt() / 25.4;
-				writeln!(f, "    size: {}x{} mm ({:.3}\")", width, height, inches)?;
+				writeln!(f, "    physical size: {}x{} mm ({:.3}\")", width, height, inches)?;
 			}
 
 			writeln!(f, "    available modes:")?;
@@ -90,6 +96,16 @@ pub mod output {
 
 			Ok(())
 		}
+	}
+
+	#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+	pub struct Logical {
+		pub x: i32,
+		pub y: i32,
+		pub w: i32,
+		pub h: i32,
+		// transform
+		// scale
 	}
 }
 

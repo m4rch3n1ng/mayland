@@ -43,9 +43,9 @@ impl Backend {
 		}
 	}
 
-	pub fn comm_outputs(&self) -> Vec<mayland_comm::Output> {
+	pub fn comm_outputs(&self, mayland: &Mayland) -> Vec<mayland_comm::Output> {
 		match self {
-			Backend::Udev(udev) => udev.comm_outputs(),
+			Backend::Udev(udev) => udev.comm_outputs(mayland),
 			Backend::Winit(winit) => winit.comm_outputs(),
 		}
 	}
