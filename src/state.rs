@@ -315,7 +315,7 @@ impl Mayland {
 	pub fn add_output(&mut self, output: Output) {
 		tracing::debug!("add output {:?}", output.description());
 
-		if let Some(location) = self.workspaces.add_output(&output) {
+		if let Some(location) = self.workspaces.add_output(&self.config.output, &output) {
 			self.loop_handle.insert_idle(move |state| {
 				state.move_cursor(location.to_f64());
 			});
@@ -342,7 +342,7 @@ impl Mayland {
 			idle.cancel();
 		};
 
-		self.workspaces.remove_output(output);
+		self.workspaces.remove_output(&self.config.output, output);
 	}
 
 	pub fn output_resized(&mut self, output: &Output) {

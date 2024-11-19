@@ -14,6 +14,7 @@ impl Outputs {
 #[serde(default)]
 pub struct Output {
 	pub mode: Option<Mode>,
+	pub position: Option<[i32; 2]>,
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -140,16 +140,12 @@ impl WorkspaceManager {
 
 impl WorkspaceManager {
 	#[must_use = "you have to reposition the cursor"]
-	pub fn add_output(&mut self, output: &Output) -> Option<Point<i32, Logical>> {
-		let x = self
-			.output_space
-			.outputs()
-			.map(|output| self.output_space.output_geometry(output).unwrap())
-			.map(|geom| geom.loc.x + geom.size.w)
-			.max()
-			.unwrap_or(0);
-
-		self.output_space.map_output(output, (x, 0));
+	pub fn add_output(
+		&mut self,
+		config: &mayland_config::Outputs,
+		output: &Output,
+	) -> Option<Point<i32, Logical>> {
+		self.position_outputs(config, Some(output));
 
 		if let Some(workspace) = self.workspaces.values_mut().find(|ws| ws.output.is_none()) {
 			workspace.map_output(output);
@@ -176,9 +172,10 @@ impl WorkspaceManager {
 		}
 	}
 
-	pub fn remove_output(&mut self, output: &Output) {
+	pub fn remove_output(&mut self, config: &mayland_config::Outputs, output: &Output) {
 		let idx = self.output_map.remove(output).unwrap();
 		self.output_space.unmap_output(output);
+		self.position_outputs(config, None);
 
 		let workspace = self.workspaces.get_mut(&idx).unwrap();
 		if workspace.is_empty() {
@@ -193,6 +190,56 @@ impl WorkspaceManager {
 
 		if self.active_output.as_ref() == Some(output) {
 			self.active_output = self.output_map.keys().next().cloned();
+		}
+	}
+
+	fn position_outputs(&mut self, config: &mayland_config::Outputs, output: Option<&Output>) {
+		let mut outputs = self
+			.outputs()
+			.chain(output)
+			.map(|output| (output, config.get_output(&output.name())))
+			.map(|(output, config)| (output.clone(), config.and_then(|conf| conf.position)))
+			.collect::<Vec<_>>();
+
+		// first sort by output name
+		outputs.sort_by_key(|(output, _)| output.name());
+		// then put the outputs with an explicit position first
+		outputs.sort_by_key(|(_, position)| position.is_none());
+
+		for (output, _) in &outputs {
+			self.output_space.unmap_output(output);
+		}
+
+		for (output, config) in outputs {
+			if let Some(config) = config {
+				let point = Point::from((config[0], config[1]));
+
+				let size = output_size(&output);
+				let rect = Rectangle { loc: point, size };
+
+				let overlaps = self
+					.output_space
+					.outputs()
+					.map(|output| self.output_space.output_geometry(output).unwrap())
+					.find(|geom| geom.overlaps(rect));
+
+				if let Some(overlaps) = overlaps {
+					panic!("output position {:?} overlaps with {:?}", rect, overlaps);
+				}
+
+				self.output_space.map_output(&output, point);
+			} else {
+				let x = self
+					.output_space
+					.outputs()
+					.map(|output| self.output_space.output_geometry(output).unwrap())
+					.map(|geom| geom.loc.x + geom.size.w)
+					.max()
+					.unwrap_or(0);
+
+				let point = Point::from((x, 0));
+				self.output_space.map_output(&output, point);
+			}
 		}
 	}
 
