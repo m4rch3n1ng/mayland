@@ -51,6 +51,9 @@ impl Winit {
 
 		output.user_data().insert_if_missing(|| OutputInfo {
 			connector: "winit".to_owned(),
+			make: "may".to_owned(),
+			model: "winit".to_owned(),
+			serial: None,
 		});
 
 		mayland.add_output(output.clone());
@@ -134,11 +137,20 @@ impl Winit {
 			w: self.backend.window_size().w.clamp(0, u16::MAX as i32) as u16,
 			h: self.backend.window_size().h.clamp(0, u16::MAX as i32) as u16,
 			refresh: 60_000,
+
+			preferred: true,
 		};
+
+		let physical = self.output.physical_properties();
 
 		let output = mayland_comm::Output {
 			name: self.output.name(),
 			mode: Some(mode),
+			make: physical.make,
+			model: physical.model,
+			serial: None,
+			size: None,
+			modes: vec![mode],
 		};
 		vec![output]
 	}

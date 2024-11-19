@@ -33,6 +33,11 @@ pub enum Response {
 pub struct Output {
 	pub name: String,
 	pub mode: Option<output::Mode>,
+	pub make: String,
+	pub model: String,
+	pub serial: Option<String>,
+	pub size: Option<(u32, u32)>,
+	pub modes: Vec<output::Mode>,
 }
 
 pub mod output {
@@ -47,20 +52,42 @@ pub mod output {
 				writeln!(f, "    mode: {}", mode)?;
 			}
 
+			writeln!(f, "    make: {}", self.make)?;
+			writeln!(f, "    model: {}", self.model)?;
+			if let Some(serial) = &self.serial {
+				writeln!(f, "    serial: {}", serial)?;
+			}
+
+			if let Some((width, height)) = self.size {
+				writeln!(f, "    size: {}x{} mm", width, height)?;
+			}
+
+			writeln!(f, "    available modes:")?;
+			for mode in &self.modes {
+				writeln!(f, "        {}", mode)?;
+			}
+
 			Ok(())
 		}
 	}
 
-	#[derive(Debug, Serialize, Deserialize)]
+	#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 	pub struct Mode {
 		pub w: u16,
 		pub h: u16,
 		pub refresh: u32,
+
+		pub preferred: bool,
 	}
 
 	impl Display for Mode {
 		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-			write!(f, "{}x{}@{:.3}", self.w, self.h, self.refresh as f64 / 1000.)
+			write!(f, "{}x{}@{:.3}", self.w, self.h, self.refresh as f64 / 1000.)?;
+			if self.preferred {
+				write!(f, " (preferred)")?;
+			}
+
+			Ok(())
 		}
 	}
 }

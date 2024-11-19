@@ -7,6 +7,9 @@ pub struct Outputs(HashMap<String, Output>);
 #[derive(Debug, Clone)]
 pub struct OutputInfo {
 	pub connector: String,
+	pub make: String,
+	pub model: String,
+	pub serial: Option<String>,
 }
 
 impl Eq for OutputInfo {}

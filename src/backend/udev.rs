@@ -195,17 +195,43 @@ impl Udev {
 
 		if let Some(device) = &self.output_device {
 			for (connector, crtc) in device.drm_scanner.crtcs() {
-				let name = format!("{}-{}", connector.interface().as_str(), connector.interface_id());
-
 				let surface = device.surfaces.get(&crtc);
 				let mode = surface.map(|surface| surface.pending_mode());
 				let mode = mode.map(|mode| mayland_comm::output::Mode {
 					w: mode.size().0,
 					h: mode.size().1,
 					refresh: Mode::from(mode).refresh as u32,
+
+					preferred: mode.mode_type().contains(ModeTypeFlags::PREFERRED),
 				});
 
-				let output = mayland_comm::Output { name, mode };
+				let modes = connector
+					.modes()
+					.iter()
+					.map(|mode| {
+						let wl_mode = Mode::from(*mode);
+						mayland_comm::output::Mode {
+							w: mode.size().0,
+							h: mode.size().1,
+							refresh: u32::try_from(wl_mode.refresh).unwrap(),
+
+							preferred: mode.mode_type().contains(ModeTypeFlags::PREFERRED),
+						}
+					})
+					.collect();
+
+				let output_info = output_info(&device.drm, connector);
+				let size = connector.size();
+
+				let output = mayland_comm::Output {
+					name: output_info.connector,
+					mode,
+					make: output_info.make,
+					model: output_info.model,
+					serial: output_info.serial,
+					size,
+					modes,
+				};
 				outputs.push(output);
 			}
 		}
@@ -429,13 +455,14 @@ impl Udev {
 	}
 
 	fn connector_connected(&mut self, connector: connector::Info, crtc: crtc::Handle, mayland: &mut Mayland) {
-		let output_info = get_output_info(&connector);
+		let device = self.output_device.as_mut().unwrap();
+
+		let output_info = output_info(&device.drm, &connector);
 		tracing::info!("connecting connector: {:?}", output_info);
 
 		let config = mayland.config.output.get_output(&output_info);
 		let mode = pick_mode(&connector, config.and_then(|conf| conf.mode));
 
-		let device = self.output_device.as_mut().unwrap();
 		let surface = device
 			.drm
 			.create_surface(crtc, mode, &[connector.handle()])
@@ -454,23 +481,13 @@ impl Udev {
 
 		let (physical_width, physical_height) = connector.size().unwrap_or((0, 0));
 
-		let info = display_info::for_connector(&device.drm, connector.handle());
-		let make = info
-			.as_ref()
-			.and_then(|info| info.make())
-			.unwrap_or_else(|| "unknown".to_owned());
-		let model = info
-			.as_ref()
-			.and_then(|info| info.model())
-			.unwrap_or_else(|| "unknown".to_owned());
-
 		let output = Output::new(
 			output_info.connector.clone(),
 			PhysicalProperties {
 				size: (physical_width as i32, physical_height as i32).into(),
 				subpixel: Subpixel::Unknown,
-				model,
-				make,
+				make: output_info.make.clone(),
+				model: output_info.model.clone(),
 			},
 		);
 
@@ -585,9 +602,25 @@ impl Udev {
 	}
 }
 
-fn get_output_info(connector: &connector::Info) -> OutputInfo {
+fn output_info(drm: &DrmDevice, connector: &connector::Info) -> OutputInfo {
+	let info = display_info::for_connector(drm, connector.handle());
+
+	let connector = format!("{}-{}", connector.interface().as_str(), connector.interface_id());
+	let make = info
+		.as_ref()
+		.and_then(|info| info.make())
+		.unwrap_or_else(|| "unknown".to_owned());
+	let model = info
+		.as_ref()
+		.and_then(|info| info.model())
+		.unwrap_or_else(|| "unknown".to_owned());
+	let serial = info.as_ref().and_then(|info| info.serial());
+
 	OutputInfo {
-		connector: format!("{}-{}", connector.interface().as_str(), connector.interface_id()),
+		connector,
+		make,
+		model,
+		serial,
 	}
 }
 
