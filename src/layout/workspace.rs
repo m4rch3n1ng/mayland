@@ -136,8 +136,8 @@ impl WorkspaceManager {
 		if self.active_output.is_none() {
 			self.active_output = Some(output.clone());
 
-			let output_size = output_size(output);
-			Some(output_size.center())
+			let output_geometry = self.output_space.output_geometry(output).unwrap();
+			Some(output_geometry.loc + output_geometry.size.center())
 		} else {
 			None
 		}
