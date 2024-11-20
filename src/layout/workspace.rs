@@ -145,6 +145,7 @@ impl WorkspaceManager {
 		config: &mayland_config::Outputs,
 		output: &Output,
 	) -> Option<Point<i32, Logical>> {
+		let output_config = config.get_output(&output.name());
 		self.position_outputs(config, Some(output));
 
 		if let Some(workspace) = self.workspaces.values_mut().find(|ws| ws.output.is_none()) {
@@ -162,7 +163,7 @@ impl WorkspaceManager {
 			self.workspaces.insert(idx, workspace);
 		}
 
-		if self.active_output.is_none() {
+		if self.active_output.is_none() || output_config.is_some_and(|conf| conf.active) {
 			self.active_output = Some(output.clone());
 
 			let output_geometry = self.output_space.output_geometry(output).unwrap();
