@@ -56,6 +56,7 @@ pub mod output {
 			if let Some(logical) = self.logical {
 				writeln!(f, "    mapped at: {},{}", logical.x, logical.y)?;
 				writeln!(f, "    mapped size: {}x{}", logical.w, logical.h)?;
+				writeln!(f, "    mapped transform: {}", logical.transform)?;
 			}
 
 			writeln!(f, "    make: {}", self.make)?;
@@ -104,8 +105,42 @@ pub mod output {
 		pub y: i32,
 		pub w: i32,
 		pub h: i32,
-		// transform
+		pub transform: Transform,
 		// scale
+	}
+
+	#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+	#[serde(rename_all = "snake_case")]
+	pub enum Transform {
+		Normal,
+		#[serde(rename = "90")]
+		_90,
+		#[serde(rename = "180")]
+		_180,
+		#[serde(rename = "270")]
+		_270,
+		Flipped,
+		#[serde(rename = "flipped_90")]
+		Flipped90,
+		#[serde(rename = "flipped_180")]
+		Flipped180,
+		#[serde(rename = "flipped_270")]
+		Flipped270,
+	}
+
+	impl Display for Transform {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+			match self {
+				Transform::Normal => f.write_str("normal"),
+				Transform::_90 => f.write_str("rotated 90° counter-clockwise"),
+				Transform::_180 => f.write_str("rotated 180°"),
+				Transform::_270 => f.write_str("rotated 270° counter-clockwise"),
+				Transform::Flipped => f.write_str("flipped vertically"),
+				Transform::Flipped90 => f.write_str("flipped vertically, rotated 90° counter-clockwise"),
+				Transform::Flipped180 => f.write_str("flipped vertically, rotated 180°"),
+				Transform::Flipped270 => f.write_str("flipped vertically, rotated 270° counter-clockwise"),
+			}
+		}
 	}
 }
 

@@ -1,7 +1,7 @@
 use crate::state::Mayland;
 use smithay::{
 	output::Output,
-	utils::{Logical, Point, Rectangle, Size},
+	utils::{Logical, Point, Rectangle, Size, Transform},
 };
 use std::{
 	os::unix::process::CommandExt,
@@ -61,11 +61,23 @@ pub fn logical_output(output: &Output) -> mayland_comm::output::Logical {
 	let size = output_size(output);
 	let point = output.current_location();
 
+	let transform = match output.current_transform() {
+		Transform::Normal => mayland_comm::output::Transform::Normal,
+		Transform::_90 => mayland_comm::output::Transform::_90,
+		Transform::_180 => mayland_comm::output::Transform::_180,
+		Transform::_270 => mayland_comm::output::Transform::_270,
+		Transform::Flipped => mayland_comm::output::Transform::Flipped,
+		Transform::Flipped90 => mayland_comm::output::Transform::Flipped90,
+		Transform::Flipped180 => mayland_comm::output::Transform::Flipped180,
+		Transform::Flipped270 => mayland_comm::output::Transform::Flipped270,
+	};
+
 	mayland_comm::output::Logical {
 		x: point.x,
 		y: point.y,
 		w: size.w,
 		h: size.h,
+		transform,
 	}
 }
 
