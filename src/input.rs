@@ -427,6 +427,27 @@ pub fn apply_libinput_settings(config: &mayland_config::Input, device: &mut Inpu
 			let _ = device.config_accel_set_profile(default_accel_profile);
 		}
 	} else if device.is_mouse() {
-		tracing::debug!("todo mouse config");
+		let conf = &config.mouse;
+		let device = &mut device.handle;
+
+		let _ = device.config_scroll_set_natural_scroll_enabled(conf.natural_scroll);
+
+		let _ = device.config_middle_emulation_set_enabled(conf.middle_emulation);
+		let _ = device.config_left_handed_set(conf.left_handed);
+
+		let accel_speed = conf.accel_speed.clamp(-1., 1.);
+		if accel_speed != conf.accel_speed {
+			tracing::warn!(
+				"invalid accel speed {}, clamping to {}",
+				conf.accel_speed,
+				accel_speed
+			);
+		}
+		let _ = device.config_accel_set_speed(accel_speed);
+		if let Some(accel_profile) = conf.accel_profile {
+			let _ = device.config_accel_set_profile(accel_profile);
+		} else if let Some(default_accel_profile) = device.config_accel_default_profile() {
+			let _ = device.config_accel_set_profile(default_accel_profile);
+		}
 	}
 }
