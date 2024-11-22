@@ -54,9 +54,6 @@ impl PointerGrab<State> for MoveGrab {
 		handle.button(state, event);
 		if !handle.current_pressed().contains(&272) {
 			handle.unset_grab(self, state, event.serial, event.time, true);
-
-			state.mayland.cursor.icon = None;
-			state.mayland.queue_redraw_all();
 		}
 	}
 
@@ -144,7 +141,10 @@ impl PointerGrab<State> for MoveGrab {
 		&self.start_data
 	}
 
-	fn unset(&mut self, _data: &mut State) {}
+	fn unset(&mut self, state: &mut State) {
+		state.mayland.cursor.icon = None;
+		state.mayland.queue_redraw_all();
+	}
 }
 
 struct ResizeGrab {
@@ -208,9 +208,6 @@ impl PointerGrab<State> for ResizeGrab {
 
 		if !handle.current_pressed().contains(&273) {
 			handle.unset_grab(self, state, event.serial, event.time, true);
-
-			state.mayland.cursor.icon = None;
-			state.mayland.queue_redraw_all();
 
 			if !self.window.alive() {
 				return;
@@ -317,7 +314,10 @@ impl PointerGrab<State> for ResizeGrab {
 		&self.start_data
 	}
 
-	fn unset(&mut self, _data: &mut State) {}
+	fn unset(&mut self, state: &mut State) {
+		state.mayland.cursor.icon = None;
+		state.mayland.queue_redraw_all();
+	}
 }
 
 impl State {
