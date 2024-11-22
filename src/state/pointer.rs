@@ -35,6 +35,35 @@ impl State {
 			self.update_keyboard_focus(location, serial);
 		}
 	}
+
+	/// refresh pointer focus if needed
+	///
+	/// checks if the `pointer::current_focus` is equal to
+	/// `surface_under(pointer::location)`, and if not issues an empty
+	/// `pointer::motion` event to refresh the focus
+	pub fn refresh_pointer_focus(&mut self) {
+		let location = self.mayland.pointer.current_location();
+
+		let curr = self.surface_under(location);
+		let prev = self.mayland.pointer.current_focus();
+
+		if curr.as_ref().map(|a| &a.0) == prev.as_ref() {
+			return;
+		}
+
+		let pointer = self.mayland.pointer.clone();
+
+		pointer.motion(
+			self,
+			curr,
+			&MotionEvent {
+				location,
+				serial: SERIAL_COUNTER.next_serial(),
+				time: self.mayland.clock.now().as_millis(),
+			},
+		);
+		pointer.frame(self);
+	}
 }
 
 delegate_relative_pointer!(State);
