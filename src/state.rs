@@ -363,10 +363,8 @@ impl Mayland {
 	fn elements(&mut self, renderer: &mut GlowRenderer, output: &Output) -> Vec<MaylandRenderElements> {
 		let mut elements = Vec::new();
 
-		if self.workspaces.is_active_output(output) {
-			let pointer_element = self.pointer_element(renderer);
-			elements.extend(pointer_element);
-		}
+		let pointer_element = self.pointer_element(renderer, output);
+		elements.extend(pointer_element);
 
 		let focus = self.keyboard.current_focus().and_then(|focus| match focus {
 			KeyboardFocusTarget::Window(mapped) => Some(mapped),
@@ -379,8 +377,15 @@ impl Mayland {
 		elements
 	}
 
-	fn pointer_element(&mut self, renderer: &mut GlowRenderer) -> Vec<MaylandRenderElements> {
-		let pointer_pos = self.workspaces.relative_cursor_location(&self.pointer);
+	fn pointer_element(
+		&mut self,
+		renderer: &mut GlowRenderer,
+		output: &Output,
+	) -> Vec<MaylandRenderElements> {
+		let geometry = self.workspaces.output_space.output_geometry(output).unwrap();
+
+		let pointer_pos = self.pointer.current_location() - geometry.loc.to_f64();
+		let pointer_pos = pointer_pos.to_physical(1.);
 
 		let render_cursor = self.cursor.get_render_cursor(1);
 		match render_cursor {

@@ -3,7 +3,6 @@ use crate::{
 	render::{FocusRing, MaylandRenderElements},
 	shell::window::MappedWindow,
 	utils::{output_size, RectExt, SizeExt},
-	State,
 };
 use smithay::{
 	backend::renderer::{
@@ -11,7 +10,6 @@ use smithay::{
 		glow::GlowRenderer,
 	},
 	desktop::{layer_map_for_output, space::SpaceElement, LayerMap, LayerSurface, Space},
-	input::pointer::PointerHandle,
 	output::Output,
 	utils::{Logical, Physical, Point, Rectangle, Scale},
 	wayland::shell::wlr_layer::Layer,
@@ -24,7 +22,7 @@ pub struct WorkspaceManager {
 	///
 	/// only used to map the outputs to keep track
 	/// of their position
-	output_space: Space<MappedWindow>,
+	pub output_space: Space<MappedWindow>,
 
 	active_output: Option<Output>,
 	output_map: HashMap<Output, usize>,
@@ -200,18 +198,6 @@ impl WorkspaceManager {
 
 	pub fn is_active_output(&self, output: &Output) -> bool {
 		self.active_output.as_ref().is_some_and(|active| active == output)
-	}
-
-	pub fn relative_cursor_location(&mut self, pointer: &PointerHandle<State>) -> Point<f64, Physical> {
-		let absolute_location = pointer.current_location();
-		let location = if let Some(active) = &self.active_output {
-			let geometry = self.output_space.output_geometry(active).unwrap();
-			absolute_location - geometry.loc.to_f64()
-		} else {
-			absolute_location
-		};
-
-		location.to_physical(1.)
 	}
 }
 
