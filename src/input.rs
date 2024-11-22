@@ -113,8 +113,16 @@ impl State {
 		let under = self.surface_under(location);
 		let serial = SERIAL_COUNTER.next_serial();
 
-		self.mayland.workspaces.update_active_output(location);
-		self.update_keyboard_focus(location, serial);
+		if self.mayland.workspaces.update_active_output(location) {
+			if self.mayland.workspaces.workspace().is_empty() {
+				let keyboard = self.mayland.keyboard.clone();
+				keyboard.set_focus(self, None, serial);
+			} else {
+				self.update_keyboard_focus(location, serial);
+			}
+		} else {
+			self.update_keyboard_focus(location, serial);
+		}
 
 		pointer.motion(
 			self,
