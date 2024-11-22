@@ -27,10 +27,11 @@ impl PointerGrab<State> for MoveGrab {
 		&mut self,
 		data: &mut State,
 		handle: &mut PointerInnerHandle<'_, State>,
-		focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
+		_focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
 		event: &MotionEvent,
 	) {
-		handle.motion(data, focus, event);
+		// no client has pointer focus while grab is active
+		handle.motion(data, None, event);
 
 		let new_location = event.location.to_i32_round() + self.window_offset;
 		data.mayland
@@ -42,10 +43,11 @@ impl PointerGrab<State> for MoveGrab {
 		&mut self,
 		data: &mut State,
 		handle: &mut PointerInnerHandle<'_, State>,
-		focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
+		_focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
 		event: &RelativeMotionEvent,
 	) {
-		handle.relative_motion(data, focus, event);
+		// no client has pointer focus while grab is active
+		handle.relative_motion(data, None, event);
 	}
 
 	fn button(&mut self, state: &mut State, handle: &mut PointerInnerHandle<'_, State>, event: &ButtonEvent) {
@@ -158,10 +160,11 @@ impl PointerGrab<State> for ResizeGrab {
 		&mut self,
 		data: &mut State,
 		handle: &mut PointerInnerHandle<'_, State>,
-		focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
+		_focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
 		event: &MotionEvent,
 	) {
-		handle.motion(data, focus, event);
+		// no client has pointer focus while grab is active
+		handle.motion(data, None, event);
 
 		let (dx, dy) = <(f64, f64)>::from(event.location - self.start_data.location);
 		let (dx, dy) = match self.corner {
@@ -193,10 +196,11 @@ impl PointerGrab<State> for ResizeGrab {
 		&mut self,
 		data: &mut State,
 		handle: &mut PointerInnerHandle<'_, State>,
-		focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
+		_focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
 		event: &RelativeMotionEvent,
 	) {
-		handle.relative_motion(data, focus, event);
+		// no client has pointer focus while grab is active
+		handle.relative_motion(data, None, event);
 	}
 
 	fn button(&mut self, state: &mut State, handle: &mut PointerInnerHandle<'_, State>, event: &ButtonEvent) {
