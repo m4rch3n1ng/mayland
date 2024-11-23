@@ -26,6 +26,7 @@ use smithay::{
 	reexports::{
 		calloop::{Dispatcher, RegistrationToken},
 		drm::control::{connector, crtc, ModeTypeFlags},
+		gbm::Modifier,
 		input::Libinput,
 		rustix::fs::OFlags,
 		wayland_protocols::wp::presentation_time::server::wp_presentation_feedback,
@@ -340,6 +341,35 @@ impl Udev {
 			.unwrap();
 
 		let formats = glow.egl_context().dmabuf_render_formats().clone();
+
+		// when upgrading to mesa 23.3.0, creating the DrmCompositor fails
+		// with a "failed to add framebuffer, invalid argument" error
+		//
+		// filtering out the ccs modifiers seems to fix the issue
+		//
+		// taken from niri (SPDX: GPL-3.0-or-later)
+		// https://github.com/YaLTeR/niri/blob/9c7e8d0/src/backend/tty.rs#L928-L956
+		let formats = formats
+			.iter()
+			.copied()
+			.filter(|format| {
+				!matches!(
+					format.modifier,
+					Modifier::I915_y_tiled_ccs
+					| Modifier::Unrecognized(0x100000000000005)
+					| Modifier::I915_y_tiled_gen12_rc_ccs
+					| Modifier::I915_y_tiled_gen12_mc_ccs
+					// I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC
+					| Modifier::Unrecognized(0x100000000000008)
+					// I915_FORMAT_MOD_4_TILED_DG2_RC_CCS
+					| Modifier::Unrecognized(0x10000000000000a)
+					// I915_FORMAT_MOD_4_TILED_DG2_MC_CCS
+					| Modifier::Unrecognized(0x10000000000000b)
+					// I915_FORMAT_MOD_4_TILED_DG2_RC_CCS_CC
+					| Modifier::Unrecognized(0x10000000000000c)
+				)
+			})
+			.collect::<FormatSet>();
 
 		let output_device = OutputDevice {
 			id: device_id,
