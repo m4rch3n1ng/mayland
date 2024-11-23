@@ -38,7 +38,7 @@ input {
 		middle_emulation = false
 		left_handed = false
 
-		accel_profile = 0
+		accel_speed = 0
 		# accel_profile = "adaptive"
 	}
 }
