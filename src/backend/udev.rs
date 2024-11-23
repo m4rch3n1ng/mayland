@@ -17,7 +17,7 @@ use smithay::{
 		egl::{EGLContext, EGLDevice, EGLDisplay},
 		input::InputEvent,
 		libinput::{LibinputInputBackend, LibinputSessionInterface},
-		renderer::{glow::GlowRenderer, Bind, ImportDma, ImportEgl},
+		renderer::{glow::GlowRenderer, ImportDma, ImportEgl},
 		session::{libseat::LibSeatSession, Event as SessionEvent, Session},
 		udev::{self, UdevBackend, UdevEvent},
 	},
@@ -339,7 +339,7 @@ impl Udev {
 			})
 			.unwrap();
 
-		let formats = Bind::<Dmabuf>::supported_formats(&glow).unwrap_or_default();
+		let formats = glow.egl_context().dmabuf_render_formats().clone();
 
 		let output_device = OutputDevice {
 			id: device_id,
