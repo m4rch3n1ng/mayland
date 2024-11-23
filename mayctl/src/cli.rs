@@ -37,6 +37,7 @@ pub enum Dispatch {
 	/// issue a dispatch to quit the compositor
 	Quit,
 	/// close active window
+	#[clap(name = "close", visible_alias = "close-window")]
 	CloseWindow,
 
 	/// switch to another workspace
