@@ -108,6 +108,7 @@ impl Default for Touchpad {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(default)]
 pub struct Mouse {
 	pub natural_scroll: bool,
 
