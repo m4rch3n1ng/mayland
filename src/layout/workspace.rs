@@ -238,8 +238,16 @@ impl WorkspaceManager {
 
 impl WorkspaceManager {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
-		let workspace = self.workspace_mut();
-		workspace.add_window(window, pointer);
+		if let Some(active) = &self.active_output {
+			let output_geo = self.output_space.output_geometry(active).unwrap();
+			let pointer = pointer - output_geo.loc.to_f64();
+
+			let workspace = self.workspace_mut();
+			workspace.add_window(window, pointer);
+		} else {
+			let workspace = self.workspace_mut();
+			workspace.add_window(window, pointer);
+		}
 	}
 
 	pub fn floating_move(&mut self, window: MappedWindow, location: Point<i32, Logical>) {
