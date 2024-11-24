@@ -280,7 +280,10 @@ impl Tiling {
 					}
 				}
 			}
-			[Some(window), None] => Some((&window.0, window.1.loc)),
+			[Some(window), None] => {
+				let loc = window.0.render_location(window.1.loc);
+				Some((&window.0, loc))
+			}
 			[None, Some(_)] => unreachable!(),
 			[None, None] => None,
 		}
