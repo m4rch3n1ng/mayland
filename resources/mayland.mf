@@ -43,6 +43,14 @@ input {
 	}
 }
 
+output {
+	"eDP-1" {
+		# mode = "2256x1504@48"
+		active = true
+		position = [ 0 0 ]
+	}
+}
+
 cursor {
 	# if this isn't set mayland will read from the
 	# XCURSOR_THEME and the XCURSOR_SIZE env var
