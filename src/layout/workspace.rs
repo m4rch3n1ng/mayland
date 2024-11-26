@@ -290,15 +290,17 @@ impl WorkspaceManager {
 		&self,
 		location: Point<f64, Logical>,
 	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
-		if let Some(active) = &self.active_output {
-			let output_geo = self.output_space.output_geometry(active).unwrap();
-			let location = location - output_geo.loc.to_f64();
+		if let Some(output) = self.output_under(location).next() {
+			let output_geometry = self.output_space.output_geometry(output).unwrap();
+			let location = location - output_geometry.loc.to_f64();
 
-			let workspace = self.workspace();
-			workspace.window_under(location)
+			let workspace = self.output_map.get(output).unwrap();
+			let workspace = self.workspaces.get(workspace).unwrap();
+
+			let (window, location) = workspace.window_under(location)?;
+			Some((window, location + output_geometry.loc))
 		} else {
-			let workspace = self.workspace();
-			workspace.window_under(location)
+			None
 		}
 	}
 }
