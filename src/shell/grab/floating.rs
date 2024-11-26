@@ -375,7 +375,11 @@ impl State {
 		let window_geometry = self.mayland.workspaces.window_geometry(&window).unwrap();
 		let pointer_location = pointer.current_location().to_i32_round();
 
-		let relative_position = pointer_location - window_geometry.loc;
+		let output_location = (self.mayland.workspaces.active_output.as_ref())
+			.map(|output| self.mayland.workspaces.output_geometry(output).unwrap().loc)
+			.unwrap_or_else(|| Point::from((0, 0)));
+
+		let relative_position = pointer_location - output_location - window_geometry.loc;
 		let window_size = window_geometry.size;
 
 		let half_height = window_size.h / 2;

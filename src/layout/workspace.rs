@@ -24,7 +24,7 @@ pub struct WorkspaceManager {
 	/// of their position
 	pub output_space: Space<MappedWindow>,
 
-	active_output: Option<Output>,
+	pub active_output: Option<Output>,
 	output_map: HashMap<Output, usize>,
 
 	pub workspaces: BTreeMap<usize, Workspace>,
