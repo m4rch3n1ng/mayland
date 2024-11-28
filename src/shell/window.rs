@@ -125,26 +125,8 @@ impl MappedWindow {
 					} else {
 						// if xdg shell version is lower than 2 the surface doesn't
 						// support tiled state, so set it to maximized because that
-						// kind of works mostly
+						// maybe kind of works mostly
 						state.states.set(xdg_toplevel::State::Maximized);
-					}
-				});
-				xdg.send_pending_configure();
-			}
-		}
-	}
-
-	pub fn unset_tiled(&self) {
-		match self.underlying_surface() {
-			WindowSurface::Wayland(xdg) => {
-				xdg.with_pending_state(|state| {
-					if xdg.version() >= 2 {
-						state.states.unset(xdg_toplevel::State::TiledTop);
-						state.states.unset(xdg_toplevel::State::TiledRight);
-						state.states.unset(xdg_toplevel::State::TiledBottom);
-						state.states.unset(xdg_toplevel::State::TiledLeft);
-					} else {
-						state.states.unset(xdg_toplevel::State::Maximized);
 					}
 				});
 				xdg.send_pending_configure();

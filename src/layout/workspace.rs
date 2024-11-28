@@ -372,10 +372,8 @@ impl Workspace {
 		};
 
 		if window.is_non_resizable() {
-			window.unset_tiled();
 			self.floating.map_element(window, center, true);
 		} else if let Some(window) = self.tiling.add_window(window, pointer) {
-			window.unset_tiled();
 			self.floating.map_element(window, center, true);
 		}
 	}

@@ -77,6 +77,10 @@ impl CompositorHandler for State {
 						let location = self.mayland.pointer.current_location();
 						self.mayland.workspaces.add_window(mapped.clone(), location);
 
+						// set the window state to be tiled, so that
+						// gtk apps don't round their corners
+						mapped.set_tiled();
+
 						// automatically focus new windows
 						self.focus_window(mapped);
 

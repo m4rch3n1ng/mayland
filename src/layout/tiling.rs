@@ -137,7 +137,6 @@ impl Tiling {
 				let position = self.layout.position(pointer);
 
 				window.set_activate(true);
-				window.set_tiled();
 
 				match position {
 					Position::Left => {
@@ -145,7 +144,6 @@ impl Tiling {
 						prev.1 = two;
 
 						window.resize(one.size);
-
 						*empty = Some((window, one));
 
 						self.windows.swap(0, 1);
@@ -155,7 +153,6 @@ impl Tiling {
 						prev.1 = one;
 
 						window.resize(two.size);
-
 						*empty = Some((window, two));
 					}
 				}
@@ -166,8 +163,6 @@ impl Tiling {
 				let one = self.layout.single();
 
 				window.set_activate(true);
-				window.set_tiled();
-
 				window.resize(one.size);
 				*empty = Some((window, one));
 
