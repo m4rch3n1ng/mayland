@@ -16,7 +16,9 @@ use smithay::{
 		Seat,
 	},
 	output::Output,
-	reexports::wayland_server::protocol::wl_surface::WlSurface,
+	reexports::{
+		wayland_protocols::xdg::shell::server::xdg_toplevel, wayland_server::protocol::wl_surface::WlSurface,
+	},
 	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial, Size},
 	wayland::{
 		compositor::with_states,
@@ -92,7 +94,9 @@ impl MappedWindow {
 
 		rect
 	}
+}
 
+impl MappedWindow {
 	/// check if surface is non-resizable
 	pub fn is_non_resizable(&self) -> bool {
 		match self.underlying_surface() {
@@ -104,6 +108,46 @@ impl MappedWindow {
 				});
 
 				min.w > 0 && min.h > 0 && min == max
+			}
+		}
+	}
+
+	pub fn set_tiled(&self) {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => {
+				xdg.with_pending_state(|state| {
+					if xdg.version() >= 2 {
+						// if the surface supports it set the tiled state
+						state.states.set(xdg_toplevel::State::TiledTop);
+						state.states.set(xdg_toplevel::State::TiledRight);
+						state.states.set(xdg_toplevel::State::TiledBottom);
+						state.states.set(xdg_toplevel::State::TiledLeft);
+					} else {
+						// if xdg shell version is lower than 2 the surface doesn't
+						// support tiled state, so set it to maximized because that
+						// kind of works mostly
+						state.states.set(xdg_toplevel::State::Maximized);
+					}
+				});
+				xdg.send_pending_configure();
+			}
+		}
+	}
+
+	pub fn unset_tiled(&self) {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => {
+				xdg.with_pending_state(|state| {
+					if xdg.version() >= 2 {
+						state.states.unset(xdg_toplevel::State::TiledTop);
+						state.states.unset(xdg_toplevel::State::TiledRight);
+						state.states.unset(xdg_toplevel::State::TiledBottom);
+						state.states.unset(xdg_toplevel::State::TiledLeft);
+					} else {
+						state.states.unset(xdg_toplevel::State::Maximized);
+					}
+				});
+				xdg.send_pending_configure();
 			}
 		}
 	}
