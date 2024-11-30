@@ -32,7 +32,10 @@ use smithay::{
 		wayland_protocols::wp::presentation_time::server::wp_presentation_feedback,
 	},
 	utils::{DeviceFd, Monotonic},
-	wayland::dmabuf::{DmabufFeedbackBuilder, DmabufGlobal},
+	wayland::{
+		dmabuf::{DmabufFeedbackBuilder, DmabufGlobal},
+		presentation::Refresh,
+	},
 };
 use smithay_drm_extras::{
 	display_info,
@@ -304,7 +307,8 @@ impl Udev {
 								let refresh = output
 									.current_mode()
 									.map(|mode| Duration::from_secs_f64(1_000f64 / f64::from(mode.refresh)))
-									.unwrap_or_default();
+									.map(Refresh::Fixed)
+									.unwrap_or(Refresh::Unknown);
 
 								feedback.presented::<_, Monotonic>(
 									presentation_time,
