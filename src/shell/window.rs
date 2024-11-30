@@ -87,10 +87,10 @@ impl MappedWindow {
 		let geometry = self.geometry();
 
 		rect.loc -= geometry.loc;
-		rect.size = (rect.size.to_point() + geometry.loc).to_size();
-
-		assert!(rect.size.w >= 0, "size should be nonnegative");
-		assert!(rect.size.h >= 0, "size should be nonnegative");
+		rect.size = Size::from((
+			rect.size.w.saturating_add(geometry.loc.x).max(0),
+			rect.size.h.saturating_add(geometry.loc.y).max(0),
+		));
 
 		rect
 	}
