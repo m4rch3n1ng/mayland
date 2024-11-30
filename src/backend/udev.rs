@@ -1,4 +1,3 @@
-use super::BACKGROUND_COLOR;
 use crate::{
 	input::{apply_libinput_settings, device::InputDevice},
 	render::{shaders, MaylandRenderElements},
@@ -143,7 +142,7 @@ impl Udev {
 		let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
 		let drm_compositor = device.surfaces.get_mut(&udev_state.crtc).unwrap();
 
-		match drm_compositor.render_frame(&mut device.glow, elements, BACKGROUND_COLOR) {
+		match drm_compositor.render_frame(&mut device.glow, elements, [0.; 4]) {
 			Ok(render_output_res) => {
 				mayland.post_repaint(output);
 

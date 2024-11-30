@@ -1,8 +1,9 @@
 use smithay::{
 	backend::renderer::{
 		element::{
-			memory::MemoryRenderBufferRenderElement, surface::WaylandSurfaceRenderElement,
-			utils::CropRenderElement, Element, Id, RenderElement, UnderlyingStorage,
+			memory::MemoryRenderBufferRenderElement, solid::SolidColorRenderElement,
+			surface::WaylandSurfaceRenderElement, utils::CropRenderElement, Element, Id, RenderElement,
+			UnderlyingStorage,
 		},
 		gles::element::PixelShaderElement,
 		glow::GlowRenderer,
@@ -24,6 +25,7 @@ pub enum OutputRenderElements<R: Renderer> {
 	DefaultPointer(MemoryRenderBufferRenderElement<R>),
 	CropSurface(CropRenderElement<WaylandSurfaceRenderElement<R>>),
 	Surface(WaylandSurfaceRenderElement<R>),
+	Solid(SolidColorRenderElement),
 	FocusElement(PixelShaderElement),
 }
 
@@ -38,6 +40,7 @@ where
 			Self::DefaultPointer(x) => x.id(),
 			Self::CropSurface(x) => x.id(),
 			Self::Surface(x) => x.id(),
+			Self::Solid(x) => x.id(),
 			Self::FocusElement(x) => x.id(),
 		}
 	}
@@ -47,6 +50,7 @@ where
 			Self::DefaultPointer(x) => x.location(scale),
 			Self::CropSurface(x) => x.location(scale),
 			Self::Surface(x) => x.location(scale),
+			Self::Solid(x) => x.location(scale),
 			Self::FocusElement(x) => x.location(scale),
 		}
 	}
@@ -56,6 +60,7 @@ where
 			Self::DefaultPointer(x) => x.src(),
 			Self::CropSurface(x) => x.src(),
 			Self::Surface(x) => x.src(),
+			Self::Solid(x) => x.src(),
 			Self::FocusElement(x) => x.src(),
 		}
 	}
@@ -65,6 +70,7 @@ where
 			Self::DefaultPointer(x) => x.transform(),
 			Self::CropSurface(x) => x.transform(),
 			Self::Surface(x) => x.transform(),
+			Self::Solid(x) => x.transform(),
 			Self::FocusElement(x) => x.transform(),
 		}
 	}
@@ -74,6 +80,7 @@ where
 			Self::DefaultPointer(x) => x.geometry(scale),
 			Self::CropSurface(x) => x.geometry(scale),
 			Self::Surface(x) => x.geometry(scale),
+			Self::Solid(x) => x.geometry(scale),
 			Self::FocusElement(x) => x.geometry(scale),
 		}
 	}
@@ -83,6 +90,7 @@ where
 			Self::DefaultPointer(x) => x.current_commit(),
 			Self::CropSurface(x) => x.current_commit(),
 			Self::Surface(x) => x.current_commit(),
+			Self::Solid(x) => x.current_commit(),
 			Self::FocusElement(x) => x.current_commit(),
 		}
 	}
@@ -92,6 +100,7 @@ where
 			Self::DefaultPointer(x) => x.damage_since(scale, commit),
 			Self::CropSurface(x) => x.damage_since(scale, commit),
 			Self::Surface(x) => x.damage_since(scale, commit),
+			Self::Solid(x) => x.damage_since(scale, commit),
 			Self::FocusElement(x) => x.damage_since(scale, commit),
 		}
 	}
@@ -101,6 +110,7 @@ where
 			Self::DefaultPointer(x) => x.opaque_regions(scale),
 			Self::CropSurface(x) => x.opaque_regions(scale),
 			Self::Surface(x) => x.opaque_regions(scale),
+			Self::Solid(x) => x.opaque_regions(scale),
 			Self::FocusElement(x) => x.opaque_regions(scale),
 		}
 	}
@@ -110,6 +120,7 @@ where
 			Self::DefaultPointer(x) => x.alpha(),
 			Self::CropSurface(x) => x.alpha(),
 			Self::Surface(x) => x.alpha(),
+			Self::Solid(x) => x.alpha(),
 			Self::FocusElement(x) => x.alpha(),
 		}
 	}
@@ -119,6 +130,7 @@ where
 			Self::DefaultPointer(x) => x.kind(),
 			Self::CropSurface(x) => x.kind(),
 			Self::Surface(x) => x.kind(),
+			Self::Solid(x) => x.kind(),
 			Self::FocusElement(x) => x.kind(),
 		}
 	}
@@ -137,6 +149,7 @@ impl RenderElement<GlowRenderer> for OutputRenderElements<GlowRenderer> {
 			Self::DefaultPointer(x) => x.draw(frame, src, dst, damage, opaque_regions),
 			Self::CropSurface(x) => x.draw(frame, src, dst, damage, opaque_regions),
 			Self::Surface(x) => x.draw(frame, src, dst, damage, opaque_regions),
+			Self::Solid(x) => RenderElement::<GlowRenderer>::draw(x, frame, src, dst, damage, opaque_regions),
 			Self::FocusElement(x) => {
 				RenderElement::<GlowRenderer>::draw(x, frame, src, dst, damage, opaque_regions)
 			}
@@ -149,6 +162,7 @@ impl RenderElement<GlowRenderer> for OutputRenderElements<GlowRenderer> {
 			Self::DefaultPointer(x) => x.underlying_storage(renderer),
 			Self::CropSurface(x) => x.underlying_storage(renderer),
 			Self::Surface(x) => x.underlying_storage(renderer),
+			Self::Solid(x) => x.underlying_storage(renderer),
 			Self::FocusElement(x) => x.underlying_storage(renderer),
 		}
 	}
@@ -192,6 +206,7 @@ impl<R: Renderer> Debug for OutputRenderElements<R> {
 				f.debug_tuple("CropSurface").field(&surface).finish()
 			}
 			OutputRenderElements::Surface(surface) => f.debug_tuple("Surface").field(&surface).finish(),
+			OutputRenderElements::Solid(surface) => f.debug_tuple("Solid").field(&surface).finish(),
 			OutputRenderElements::FocusElement(element) => {
 				f.debug_tuple("FocusElement").field(&element).finish()
 			}

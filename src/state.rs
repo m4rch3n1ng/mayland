@@ -1,5 +1,5 @@
 use crate::{
-	backend::{udev::Udev, winit::Winit, Backend},
+	backend::{udev::Udev, winit::Winit, Backend, BACKGROUND_COLOR},
 	comm::MaySocket,
 	cursor::{Cursor, RenderCursor},
 	error::MaylandError,
@@ -7,6 +7,7 @@ use crate::{
 	layout::workspace::WorkspaceManager,
 	render::MaylandRenderElements,
 	shell::{focus::KeyboardFocusTarget, window::UnmappedSurface},
+	utils::output_size,
 };
 use calloop::futures::Scheduler;
 use indexmap::IndexSet;
@@ -17,8 +18,10 @@ use smithay::{
 		input::Keycode,
 		renderer::{
 			element::{
-				memory::MemoryRenderBufferRenderElement, surface::render_elements_from_surface_tree, Kind,
-				RenderElementStates,
+				memory::MemoryRenderBufferRenderElement,
+				solid::{SolidColorBuffer, SolidColorRenderElement},
+				surface::render_elements_from_surface_tree,
+				Kind, RenderElementStates,
 			},
 			glow::GlowRenderer,
 		},
@@ -177,6 +180,12 @@ pub struct OutputState {
 	pub global: GlobalId,
 	pub queued: Option<Idle<'static>>,
 	pub waiting_for_vblank: bool,
+	/// use a solid color buffer instead of a clear color, so that
+	/// the background color cuts out at the sides when mirroring
+	/// outputs instead of filling the entire output
+	///
+	/// apparently it also avoids damage tracking issues
+	pub background: SolidColorBuffer,
 }
 
 impl Mayland {
@@ -301,10 +310,12 @@ impl Mayland {
 			});
 		}
 
+		let size = output_size(&output);
 		let state = OutputState {
 			global: output.create_global::<State>(&self.display_handle),
 			queued: None,
 			waiting_for_vblank: false,
+			background: SolidColorBuffer::new(size, BACKGROUND_COLOR),
 		};
 
 		let prev = self.output_state.insert(output, state);
@@ -325,6 +336,10 @@ impl Mayland {
 	pub fn output_resized(&mut self, output: &Output) {
 		layer_map_for_output(output).arrange();
 		self.workspaces.resize_output(output);
+
+		let size = output_size(output);
+		let output_state = self.output_state.get_mut(output).unwrap();
+		output_state.background.resize(size);
 	}
 
 	pub fn queue_redraw_all(&mut self) {
@@ -373,6 +388,17 @@ impl Mayland {
 
 		let workspace_elements = self.workspaces.render_elements(renderer, output, focus);
 		elements.extend(workspace_elements);
+
+		let output_state = &self.output_state[output];
+		elements.push(MaylandRenderElements::Solid(
+			SolidColorRenderElement::from_buffer(
+				&output_state.background,
+				(0, 0),
+				1.0,
+				1.0,
+				Kind::Unspecified,
+			),
+		));
 
 		elements
 	}

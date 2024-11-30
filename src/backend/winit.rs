@@ -1,4 +1,3 @@
-use super::BACKGROUND_COLOR;
 use crate::{
 	render::{shaders, MaylandRenderElements},
 	state::{Mayland, State},
@@ -100,7 +99,7 @@ impl Winit {
 		self.backend.bind().unwrap();
 		let renderer = self.backend.renderer();
 		self.damage_tracker
-			.render_output(renderer, 0, elements, BACKGROUND_COLOR)
+			.render_output(renderer, 0, elements, [0.; 4])
 			.unwrap();
 
 		self.backend.submit(Some(&[damage])).unwrap();
