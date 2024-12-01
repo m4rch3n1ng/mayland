@@ -39,10 +39,7 @@ impl PartialEq<CompMod> for ModifiersState {
 pub struct Binds(HashMap<Mapping, Action>);
 
 impl<'de> Deserialize<'de> for Binds {
-	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-	where
-		D: serde::Deserializer<'de>,
-	{
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
 		let map = HashMap::<Mapping, self::action::Action>::deserialize(deserializer)?;
 		let map = map.into_iter().map(|(m, a)| (m, Action::from(a))).collect();
 
@@ -268,10 +265,7 @@ impl Mapping {
 }
 
 impl<'de> Deserialize<'de> for Mapping {
-	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-	where
-		D: serde::Deserializer<'de>,
-	{
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
 		deserializer.deserialize_str(MappingVisitor)
 	}
 }
@@ -285,10 +279,7 @@ impl Visitor<'_> for MappingVisitor {
 		f.write_str("a valid key map")
 	}
 
-	fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-	where
-		E: serde::de::Error,
-	{
+	fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
 		let mut mods = Modifiers::default();
 		let mut key = None;
 

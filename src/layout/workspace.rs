@@ -26,7 +26,6 @@ pub struct WorkspaceManager {
 
 	pub active_output: Option<Output>,
 	output_map: HashMap<Output, usize>,
-
 	pub workspaces: BTreeMap<usize, Workspace>,
 
 	decoration: mayland_config::Decoration,
@@ -47,7 +46,6 @@ impl WorkspaceManager {
 
 			active_output,
 			output_map,
-
 			workspaces,
 
 			decoration: *decoration,
@@ -294,8 +292,8 @@ impl WorkspaceManager {
 			let output_geometry = self.output_space.output_geometry(output).unwrap();
 			let location = location - output_geometry.loc.to_f64();
 
-			let workspace = self.output_map.get(output).unwrap();
-			let workspace = self.workspaces.get(workspace).unwrap();
+			let workspace = &self.output_map[output];
+			let workspace = &self.workspaces[workspace];
 
 			let (window, location) = workspace.window_under(location)?;
 			Some((window, location + output_geometry.loc))

@@ -134,10 +134,7 @@ impl Default for Mouse {
 	}
 }
 
-fn deserialize_path<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
-where
-	D: serde::Deserializer<'de>,
-{
+fn deserialize_path<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Option<String>, D::Error> {
 	let option = Option::<String>::deserialize(deserializer)?;
 	let Some(mut path) = option else { return Ok(None) };
 

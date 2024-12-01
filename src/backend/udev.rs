@@ -140,8 +140,8 @@ impl Udev {
 impl Udev {
 	pub fn render(&mut self, mayland: &mut Mayland, output: &Output, elements: &[MaylandRenderElements]) {
 		let device = self.output_device.as_mut().unwrap();
-		let tty_state: &UdevOutputState = output.user_data().get().unwrap();
-		let drm_compositor = device.surfaces.get_mut(&tty_state.crtc).unwrap();
+		let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
+		let drm_compositor = device.surfaces.get_mut(&udev_state.crtc).unwrap();
 
 		match drm_compositor.render_frame(&mut device.glow, elements, BACKGROUND_COLOR) {
 			Ok(render_output_res) => {
