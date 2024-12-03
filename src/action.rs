@@ -25,7 +25,7 @@ impl State {
 					self.mayland.queue_redraw_all();
 				}
 
-				self.reset_keyboard_focus();
+				self.reset_focus();
 			}
 			Action::Spawn(command) => {
 				spawn(command, &self.mayland);

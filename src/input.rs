@@ -343,6 +343,7 @@ impl State {
 		let serial = SERIAL_COUNTER.next_serial();
 		let keyboard = self.mayland.keyboard.clone();
 		self.set_window_focus(window, &keyboard, serial);
+		self.refresh_pointer_focus();
 	}
 
 	pub fn surface_under(

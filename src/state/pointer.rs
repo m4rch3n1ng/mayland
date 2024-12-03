@@ -24,7 +24,8 @@ impl State {
 		);
 	}
 
-	pub fn reset_keyboard_focus(&mut self) {
+	/// resets the keyboard and pointer focus
+	pub fn reset_focus(&mut self) {
 		let serial = SERIAL_COUNTER.next_serial();
 		let workspace = self.mayland.workspaces.workspace();
 		if workspace.is_empty() {
@@ -34,6 +35,8 @@ impl State {
 			let location = self.mayland.pointer.current_location();
 			self.update_keyboard_focus(location, serial);
 		}
+
+		self.refresh_pointer_focus();
 	}
 
 	/// refresh pointer focus if needed
@@ -52,7 +55,6 @@ impl State {
 		}
 
 		let pointer = self.mayland.pointer.clone();
-
 		pointer.motion(
 			self,
 			curr,

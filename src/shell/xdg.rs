@@ -63,7 +63,7 @@ impl XdgShellHandler for State {
 		};
 
 		self.mayland.workspaces.remove_window(&window);
-		self.reset_keyboard_focus();
+		self.reset_focus();
 		self.refresh_pointer_focus();
 		self.mayland.queue_redraw_all();
 	}
