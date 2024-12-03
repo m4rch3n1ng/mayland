@@ -4,6 +4,7 @@ use crate::{
 	shell::window::MappedWindow,
 	utils::{output_size, RectExt, SizeExt},
 };
+use mayland_config::outputs::OutputInfo;
 use smithay::{
 	backend::renderer::{
 		element::{surface::WaylandSurfaceRenderElement, AsRenderElements},
@@ -145,7 +146,8 @@ impl WorkspaceManager {
 		config: &mayland_config::Outputs,
 		output: &Output,
 	) -> Option<Point<i32, Logical>> {
-		let output_config = config.get_output(&output.name());
+		let output_info = output.user_data().get::<OutputInfo>().unwrap();
+		let output_config = config.get_output(output_info);
 		self.position_outputs(config, Some(output));
 
 		if let Some(workspace) = self.workspaces.values_mut().find(|ws| ws.output.is_none()) {
@@ -198,7 +200,10 @@ impl WorkspaceManager {
 		let mut outputs = self
 			.outputs()
 			.chain(output)
-			.map(|output| (output, config.get_output(&output.name())))
+			.map(|output| {
+				let output_info = output.user_data().get::<OutputInfo>().unwrap();
+				(output, config.get_output(output_info))
+			})
 			.map(|(output, config)| (output.clone(), config.and_then(|conf| conf.position)))
 			.collect::<Vec<_>>();
 

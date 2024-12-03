@@ -2,6 +2,7 @@ use crate::{
 	render::{shaders, MaylandRenderElements},
 	state::{Mayland, State},
 };
+use mayland_config::outputs::OutputInfo;
 use smithay::{
 	backend::{
 		allocator::dmabuf::Dmabuf,
@@ -47,6 +48,10 @@ impl Winit {
 		let _global = output.create_global::<State>(&mayland.display_handle);
 		output.change_current_state(Some(mode), Some(Transform::Flipped180), None, None);
 		output.set_preferred(mode);
+
+		output.user_data().insert_if_missing(|| OutputInfo {
+			connector: "winit".to_owned(),
+		});
 
 		mayland.add_output(output.clone());
 

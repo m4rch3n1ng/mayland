@@ -4,6 +4,7 @@ use crate::{
 	state::{Mayland, State},
 };
 use libc::dev_t;
+use mayland_config::outputs::OutputInfo;
 use smithay::{
 	backend::{
 		allocator::{
@@ -399,10 +400,10 @@ impl Udev {
 	}
 
 	fn connector_connected(&mut self, connector: connector::Info, crtc: crtc::Handle, mayland: &mut Mayland) {
-		let output_name = format!("{}-{}", connector.interface().as_str(), connector.interface_id());
-		tracing::info!("connecting connector: {}", output_name);
+		let output_info = get_output_info(&connector);
+		tracing::info!("connecting connector: {:?}", output_info);
 
-		let config = mayland.config.output.get_output(&output_name);
+		let config = mayland.config.output.get_output(&output_info);
 		let mode = pick_mode(&connector, config.and_then(|conf| conf.mode));
 
 		let device = self.output_device.as_mut().unwrap();
@@ -435,7 +436,7 @@ impl Udev {
 			.unwrap_or_else(|| "unknown".to_owned());
 
 		let output = Output::new(
-			output_name,
+			output_info.connector.clone(),
 			PhysicalProperties {
 				size: (physical_width as i32, physical_height as i32).into(),
 				subpixel: Subpixel::Unknown,
@@ -448,6 +449,7 @@ impl Udev {
 		output.change_current_state(Some(wl_mode), None, None, None);
 		output.set_preferred(wl_mode);
 
+		output.user_data().insert_if_missing(|| output_info);
 		output.user_data().insert_if_missing(|| UdevOutputState {
 			device_id: device.id,
 			crtc,
@@ -551,6 +553,12 @@ impl Udev {
 		output_state.waiting_for_vblank = false;
 
 		mayland.queue_redraw(output);
+	}
+}
+
+fn get_output_info(connector: &connector::Info) -> OutputInfo {
+	OutputInfo {
+		connector: format!("{}-{}", connector.interface().as_str(), connector.interface_id()),
 	}
 }
 

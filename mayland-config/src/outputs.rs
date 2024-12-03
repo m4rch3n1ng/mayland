@@ -4,9 +4,14 @@ use std::collections::HashMap;
 #[derive(Debug, Default, Deserialize)]
 pub struct Outputs(HashMap<String, Output>);
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OutputInfo {
+	pub connector: String,
+}
+
 impl Outputs {
-	pub fn get_output(&self, connector: &str) -> Option<&Output> {
-		self.0.get(connector)
+	pub fn get_output(&self, info: &OutputInfo) -> Option<&Output> {
+		self.0.get(&info.connector)
 	}
 }
 
