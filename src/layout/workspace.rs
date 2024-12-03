@@ -207,8 +207,13 @@ impl WorkspaceManager {
 			.map(|(output, config)| (output.clone(), config.and_then(|conf| conf.position)))
 			.collect::<Vec<_>>();
 
-		// first sort by output name
-		outputs.sort_by_key(|(output, _)| output.name());
+		// first sort by output info
+		outputs.sort_by(|(out1, _), (out2, _)| {
+			let info1 = out1.user_data().get::<OutputInfo>().unwrap();
+			let info2 = out2.user_data().get::<OutputInfo>().unwrap();
+
+			info1.cmp(info2)
+		});
 		// then put the outputs with an explicit position first
 		outputs.sort_by_key(|(_, position)| position.is_none());
 

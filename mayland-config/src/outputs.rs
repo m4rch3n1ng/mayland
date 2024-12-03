@@ -1,12 +1,42 @@
 use serde::{de::Visitor, Deserialize};
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 #[derive(Debug, Default, Deserialize)]
 pub struct Outputs(HashMap<String, Output>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct OutputInfo {
 	pub connector: String,
+}
+
+impl Eq for OutputInfo {}
+
+impl PartialEq for OutputInfo {
+	fn eq(&self, other: &Self) -> bool {
+		self.connector == other.connector
+	}
+}
+
+impl Ord for OutputInfo {
+	/// tries to provide a relatively consistent ordering for
+	/// outputs, so that i can always map them in that order
+	///
+	/// puts internal monitors ("eDP-1") first, and then sorts by
+	/// the connector name
+	fn cmp(&self, other: &Self) -> Ordering {
+		match (&*self.connector, &*other.connector) {
+			("eDP-1", "eDP-1") => Ordering::Equal,
+			("eDP-1", _) => Ordering::Less,
+			(_, "eDP-1") => Ordering::Greater,
+			(conn1, conn2) => conn1.cmp(conn2),
+		}
+	}
+}
+
+impl PartialOrd for OutputInfo {
+	fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+		Some(self.cmp(other))
+	}
 }
 
 impl Outputs {
