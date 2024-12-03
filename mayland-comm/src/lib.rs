@@ -59,7 +59,8 @@ pub mod output {
 			}
 
 			if let Some((width, height)) = self.size {
-				writeln!(f, "    size: {}x{} mm", width, height)?;
+				let inches = (width.pow(2) as f64 + height.pow(2) as f64).sqrt() / 25.4;
+				writeln!(f, "    size: {}x{} mm ({:.3}\")", width, height, inches)?;
 			}
 
 			writeln!(f, "    available modes:")?;
