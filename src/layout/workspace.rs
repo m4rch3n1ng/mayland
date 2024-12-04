@@ -148,7 +148,7 @@ impl WorkspaceManager {
 	) -> Option<Point<i32, Logical>> {
 		let output_info = output.user_data().get::<OutputInfo>().unwrap();
 		let output_config = config.get_output(output_info);
-		self.position_outputs(config, Some(output));
+		let new_active_position = self.position_outputs(config, Some(output));
 
 		if let Some(workspace) = self.workspaces.values_mut().find(|ws| ws.output.is_none()) {
 			workspace.map_output(output);
@@ -171,7 +171,7 @@ impl WorkspaceManager {
 			let output_geometry = self.output_space.output_geometry(output).unwrap();
 			Some(output_geometry.loc + output_geometry.size.center())
 		} else {
-			None
+			new_active_position
 		}
 	}
 
@@ -196,7 +196,16 @@ impl WorkspaceManager {
 		}
 	}
 
-	fn position_outputs(&mut self, config: &mayland_config::Outputs, output: Option<&Output>) {
+	fn position_outputs(
+		&mut self,
+		config: &mayland_config::Outputs,
+		output: Option<&Output>,
+	) -> Option<Point<i32, Logical>> {
+		let active_position = self
+			.active_output
+			.as_ref()
+			.and_then(|output| self.output_space.output_geometry(output));
+
 		let mut outputs = self
 			.outputs()
 			.chain(output)
@@ -251,6 +260,19 @@ impl WorkspaceManager {
 				let point = Point::from((x, 0));
 				self.output_space.map_output(&output, point);
 			}
+		}
+
+		if let Some(active_position) = active_position {
+			let active_output = self.active_output.as_ref().unwrap();
+			let new_active_position = self.output_space.output_geometry(active_output).unwrap();
+
+			if active_position != new_active_position {
+				Some(new_active_position.center())
+			} else {
+				None
+			}
+		} else {
+			None
 		}
 	}
 

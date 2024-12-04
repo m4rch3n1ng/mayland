@@ -318,6 +318,7 @@ impl Mayland {
 		if let Some(location) = self.workspaces.add_output(&self.config.output, &output) {
 			self.loop_handle.insert_idle(move |state| {
 				state.move_cursor(location.to_f64());
+				state.mayland.queue_redraw_all();
 			});
 		}
 
