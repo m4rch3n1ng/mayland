@@ -1,4 +1,4 @@
-use self::cli::Cli;
+use self::{cli::Cli, term::Term};
 use clap::Parser;
 use mayland_comm::{Request, Response, MAYLAND_SOCKET_VAR};
 use serde::Serialize;
@@ -10,10 +10,13 @@ use std::{
 };
 
 mod cli;
+mod term;
 
-fn main() {
+fn main() -> Term {
 	let cli = Cli::parse();
-	let socket_path = std::env::var(MAYLAND_SOCKET_VAR).expect("not running in a mayland instance");
+	let Ok(socket_path) = std::env::var(MAYLAND_SOCKET_VAR) else {
+		return Term::MaylandNotRunning;
+	};
 
 	let request = Request::from(cli.cmd);
 	let message = serde_json::to_string(&request).unwrap();
@@ -44,6 +47,8 @@ fn main() {
 			}
 		}
 	}
+
+	Term::Ok
 }
 
 fn prettify<T: Display>(t: &[T]) {
