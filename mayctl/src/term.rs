@@ -5,6 +5,10 @@ use std::{fmt::Display, io::Write as _, process::Termination};
 pub enum Term {
 	/// mayctl exited successfully
 	Ok,
+	/// an io error occured
+	IoError(std::io::Error),
+	/// the mayland socket was not found
+	NotFound(String),
 	/// mayctl wasn't started inside mayland
 	MaylandNotRunning,
 }
@@ -26,6 +30,14 @@ impl Display for Term {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Term::Ok => Ok(()),
+			Term::IoError(err) => {
+				writeln!(f, "{}: {}", "error".red().bold(), "io error".bold())?;
+				writeln!(f, "  {} {}", "::".blue().bold(), err)
+			}
+			Term::NotFound(socket_path) => {
+				writeln!(f, "{}: {}", "error".red().bold(), "socket not found".bold())?;
+				writeln!(f, "  {} file {} does not exist", "::".blue().bold(), socket_path)
+			}
 			Term::MaylandNotRunning => {
 				writeln!(f, "{}: {}", "error".red().bold(), "mayland not running".bold())?;
 				writeln!(f, "  {} env ${} not set", "::".blue().bold(), MAYLAND_SOCKET_VAR)

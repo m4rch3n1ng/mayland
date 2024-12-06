@@ -4,7 +4,7 @@ use mayland_comm::{Request, Response, MAYLAND_SOCKET_VAR};
 use serde::Serialize;
 use std::{
 	fmt::Display,
-	io::{BufRead, BufReader, Write},
+	io::{BufRead, BufReader, ErrorKind, Write},
 	net::Shutdown,
 	os::unix::net::UnixStream,
 };
@@ -21,7 +21,11 @@ fn main() -> Term {
 	let request = Request::from(cli.cmd);
 	let message = serde_json::to_string(&request).unwrap();
 
-	let mut stream = UnixStream::connect(socket_path).unwrap();
+	let mut stream = match UnixStream::connect(&socket_path) {
+		Ok(stream) => stream,
+		Err(err) if matches!(err.kind(), ErrorKind::NotFound) => return Term::NotFound(socket_path),
+		Err(err) => return Term::IoError(err),
+	};
 	stream.write_all(message.as_bytes()).unwrap();
 	stream.shutdown(Shutdown::Write).unwrap();
 
