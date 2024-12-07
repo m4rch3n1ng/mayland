@@ -33,7 +33,10 @@ fn main() -> Term {
 	let mut buf = String::new();
 	read.read_line(&mut buf).unwrap();
 
-	let reply = serde_json::from_str::<Response>(&buf).unwrap();
+	let reply = match serde_json::from_str::<Response>(&buf) {
+		Ok(reply) => reply,
+		Err(err) => return Term::InvalidReply(err),
+	};
 	stream.shutdown(Shutdown::Read).unwrap();
 
 	match request {
