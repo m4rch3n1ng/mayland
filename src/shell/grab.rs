@@ -59,7 +59,11 @@ impl ResizeCorner {
 
 impl State {
 	pub fn xdg_move(&mut self, window: MappedWindow, serial: Serial) {
-		if self.mayland.workspaces.is_floating(&window) {
+		let Some(workspace) = self.mayland.workspaces.workspace() else {
+			return;
+		};
+
+		if workspace.is_floating(&window) {
 			self.xdg_floating_move(window, serial);
 		} else {
 			tracing::debug!("todo! tiling move");
@@ -67,7 +71,11 @@ impl State {
 	}
 
 	pub fn xdg_resize(&mut self, window: MappedWindow, serial: Serial) {
-		if self.mayland.workspaces.is_floating(&window) {
+		let Some(workspace) = self.mayland.workspaces.workspace() else {
+			return;
+		};
+
+		if workspace.is_floating(&window) {
 			self.xdg_floating_resize(window, serial);
 		} else {
 			tracing::debug!("todo! tiling resize");
@@ -77,6 +85,13 @@ impl State {
 
 impl Mayland {
 	pub fn handle_resize(&mut self, window: MappedWindow) {
+		let Some(workspace) = self.workspaces.workspace_mut() else {
+			let mut resize_data = window.resize_state.lock().unwrap();
+			*resize_data = None;
+
+			return;
+		};
+
 		let mut resize_state = window.resize_state.lock().unwrap();
 		if let Some(ResizeState::Resizing(data) | ResizeState::WatingForCommit(data)) = *resize_state {
 			let ResizeData {
@@ -90,7 +105,7 @@ impl Mayland {
 			let delta = corner.delta(initial_window_size, window_size);
 			if let Some(delta) = delta {
 				let location = initial_window_location + delta;
-				self.workspaces.floating_move(window.clone(), location);
+				workspace.floating_move(window.clone(), location);
 			}
 		}
 

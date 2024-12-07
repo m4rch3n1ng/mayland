@@ -27,8 +27,9 @@ impl State {
 	/// resets the keyboard and pointer focus
 	pub fn reset_focus(&mut self) {
 		let serial = SERIAL_COUNTER.next_serial();
+
 		let workspace = self.mayland.workspaces.workspace();
-		if workspace.is_empty() {
+		if workspace.is_none_or(|ws| ws.is_empty()) {
 			let keyboard = self.mayland.keyboard.clone();
 			keyboard.set_focus(self, None, serial);
 		} else {

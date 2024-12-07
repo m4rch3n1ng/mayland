@@ -25,18 +25,22 @@ struct MoveGrab {
 impl PointerGrab<State> for MoveGrab {
 	fn motion(
 		&mut self,
-		data: &mut State,
+		state: &mut State,
 		handle: &mut PointerInnerHandle<'_, State>,
 		_focus: Option<(<State as SeatHandler>::PointerFocus, Point<f64, Logical>)>,
 		event: &MotionEvent,
 	) {
 		// no client has pointer focus while grab is active
-		handle.motion(data, None, event);
+		handle.motion(state, None, event);
 
 		let new_location = event.location.to_i32_round() + self.window_offset;
-		data.mayland
-			.workspaces
-			.floating_move(self.window.clone(), new_location);
+
+		let Some(workspace) = state.mayland.workspaces.workspace_mut() else {
+			handle.unset_grab(self, state, event.serial, event.time, true);
+			return;
+		};
+
+		workspace.floating_move(self.window.clone(), new_location);
 	}
 
 	fn relative_motion(
@@ -340,7 +344,9 @@ impl State {
 		}
 
 		let pointer_location = pointer.current_location().to_i32_round();
-		let window_geometry = self.mayland.workspaces.window_geometry(&window).unwrap();
+
+		let workspace = self.mayland.workspaces.workspace().unwrap();
+		let window_geometry = workspace.window_geometry(&window).unwrap();
 		let window_offset = window_geometry.loc - pointer_location;
 
 		self.mayland.cursor.icon = Some(CursorIcon::Grabbing);
@@ -372,7 +378,8 @@ impl State {
 			return;
 		}
 
-		let window_geometry = self.mayland.workspaces.window_geometry(&window).unwrap();
+		let workspace = self.mayland.workspaces.workspace().unwrap();
+		let window_geometry = workspace.window_geometry(&window).unwrap();
 		let pointer_location = pointer.current_location().to_i32_round();
 
 		let output_location = (self.mayland.workspaces.active_output.as_ref())

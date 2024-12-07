@@ -72,9 +72,8 @@ impl WorkspaceManager {
 			let center = rect.center();
 			Some(center)
 		} else {
-			if let Some(prev) = self.workspaces.get_mut(&current) {
-				prev.unmap_output(active_output);
-			}
+			let prev = self.workspaces.get_mut(&current).unwrap();
+			prev.unmap_output(active_output);
 
 			let workspace = self
 				.workspaces
@@ -87,21 +86,26 @@ impl WorkspaceManager {
 		}
 	}
 
-	pub fn workspace(&self) -> &Workspace {
+	/// get the currently active workspace, if one exists
+	pub fn workspace(&self) -> Option<&Workspace> {
 		if let Some(output) = &self.active_output {
 			let idx = self.output_map[output];
-			self.workspaces.get(&idx).unwrap()
+			let workspace = &self.workspaces[&idx];
+			Some(workspace)
 		} else {
-			self.workspaces.values().next().unwrap()
+			None
 		}
 	}
 
-	pub fn workspace_mut(&mut self) -> &mut Workspace {
+	/// get mutable access to the currently active workspace,
+	/// if one exists
+	pub fn workspace_mut(&mut self) -> Option<&mut Workspace> {
 		if let Some(output) = &self.active_output {
 			let idx = self.output_map[output];
-			self.workspaces.get_mut(&idx).unwrap()
+			let workspace = self.workspaces.get_mut(&idx).unwrap();
+			Some(workspace)
 		} else {
-			self.workspaces.values_mut().next().unwrap()
+			None
 		}
 	}
 }
@@ -162,8 +166,9 @@ impl WorkspaceManager {
 	pub fn refresh(&mut self) {
 		self.output_space.refresh();
 
-		let workspace = self.workspace_mut();
-		workspace.refresh();
+		for workspace in self.workspaces.values_mut() {
+			workspace.refresh();
+		}
 	}
 
 	pub fn render_elements(
@@ -191,13 +196,6 @@ impl WorkspaceManager {
 		false
 	}
 
-	/// is the [`MappedWindow`] in the floating space of the currently
-	/// active [`Workspace`]?
-	pub fn is_floating(&mut self, window: &MappedWindow) -> bool {
-		let workspace = self.workspace();
-		workspace.is_floating(window)
-	}
-
 	pub fn is_active_output(&self, output: &Output) -> bool {
 		self.active_output.as_ref().is_some_and(|active| active == output)
 	}
@@ -206,11 +204,6 @@ impl WorkspaceManager {
 impl WorkspaceManager {
 	pub fn outputs(&self) -> impl Iterator<Item = &Output> {
 		self.output_space.outputs()
-	}
-
-	pub fn outputs_for_window(&self, window: &MappedWindow) -> Vec<Output> {
-		let workspace = self.workspace();
-		workspace.outputs_for_window(window)
 	}
 
 	pub fn output_geometry(&self, output: &Output) -> Option<Rectangle<i32, Logical>> {
@@ -241,17 +234,14 @@ impl WorkspaceManager {
 			let output_geo = self.output_space.output_geometry(active).unwrap();
 			let pointer = pointer - output_geo.loc.to_f64();
 
-			let workspace = self.workspace_mut();
+			let workspace = self.output_map[active];
+			let workspace = self.workspaces.get_mut(&workspace).unwrap();
+
 			workspace.add_window(window, pointer);
 		} else {
-			let workspace = self.workspace_mut();
+			let workspace = self.workspaces.values_mut().next().unwrap();
 			workspace.add_window(window, pointer);
 		}
-	}
-
-	pub fn floating_move(&mut self, window: MappedWindow, location: Point<i32, Logical>) {
-		let workspace = self.workspace_mut();
-		workspace.floating_move(window, location);
 	}
 
 	pub fn remove_window(&mut self, window: &MappedWindow) {
@@ -266,23 +256,18 @@ impl WorkspaceManager {
 	/// activate [`MappedWindow`] with [`MappedWindow::set_activate`],
 	/// and raise it to the top if floating.
 	pub fn activate_window(&mut self, window: &MappedWindow) {
-		let workspace = self.workspace_mut();
-		workspace.activate_window(window);
+		for workspace in self.workspaces.values_mut() {
+			if workspace.has_window(window) {
+				workspace.activate_window(window);
+				return;
+			}
+		}
 	}
 
-	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
-		let workspace = self.workspace();
+	pub fn windows_for_output(&self, output: &Output) -> impl DoubleEndedIterator<Item = &MappedWindow> {
+		let workspace = self.output_map[output];
+		let workspace = &self.workspaces[&workspace];
 		workspace.windows()
-	}
-
-	pub fn window_location(&self, window: &MappedWindow) -> Option<Point<i32, Logical>> {
-		let workspace = self.workspace();
-		workspace.window_location(window)
-	}
-
-	pub fn window_geometry(&self, window: &MappedWindow) -> Option<Rectangle<i32, Logical>> {
-		let workspace = self.workspace();
-		workspace.window_geometry(window)
 	}
 
 	pub fn window_under(
@@ -343,10 +328,6 @@ impl Workspace {
 
 	fn resize_output(&mut self, output: &Output) {
 		self.tiling.resize_output(output);
-	}
-
-	fn outputs_for_window(&self, window: &MappedWindow) -> Vec<Output> {
-		self.floating.outputs_for_element(window)
 	}
 
 	fn refresh(&mut self) {

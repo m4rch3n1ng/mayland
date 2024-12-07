@@ -454,16 +454,12 @@ impl Mayland {
 	) -> OutputPresentationFeedback {
 		let mut output_presentation_feedback = OutputPresentationFeedback::new(output);
 
-		for mapped in self.workspaces.windows() {
-			if self.workspaces.outputs_for_window(mapped).contains(output) {
-				mapped.window.take_presentation_feedback(
-					&mut output_presentation_feedback,
-					surface_primary_scanout_output,
-					|surface, _| {
-						surface_presentation_feedback_flags_from_states(surface, render_element_states)
-					},
-				);
-			}
+		for mapped in self.workspaces.windows_for_output(output) {
+			mapped.window.take_presentation_feedback(
+				&mut output_presentation_feedback,
+				surface_primary_scanout_output,
+				|surface, _| surface_presentation_feedback_flags_from_states(surface, render_element_states),
+			);
 		}
 
 		let layer_map = layer_map_for_output(output);
@@ -479,7 +475,7 @@ impl Mayland {
 	}
 
 	pub fn post_repaint(&self, output: &Output) {
-		for mapped in self.workspaces.windows() {
+		for mapped in self.workspaces.windows_for_output(output) {
 			mapped
 				.window
 				.send_frame(output, self.start_time.elapsed(), Some(Duration::ZERO), |_, _| {

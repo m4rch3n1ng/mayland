@@ -114,7 +114,8 @@ impl State {
 		let serial = SERIAL_COUNTER.next_serial();
 
 		if self.mayland.workspaces.update_active_output(location) {
-			if self.mayland.workspaces.workspace().is_empty() {
+			let workspace = self.mayland.workspaces.workspace();
+			if workspace.is_none_or(|ws| ws.is_empty()) {
 				let keyboard = self.mayland.keyboard.clone();
 				keyboard.set_focus(self, None, serial);
 			} else {
