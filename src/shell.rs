@@ -2,7 +2,7 @@ use self::window::MappedWindow;
 use crate::state::{ClientState, State};
 use smithay::{
 	backend::renderer::utils::{on_commit_buffer_handler, with_renderer_surface_state},
-	delegate_compositor, delegate_shm,
+	delegate_compositor, delegate_layer_shell, delegate_shm,
 	desktop::{layer_map_for_output, LayerSurface},
 	output::Output,
 	reexports::wayland_server::{
@@ -24,6 +24,7 @@ use smithay::{
 pub mod focus;
 pub mod grab;
 pub mod window;
+pub mod wlr;
 pub mod xdg;
 
 impl BufferHandler for State {
@@ -99,11 +100,10 @@ impl CompositorHandler for State {
 			}
 		}
 
+		// handle xdg surface commits
 		self.mayland.handle_surface_commit(surface);
-
-		if let Some(window) = self.mayland.workspaces.window_for_surface(surface) {
-			self.handle_resize(window.clone());
-		}
+		// handle wlr layer shell surface commits
+		self.mayland.handle_layer_surface_commit(surface);
 
 		self.mayland.queue_redraw_all();
 	}
@@ -136,5 +136,6 @@ impl ShmHandler for State {
 	}
 }
 
+delegate_layer_shell!(State);
 delegate_compositor!(State);
 delegate_shm!(State);

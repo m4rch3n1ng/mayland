@@ -1,5 +1,5 @@
 use super::window::MappedWindow;
-use crate::state::State;
+use crate::state::{Mayland, State};
 use smithay::{
 	desktop::space::SpaceElement,
 	utils::{Logical, Point, Serial, Size},
@@ -73,7 +73,9 @@ impl State {
 			tracing::debug!("todo! tiling resize");
 		}
 	}
+}
 
+impl Mayland {
 	pub fn handle_resize(&mut self, window: MappedWindow) {
 		let mut resize_state = window.resize_state.lock().unwrap();
 		if let Some(ResizeState::Resizing(data) | ResizeState::WatingForCommit(data)) = *resize_state {
@@ -88,7 +90,7 @@ impl State {
 			let delta = corner.delta(initial_window_size, window_size);
 			if let Some(delta) = delta {
 				let location = initial_window_location + delta;
-				self.mayland.workspaces.floating_move(window.clone(), location);
+				self.workspaces.floating_move(window.clone(), location);
 			}
 		}
 

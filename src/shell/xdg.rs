@@ -3,13 +3,12 @@ use crate::{
 	state::{Mayland, State},
 };
 use smithay::{
-	delegate_layer_shell, delegate_presentation, delegate_xdg_shell,
+	delegate_presentation, delegate_xdg_shell,
 	desktop::PopupKind,
 	reexports::wayland_server::protocol::{wl_seat::WlSeat, wl_surface::WlSurface},
 	utils::Serial,
 	wayland::{
 		compositor::with_states,
-		seat::WaylandFocus,
 		shell::xdg::{
 			PopupSurface, PositionerState, ToplevelSurface, XdgPopupSurfaceData, XdgShellHandler,
 			XdgShellState, XdgToplevelSurfaceData,
@@ -74,7 +73,6 @@ impl XdgShellHandler for State {
 }
 
 delegate_xdg_shell!(State);
-delegate_layer_shell!(State);
 delegate_presentation!(State);
 
 pub fn initial_configure_sent(toplevel: &ToplevelSurface) -> bool {
@@ -92,18 +90,15 @@ pub fn initial_configure_sent(toplevel: &ToplevelSurface) -> bool {
 impl Mayland {
 	/// should be called on `WlSurface::commit`
 	pub fn handle_surface_commit(&mut self, surface: &WlSurface) {
-		// handle toplevel commits.
-		if let Some(mapped) = self
-			.workspaces
-			.windows()
-			.find(|w| w.wl_surface().is_some_and(|w| *w == *surface))
-			.cloned()
-		{
-			if let Some(toplevel) = mapped.window.toplevel() {
+		// handle toplevel commits
+		if let Some(window) = self.workspaces.window_for_surface(surface) {
+			if let Some(toplevel) = window.window.toplevel() {
 				if !initial_configure_sent(toplevel) {
 					toplevel.send_configure();
 				}
 			}
+
+			self.handle_resize(window.clone());
 		}
 
 		// handle popup commits.
