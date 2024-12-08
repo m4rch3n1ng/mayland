@@ -1,11 +1,11 @@
 use crate::{
 	render::{FocusRing, MaylandRenderElements},
 	shell::window::MappedWindow,
-	utils::{output_size, RectExt, SizeExt},
+	utils::RectExt,
 };
 use smithay::{
 	backend::renderer::glow::GlowRenderer,
-	desktop::space::SpaceElement,
+	desktop::{layer_map_for_output, space::SpaceElement},
 	output::Output,
 	utils::{Logical, Point, Rectangle, Size},
 };
@@ -14,8 +14,15 @@ type WindowLayout = (MappedWindow, Rectangle<i32, Logical>);
 
 #[derive(Debug)]
 struct Layout {
-	rect: Rectangle<i32, Logical>,
+	/// the output working area, excluding layer-shell
+	/// exclusive zones
+	working_area: Rectangle<i32, Logical>,
+	/// the area that i can actually map windows to
+	useable_area: Rectangle<i32, Logical>,
 
+	/// the border around the windows
+	border: i32,
+	/// the gaps between windows
 	gaps: i32,
 	/// thickness of the focus ring
 	ring: i32,
@@ -27,15 +34,18 @@ struct Layout {
 
 impl Layout {
 	fn new(border: i32, gaps: i32, decoration: &mayland_config::Decoration) -> Self {
-		let rect = Rectangle {
+		let working_area = Rectangle::default();
+		let useable_area = Rectangle {
 			loc: Point::from((border, border)),
 			size: Size::from((0, 0)),
 		};
 
 		Layout {
-			rect,
-			gaps,
+			working_area,
+			useable_area,
 
+			border,
+			gaps,
 			ring: i32::from(decoration.focus.thickness),
 
 			ratio: 0.5,
@@ -43,31 +53,32 @@ impl Layout {
 		}
 	}
 
-	fn resize(&mut self, size: Size<i32, Logical>) {
-		self.rect.size = size;
+	fn resize(&mut self, working_area: Rectangle<i32, Logical>) {
+		self.working_area = working_area;
+		self.useable_area = working_area.borderless(self.border);
 
-		let x = self.rect.size.w as f64 * self.ratio;
+		let x = self.useable_area.size.w as f64 * self.ratio;
 		let x = x.round() as i32;
 
 		let rel = Point::from((x, 0));
-		let split = self.rect.loc + rel;
+		let split = self.useable_area.loc + rel;
 		self.split = split;
 	}
 
 	fn single(&self) -> Rectangle<i32, Logical> {
-		self.rect.borderless(self.ring)
+		self.useable_area.borderless(self.ring)
 	}
 
 	fn double(&self) -> [Rectangle<i32, Logical>; 2] {
 		let split = self.split;
-		let rel_split = split - self.rect.loc;
-		let size = self.rect.size;
+		let rel_split = split - self.useable_area.loc;
+		let size = self.useable_area.size;
 
 		let gap = self.gaps / 2;
 
 		let one = {
 			let size = Size::from((rel_split.x - gap, size.h));
-			let loc = self.rect.loc;
+			let loc = self.useable_area.loc;
 
 			Rectangle { loc, size }
 		};
@@ -102,8 +113,6 @@ impl Layout {
 #[derive(Debug)]
 pub struct Tiling {
 	layout: Layout,
-	border: i32,
-
 	windows: [Option<WindowLayout>; 2],
 }
 
@@ -116,8 +125,6 @@ impl Tiling {
 
 		Tiling {
 			layout,
-			border,
-
 			windows: [None, None],
 		}
 	}
@@ -211,19 +218,17 @@ impl Tiling {
 	}
 
 	pub fn map_output(&mut self, output: &Output) {
-		let output_size = output_size(output);
-		let layout_size = output_size.borderless(self.border);
+		let layout_size = layer_map_for_output(output).non_exclusive_zone();
 		self.resize(layout_size);
 	}
 
 	pub fn resize_output(&mut self, output: &Output) {
-		let output_size = output_size(output);
-		let layout_size = output_size.borderless(self.border);
+		let layout_size = layer_map_for_output(output).non_exclusive_zone();
 		self.resize(layout_size);
 	}
 
-	fn resize(&mut self, size: Size<i32, Logical>) {
-		self.layout.resize(size);
+	fn resize(&mut self, working_area: Rectangle<i32, Logical>) {
+		self.layout.resize(working_area);
 
 		match &mut self.windows {
 			[Some(w1), Some(w2)] => {

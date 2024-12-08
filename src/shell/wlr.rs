@@ -7,11 +7,16 @@ use smithay::{
 
 impl Mayland {
 	pub fn handle_layer_surface_commit(&mut self, surface: &WlSurface) {
-		let Some(output) = self.workspaces.outputs().find(|output| {
-			let layer_map = layer_map_for_output(output);
-			let layer = layer_map.layer_for_surface(surface, WindowSurfaceType::TOPLEVEL);
-			layer.is_some()
-		}) else {
+		let Some(output) = self
+			.workspaces
+			.outputs()
+			.find(|output| {
+				let layer_map = layer_map_for_output(output);
+				let layer = layer_map.layer_for_surface(surface, WindowSurfaceType::TOPLEVEL);
+				layer.is_some()
+			})
+			.cloned()
+		else {
 			return;
 		};
 
@@ -25,7 +30,7 @@ impl Mayland {
 				.initial_configure_sent
 		});
 
-		let mut layer_map = layer_map_for_output(output);
+		let mut layer_map = layer_map_for_output(&output);
 		layer_map.arrange();
 
 		if !initial_configure_sent {
@@ -36,6 +41,6 @@ impl Mayland {
 		}
 
 		drop(layer_map);
-		self.queue_redraw(output.clone());
+		self.output_resized(&output);
 	}
 }
