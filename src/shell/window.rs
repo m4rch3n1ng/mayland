@@ -76,6 +76,10 @@ impl MappedWindow {
 		self.window.underlying_surface()
 	}
 
+	pub fn toplevel(&self) -> Option<&ToplevelSurface> {
+		self.window.toplevel()
+	}
+
 	pub fn render_location(&self, location: Point<i32, Logical>) -> Point<i32, Logical> {
 		let geometry = self.geometry();
 		location - geometry.loc

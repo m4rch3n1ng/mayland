@@ -181,7 +181,7 @@ impl PointerGrab<State> for ResizeGrab {
 		let new_window_height = i32::max(new_window_height, 50);
 
 		self.new_window_size = Size::from((new_window_width, new_window_height));
-		match self.window.window.underlying_surface() {
+		match self.window.underlying_surface() {
 			WindowSurface::Wayland(xdg) => {
 				xdg.with_pending_state(|state| {
 					state.states.set(xdg_toplevel::State::Resizing);
@@ -213,7 +213,7 @@ impl PointerGrab<State> for ResizeGrab {
 				return;
 			}
 
-			match self.window.window.underlying_surface() {
+			match self.window.underlying_surface() {
 				WindowSurface::Wayland(xdg) => {
 					xdg.with_pending_state(|state| {
 						state.states.unset(xdg_toplevel::State::Resizing);

@@ -270,17 +270,17 @@ impl PointerTarget<State> for PointerFocusTarget {
 impl WaylandFocus for KeyboardFocusTarget {
 	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
 		match self {
-			KeyboardFocusTarget::Window(w) => w.wl_surface(),
-			KeyboardFocusTarget::LayerSurface(l) => Some(Cow::Borrowed(l.wl_surface())),
-			KeyboardFocusTarget::Popup(p) => Some(Cow::Borrowed(p.wl_surface())),
+			KeyboardFocusTarget::Window(window) => window.wl_surface(),
+			KeyboardFocusTarget::LayerSurface(layer) => Some(Cow::Borrowed(layer.wl_surface())),
+			KeyboardFocusTarget::Popup(popup) => Some(Cow::Borrowed(popup.wl_surface())),
 		}
 	}
 
 	fn same_client_as(&self, object_id: &ObjectId) -> bool {
 		match self {
-			KeyboardFocusTarget::Window(w) => w.window.same_client_as(object_id),
-			KeyboardFocusTarget::LayerSurface(l) => l.wl_surface().id().same_client_as(object_id),
-			KeyboardFocusTarget::Popup(p) => p.wl_surface().id().same_client_as(object_id),
+			KeyboardFocusTarget::Window(window) => window.same_client_as(object_id),
+			KeyboardFocusTarget::LayerSurface(layer) => layer.wl_surface().id().same_client_as(object_id),
+			KeyboardFocusTarget::Popup(popup) => popup.wl_surface().id().same_client_as(object_id),
 		}
 	}
 }

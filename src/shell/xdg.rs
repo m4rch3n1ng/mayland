@@ -92,7 +92,7 @@ impl Mayland {
 	pub fn handle_surface_commit(&mut self, surface: &WlSurface) {
 		// handle toplevel commits
 		if let Some(window) = self.workspaces.window_for_surface(surface) {
-			if let Some(toplevel) = window.window.toplevel() {
+			if let Some(toplevel) = window.toplevel() {
 				if !initial_configure_sent(toplevel) {
 					toplevel.send_configure();
 				}
