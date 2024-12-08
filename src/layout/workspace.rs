@@ -218,6 +218,7 @@ impl WorkspaceManager {
 	}
 
 	pub fn output_under(&self, point: Point<f64, Logical>) -> impl Iterator<Item = &Output> {
+		debug_assert!(self.output_space.output_under(point).count() <= 1);
 		self.output_space.output_under(point)
 	}
 }

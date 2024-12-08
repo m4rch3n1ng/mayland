@@ -350,10 +350,7 @@ impl State {
 		&self,
 		location: Point<f64, Logical>,
 	) -> Option<(PointerFocusTarget, Point<f64, Logical>)> {
-		let output = self.mayland.workspaces.outputs().find(|output| {
-			let geometry = self.mayland.workspaces.output_geometry(output).unwrap();
-			geometry.contains(location.to_i32_round())
-		})?;
+		let output = self.mayland.workspaces.output_under(location).next()?;
 
 		let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
 		let layers = layer_map_for_output(output);
