@@ -65,21 +65,45 @@ impl WorkspaceManager {
 			return None;
 		}
 
-		if let Some(output) = self.output_map.iter().find(|&(_, &w)| w == idx).map(|(o, _)| o) {
-			self.active_output = Some(output.clone());
+		if let Some(workspace) = self.workspaces.get_mut(&idx) {
+			if let Some(output) = workspace.output.as_ref() {
+				*self.output_map.get_mut(output).unwrap() = idx;
 
-			let rect = self.output_space.output_geometry(output).unwrap();
-			let center = rect.center();
-			Some(center)
+				if active_output != output {
+					self.active_output = Some(output.clone());
+
+					let output_geometry = self.output_space.output_geometry(output).unwrap();
+					let output_center = output_geometry.center();
+					Some(output_center)
+				} else {
+					let prev = &self.workspaces[&current];
+					if prev.is_empty() {
+						self.workspaces.remove(&current);
+					}
+
+					None
+				}
+			} else {
+				workspace.map_output(active_output);
+				*self.output_map.get_mut(active_output).unwrap() = idx;
+
+				let prev = &self.workspaces[&current];
+				if prev.is_empty() {
+					self.workspaces.remove(&current);
+				}
+
+				None
+			}
 		} else {
-			let prev = self.workspaces.get_mut(&current).unwrap();
-			prev.unmap_output(active_output);
+			let prev = &self.workspaces[&current];
+			if prev.is_empty() {
+				self.workspaces.remove(&current);
+			}
 
-			let workspace = self
-				.workspaces
-				.entry(idx)
-				.or_insert_with(|| Workspace::new(idx, &self.decoration));
+			let mut workspace = Workspace::new(idx, &self.decoration);
 			workspace.map_output(active_output);
+
+			self.workspaces.insert(idx, workspace);
 			*self.output_map.get_mut(active_output).unwrap() = idx;
 
 			None
@@ -123,17 +147,20 @@ impl WorkspaceManager {
 
 		self.output_space.map_output(output, (x, 0));
 
-		let idx = (0..usize::MAX)
-			.find(|n| self.output_map.values().all(|v| n != v))
-			.expect("if you have more than usize::MAX monitors you deserve this");
+		if let Some(workspace) = self.workspaces.values_mut().find(|ws| ws.output.is_none()) {
+			workspace.map_output(output);
+			self.output_map.insert(output.clone(), workspace.idx);
+		} else {
+			let idx = (0..usize::MAX)
+				.find(|n| !self.workspaces.contains_key(n))
+				.expect("if you have more than usize::MAX monitors you deserve this");
+			self.output_map.insert(output.clone(), idx);
 
-		self.output_map.insert(output.clone(), idx);
+			let mut workspace = Workspace::new(idx, &self.decoration);
+			workspace.map_output(output);
 
-		let workspace = self
-			.workspaces
-			.entry(idx)
-			.or_insert_with(|| Workspace::new(idx, &self.decoration));
-		workspace.map_output(output);
+			self.workspaces.insert(idx, workspace);
+		}
 
 		if self.active_output.is_none() {
 			self.active_output = Some(output.clone());
@@ -146,11 +173,19 @@ impl WorkspaceManager {
 	}
 
 	pub fn remove_output(&mut self, output: &Output) {
+		let idx = self.output_map.remove(output).unwrap();
 		self.output_space.unmap_output(output);
 
-		let idx = self.output_map.remove(output).unwrap();
 		let workspace = self.workspaces.get_mut(&idx).unwrap();
-		workspace.unmap_output(output);
+		if workspace.is_empty() {
+			self.workspaces.remove(&idx);
+		}
+
+		for workspace in self.workspaces.values_mut() {
+			if workspace.output.as_ref().is_some_and(|wo| wo == output) {
+				workspace.remove_output(output);
+			}
+		}
 
 		if self.active_output.as_ref() == Some(output) {
 			self.active_output = self.output_map.keys().next().cloned();
@@ -328,7 +363,9 @@ impl Workspace {
 		self.floating.map_output(output, (0, 0));
 	}
 
-	fn unmap_output(&mut self, output: &Output) {
+	fn remove_output(&mut self, output: &Output) {
+		debug_assert!(self.output.as_ref().is_some_and(|wo| wo == output));
+
 		self.output = None;
 		self.floating.unmap_output(output);
 	}
