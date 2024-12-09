@@ -9,6 +9,7 @@ annotate-snippets = "0.11.5"
 bitflags = "2.6.0"
 dirs = { workspace = true }
 mayland-comm = { workspace = true }
+regex = "1.11.1"
 serde = { workspace = true, features = ["derive"] }
 smithay = { workspace = true, features = ["backend_libinput"] }
 thiserror = "2.0.9"
