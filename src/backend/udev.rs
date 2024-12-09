@@ -12,7 +12,7 @@ use smithay::{
 			gbm::{GbmAllocator, GbmBufferFlags, GbmDevice},
 			Fourcc,
 		},
-		drm::{compositor::DrmCompositor, DrmDevice, DrmDeviceFd, DrmEvent, DrmEventTime},
+		drm::{compositor::DrmCompositor, DrmDevice, DrmDeviceFd, DrmEvent, DrmEventMetadata, DrmEventTime},
 		egl::{EGLContext, EGLDevice, EGLDisplay},
 		input::InputEvent,
 		libinput::{LibinputInputBackend, LibinputSessionInterface},
@@ -284,59 +284,8 @@ impl Udev {
 				let udev = state.backend.udev();
 				match event {
 					DrmEvent::VBlank(crtc) => {
-						let device = udev.output_device.as_mut().unwrap();
-						let drm_comp = device.surfaces.get_mut(&crtc).unwrap();
-
-						let presentation_time = match metadata.as_mut().unwrap().time {
-							DrmEventTime::Monotonic(time) => time,
-							DrmEventTime::Realtime(_) => {
-								// not supported
-								Duration::ZERO
-							}
-						};
-
-						match drm_comp.frame_submitted() {
-							Ok(Some(mut feedback)) => {
-								let seq = metadata.as_ref().map_or(0, |meta| meta.sequence);
-								let flags = wp_presentation_feedback::Kind::Vsync
-									| wp_presentation_feedback::Kind::HwClock
-									| wp_presentation_feedback::Kind::HwCompletion;
-
-								let output = feedback.output().unwrap();
-								let refresh = output
-									.current_mode()
-									.map(|mode| Duration::from_secs_f64(1_000f64 / f64::from(mode.refresh)))
-									.map(Refresh::Fixed)
-									.unwrap_or(Refresh::Unknown);
-
-								feedback.presented::<_, Monotonic>(
-									presentation_time,
-									refresh,
-									u64::from(seq),
-									flags,
-								);
-							}
-							Ok(None) => {}
-							Err(err) => {
-								tracing::error!("error marking frame as submitted {}", err);
-							}
-						}
-
-						let output = state
-							.mayland
-							.workspaces
-							.outputs()
-							.find(|output| {
-								let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
-								udev_state.device_id == device.id && udev_state.crtc == crtc
-							})
-							.unwrap()
-							.clone();
-
-						let output_state = state.mayland.output_state.get_mut(&output).unwrap();
-						output_state.waiting_for_vblank = false;
-
-						state.mayland.queue_redraw(output);
+						let metadata = metadata.expect("vblank events must have metadata");
+						udev.on_vblank(&mut state.mayland, crtc, metadata);
 					}
 					DrmEvent::Error(error) => tracing::error!("drm error {:?}", error),
 				}
@@ -553,6 +502,59 @@ impl Udev {
 			.clone();
 
 		mayland.remove_output(&output);
+	}
+
+	fn on_vblank(&mut self, mayland: &mut Mayland, crtc: crtc::Handle, meta: DrmEventMetadata) {
+		let device = self.output_device.as_mut().unwrap();
+		let Some(surface) = device.surfaces.get_mut(&crtc) else {
+			tracing::warn!("missing crtc {:?} in vblannk callback", crtc);
+			return;
+		};
+
+		let presentation_time = match meta.time {
+			DrmEventTime::Monotonic(time) => time,
+			DrmEventTime::Realtime(_) => {
+				// not supported
+				Duration::ZERO
+			}
+		};
+
+		match surface.frame_submitted() {
+			Ok(Some(mut feedback)) => {
+				let seq = meta.sequence;
+				let flags = wp_presentation_feedback::Kind::Vsync
+					| wp_presentation_feedback::Kind::HwClock
+					| wp_presentation_feedback::Kind::HwCompletion;
+
+				let output = feedback.output().unwrap();
+				let refresh = output
+					.current_mode()
+					.map(|mode| Duration::from_secs_f64(1_000f64 / f64::from(mode.refresh)))
+					.map(Refresh::Fixed)
+					.unwrap_or(Refresh::Unknown);
+
+				feedback.presented::<_, Monotonic>(presentation_time, refresh, u64::from(seq), flags);
+			}
+			Ok(None) => {}
+			Err(err) => {
+				tracing::error!("error marking frame as submitted {}", err);
+			}
+		}
+
+		let output = mayland
+			.workspaces
+			.outputs()
+			.find(|output| {
+				let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
+				udev_state.device_id == device.id && udev_state.crtc == crtc
+			})
+			.unwrap()
+			.clone();
+
+		let output_state = mayland.output_state.get_mut(&output).unwrap();
+		output_state.waiting_for_vblank = false;
+
+		mayland.queue_redraw(output);
 	}
 }
 
