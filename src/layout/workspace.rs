@@ -22,9 +22,9 @@ pub struct WorkspaceManager {
 	///
 	/// only used to map the outputs to keep track
 	/// of their position
-	pub output_space: Space<MappedWindow>,
+	output_space: Space<MappedWindow>,
 
-	pub active_output: Option<Output>,
+	active_output: Option<Output>,
 	output_map: HashMap<Output, usize>,
 	pub workspaces: BTreeMap<usize, Workspace>,
 
@@ -208,6 +208,13 @@ impl WorkspaceManager {
 
 	pub fn output_geometry(&self, output: &Output) -> Option<Rectangle<i32, Logical>> {
 		self.output_space.output_geometry(output)
+	}
+
+	pub fn active_output_geometry(&self) -> Option<Rectangle<i32, Logical>> {
+		let active_output = self.active_output.as_ref()?;
+
+		let geometry = self.output_space.output_geometry(active_output).unwrap();
+		Some(geometry)
 	}
 
 	pub fn output_under(&self, point: Point<f64, Logical>) -> impl Iterator<Item = &Output> {
