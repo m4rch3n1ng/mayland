@@ -230,10 +230,6 @@ impl WorkspaceManager {
 
 		false
 	}
-
-	pub fn is_active_output(&self, output: &Output) -> bool {
-		self.active_output.as_ref().is_some_and(|active| active == output)
-	}
 }
 
 impl WorkspaceManager {
@@ -563,8 +559,8 @@ impl Workspace {
 			.collect();
 		let output = self.output.as_ref().map(|output| output.name());
 
-		let active = match &self.output {
-			Some(output) => workspaces.is_active_output(output),
+		let active = match workspaces.workspace() {
+			Some(workspace) => workspace.idx == self.idx,
 			None => false,
 		};
 
