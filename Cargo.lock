@@ -1088,6 +1088,7 @@ dependencies = [
  "dirs",
  "mayfig",
  "mayland-comm",
+ "regex",
  "serde",
  "smithay",
  "thiserror 2.0.9",
