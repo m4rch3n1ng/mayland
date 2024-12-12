@@ -1,4 +1,4 @@
-use mayland_comm::MAYLAND_SOCKET_VAR;
+use mayland_comm::{Response, MAYLAND_SOCKET_VAR};
 use owo_colors::OwoColorize;
 use std::{fmt::Display, io::Write as _, process::Termination};
 
@@ -13,6 +13,10 @@ pub enum Term {
 	InvalidReply(serde_json::Error),
 	/// mayctl wasn't started inside mayland
 	MaylandNotRunning,
+	UnexpectedResponse {
+		expected: &'static str,
+		actual: &'static str,
+	},
 }
 
 impl Termination for Term {
@@ -63,6 +67,60 @@ impl Display for Term {
 				writeln!(f, "{}: {}", "error".red().bold(), "mayland not running".bold())?;
 				writeln!(f, "  {} env ${} not set", "::".blue().bold(), MAYLAND_SOCKET_VAR)
 			}
+			Term::UnexpectedResponse { expected, actual } => {
+				writeln!(
+					f,
+					"{}: {}",
+					"error".red().bold(),
+					"mayland returned unexpected response".bold()
+				)?;
+				writeln!(
+					f,
+					"  {} expected {}, got {}",
+					"::".blue().bold(),
+					expected,
+					actual
+				)
+			}
 		}
+	}
+}
+
+macro_rules! ensure_matches {
+	($left:expr, $( $pattern:pat_param )|+, $expected:literal) => {
+		match $left {
+			$( $pattern )|+ => {}
+			ref left => {
+				let actual = $crate::term::get_response_name(left);
+				return Term::UnexpectedResponse {
+					expected: $expected,
+					actual,
+				}
+			}
+		}
+	}
+}
+
+pub(crate) use ensure_matches;
+
+macro_rules! unexpected {
+	($left:expr, $expected:literal) => {{
+		let actual = $crate::term::get_response_name(&$left);
+		return Term::UnexpectedResponse {
+			expected: $expected,
+			actual,
+		};
+	}};
+}
+
+pub(crate) use unexpected;
+
+/// get a static str, that describes the response, for use
+/// in [`Term::UnexpectedResponse`].
+#[doc(hidden)]
+pub(crate) fn get_response_name(response: &Response) -> &'static str {
+	match response {
+		Response::Dispatch => "dispatch",
+		Response::Workspaces(_) => "workspaces",
 	}
 }

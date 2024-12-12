@@ -1,4 +1,7 @@
-use self::{cli::Cli, term::Term};
+use self::{
+	cli::Cli,
+	term::{ensure_matches, unexpected, Term},
+};
 use clap::Parser;
 use mayland_comm::{Request, Response, MAYLAND_SOCKET_VAR};
 use serde::Serialize;
@@ -41,11 +44,13 @@ fn main() -> Term {
 
 	match request {
 		Request::Dispatch(_) => {
-			assert!(matches!(reply, Response::Dispatch));
+			ensure_matches!(reply, Response::Dispatch, "dispatch");
 			println!("ok dispatch");
 		}
 		Request::Workspaces => {
-			let Response::Workspaces(workspaces) = reply else { panic!() };
+			let Response::Workspaces(workspaces) = reply else {
+				unexpected!(reply, "workspaces")
+			};
 
 			if cli.json {
 				stringify(&workspaces);
