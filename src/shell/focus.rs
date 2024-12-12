@@ -301,24 +301,6 @@ impl WaylandFocus for PointerFocusTarget {
 	}
 }
 
-impl From<WlSurface> for PointerFocusTarget {
-	fn from(wl_surface: WlSurface) -> Self {
-		PointerFocusTarget::WlSurface(wl_surface)
-	}
-}
-
-impl From<&MappedWindow> for PointerFocusTarget {
-	fn from(window: &MappedWindow) -> Self {
-		PointerFocusTarget::Window(window.clone())
-	}
-}
-
-impl From<&LayerSurface> for KeyboardFocusTarget {
-	fn from(value: &LayerSurface) -> Self {
-		KeyboardFocusTarget::LayerSurface(value.clone())
-	}
-}
-
 impl From<PopupKind> for KeyboardFocusTarget {
 	fn from(popup: PopupKind) -> Self {
 		KeyboardFocusTarget::Popup(popup)

@@ -12,7 +12,7 @@ use smithay::{
 		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState, KeyboardKeyEvent,
 		Keycode, PointerAxisEvent, PointerButtonEvent, PointerMotionEvent,
 	},
-	desktop::{layer_map_for_output, WindowSurfaceType},
+	desktop::{layer_map_for_output, LayerSurface, WindowSurfaceType},
 	input::{
 		keyboard::{
 			keysyms::{KEY_XF86Switch_VT_1, KEY_XF86Switch_VT_12},
@@ -20,7 +20,8 @@ use smithay::{
 		},
 		pointer::{AxisFrame, ButtonEvent, MotionEvent, RelativeMotionEvent},
 	},
-	reexports::wayland_server::protocol::wl_pointer,
+	output::Output,
+	reexports::wayland_server::protocol::{wl_pointer, wl_surface::WlSurface},
 	utils::{Logical, Point, Serial, SERIAL_COUNTER},
 	wayland::{input_method::InputMethodSeat, shell::wlr_layer::Layer as WlrLayer},
 };
@@ -284,57 +285,38 @@ impl State {
 			return;
 		}
 
-		self.mayland.queue_redraw_all();
+		let Some(output) = self.mayland.workspaces.output_under(location) else {
+			return;
+		};
 
-		let output = self.mayland.workspaces.output_under(location).cloned();
-		if let Some(output) = output.as_ref() {
-			let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
-			let layers = layer_map_for_output(output);
-			if let Some(layer) = layers
-				.layer_under(WlrLayer::Overlay, location)
-				.or_else(|| layers.layer_under(WlrLayer::Top, location))
-			{
-				if layer.can_receive_keyboard_focus() {
-					let layer_geo = layers.layer_geometry(layer).unwrap();
-					if let Some((_, _)) = layer.surface_under(
-						location - output_geo.loc.to_f64() - layer_geo.loc.to_f64(),
-						WindowSurfaceType::ALL,
-					) {
-						keyboard.set_focus(self, Some(KeyboardFocusTarget::from(layer)), serial);
-						return;
-					}
-				}
-			}
-		}
-
-		if let Some((window, _)) = self
+		if let Some((layer, _, _)) = self.layer_surface_under(
+			output,
+			location,
+			&[WlrLayer::Overlay, WlrLayer::Top],
+			SurfaceFocus::Keyboard,
+		) {
+			let target = KeyboardFocusTarget::LayerSurface(layer);
+			keyboard.set_focus(self, Some(target), serial);
+		} else if let Some((window, _)) = self
 			.mayland
 			.workspaces
 			.window_under(location)
 			.map(|(w, p)| (w.clone(), p))
 		{
 			self.set_window_focus(window, &keyboard, serial);
+		} else if let Some((layer, _, _)) = self.layer_surface_under(
+			output,
+			location,
+			&[WlrLayer::Bottom, WlrLayer::Background],
+			SurfaceFocus::Keyboard,
+		) {
+			let target = KeyboardFocusTarget::LayerSurface(layer);
+			keyboard.set_focus(self, Some(target), serial);
+		} else {
 			return;
-		}
+		};
 
-		if let Some(output) = output.as_ref() {
-			let layers = layer_map_for_output(output);
-			if let Some(layer) = layers
-				.layer_under(WlrLayer::Bottom, location)
-				.or_else(|| layers.layer_under(WlrLayer::Background, location))
-			{
-				if layer.can_receive_keyboard_focus() {
-					let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
-					let layer_geo = layers.layer_geometry(layer).unwrap();
-					if let Some((_, _)) = layer.surface_under(
-						location - output_geo.loc.to_f64() - layer_geo.loc.to_f64(),
-						WindowSurfaceType::ALL,
-					) {
-						keyboard.set_focus(self, Some(KeyboardFocusTarget::from(layer)), serial);
-					}
-				}
-			}
-		}
+		self.mayland.queue_redraw_all();
 	}
 
 	fn set_window_focus(&mut self, window: MappedWindow, keyboard: &KeyboardHandle<State>, serial: Serial) {
@@ -355,47 +337,61 @@ impl State {
 	) -> Option<(PointerFocusTarget, Point<f64, Logical>)> {
 		let output = self.mayland.workspaces.output_under(location)?;
 
-		let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
-		let layers = layer_map_for_output(output);
-
-		if let Some(layer) = layers
-			.layer_under(WlrLayer::Overlay, location)
-			.or_else(|| layers.layer_under(WlrLayer::Top, location))
-		{
-			let layer_loc = layers.layer_geometry(layer).unwrap();
-			layer
-				.surface_under(
-					location - output_geo.loc.to_f64() - layer_loc.loc.to_f64(),
-					WindowSurfaceType::ALL,
-				)
-				.map(|(surface, loc)| {
-					(
-						PointerFocusTarget::from(surface),
-						(loc + layer_loc.loc + output_geo.loc).to_f64(),
-					)
-				})
-		} else if let Some((window, loc)) = self.mayland.workspaces.window_under(location) {
-			Some((PointerFocusTarget::from(window), loc.to_f64()))
-		} else if let Some(layer) = layers
-			.layer_under(WlrLayer::Bottom, location)
-			.or_else(|| layers.layer_under(WlrLayer::Background, location))
-		{
-			let layer_loc = layers.layer_geometry(layer).unwrap();
-			layer
-				.surface_under(
-					location - output_geo.loc.to_f64() - layer_loc.loc.to_f64(),
-					WindowSurfaceType::ALL,
-				)
-				.map(|(surface, loc)| {
-					(
-						PointerFocusTarget::from(surface),
-						(loc + layer_loc.loc + output_geo.loc).to_f64(),
-					)
-				})
+		if let Some((_, surface, location)) = self.layer_surface_under(
+			output,
+			location,
+			&[WlrLayer::Overlay, WlrLayer::Top],
+			SurfaceFocus::Pointer,
+		) {
+			Some((PointerFocusTarget::WlSurface(surface), location.to_f64()))
+		} else if let Some((window, location)) = self.mayland.workspaces.window_under(location) {
+			Some((PointerFocusTarget::Window(window.clone()), location.to_f64()))
+		} else if let Some((_, surface, location)) = self.layer_surface_under(
+			output,
+			location,
+			&[WlrLayer::Bottom, WlrLayer::Background],
+			SurfaceFocus::Pointer,
+		) {
+			Some((PointerFocusTarget::WlSurface(surface), location.to_f64()))
 		} else {
 			None
 		}
 	}
+
+	fn layer_surface_under(
+		&self,
+		output: &Output,
+		location: Point<f64, Logical>,
+		wlr_layers: &[WlrLayer],
+		kind: SurfaceFocus,
+	) -> Option<(LayerSurface, WlSurface, Point<i32, Logical>)> {
+		let output_geometry = self.mayland.workspaces.output_geometry(output).unwrap();
+		let layer_map = layer_map_for_output(output);
+
+		for wlr_layer in wlr_layers {
+			if let Some(layer) = layer_map.layer_under(*wlr_layer, location) {
+				if kind == SurfaceFocus::Keyboard && !layer.can_receive_keyboard_focus() {
+					continue;
+				}
+
+				let layer_geometry = layer_map.layer_geometry(layer).unwrap();
+				let layer_location = location - output_geometry.loc.to_f64() - layer_geometry.loc.to_f64();
+
+				if let Some((surface, loc)) = layer.surface_under(layer_location, WindowSurfaceType::ALL) {
+					let surface_location = loc + layer_geometry.loc + output_geometry.loc;
+					return Some((layer.clone(), surface, surface_location));
+				}
+			}
+		}
+
+		None
+	}
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SurfaceFocus {
+	Pointer,
+	Keyboard,
 }
 
 pub fn apply_libinput_settings(config: &mayland_config::Input, device: &mut InputDevice) {
