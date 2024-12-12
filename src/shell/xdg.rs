@@ -53,9 +53,7 @@ impl XdgShellHandler for State {
 			return;
 		}
 
-		let surface = toplevel.wl_surface();
-		let window = self.mayland.workspaces.window_for_surface(surface).cloned();
-		let Some(window) = window else {
+		let Some(window) = self.mayland.workspaces.window_for_surface(&toplevel).cloned() else {
 			tracing::error!("couldn't find toplevel");
 			return;
 		};
@@ -67,6 +65,35 @@ impl XdgShellHandler for State {
 
 	fn popup_destroyed(&mut self, _surface: PopupSurface) {
 		self.mayland.queue_redraw_all();
+	}
+
+	fn app_id_changed(&mut self, toplevel: ToplevelSurface) {
+		if self.mayland.unmapped_windows.iter().any(|w| w == &toplevel) {
+			// windowrules are computed when mapping the window
+			// so i don't need to deal with unmapped ones
+			return;
+		}
+
+		let Some(window) = self.mayland.workspaces.window_for_surface(&toplevel) else {
+			tracing::error!("couldn't find toplevel");
+			return;
+		};
+
+		window.recompute_windowrules(&self.mayland.config.windowrules);
+	}
+
+	fn title_changed(&mut self, toplevel: ToplevelSurface) {
+		if self.mayland.unmapped_windows.iter().any(|w| w == &toplevel) {
+			// windowrules are still only computed when mapping
+			return;
+		}
+
+		let Some(window) = self.mayland.workspaces.window_for_surface(&toplevel) else {
+			tracing::error!("couldn't find toplevel");
+			return;
+		};
+
+		window.recompute_windowrules(&self.mayland.config.windowrules);
 	}
 }
 
@@ -102,7 +129,7 @@ impl State {
 				if is_mapped {
 					let unmapped = self.mayland.unmapped_windows.remove(idx);
 
-					let windowrules = unmapped.windowrules(&self.mayland.config.windowrules);
+					let windowrules = unmapped.compute_windowrules(&self.mayland.config.windowrules);
 					let mapped = MappedWindow::new(unmapped, windowrules);
 
 					mapped.on_commit();
