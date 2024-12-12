@@ -29,13 +29,13 @@ use smithay::{
 };
 use std::{
 	borrow::Cow,
-	sync::{Arc, Mutex},
+	sync::{Arc, Mutex, RwLock, RwLockReadGuard},
 };
 
 #[derive(Debug, Clone)]
 pub struct MappedWindow {
 	pub window: Window,
-	pub windowrules: WindowRule,
+	pub windowrules: Arc<RwLock<WindowRule>>,
 	pub resize_state: Arc<Mutex<Option<ResizeState>>>,
 }
 
@@ -64,7 +64,7 @@ impl MappedWindow {
 	pub fn new(unmapped: UnmappedSurface, windowrules: WindowRule) -> Self {
 		MappedWindow {
 			window: unmapped.0,
-			windowrules,
+			windowrules: Arc::new(RwLock::new(windowrules)),
 			resize_state: Arc::new(Mutex::new(None)),
 		}
 	}
@@ -146,6 +146,29 @@ impl MappedWindow {
 	}
 }
 
+impl MappedWindow {
+	pub fn windowrules(&self) -> RwLockReadGuard<'_, WindowRule> {
+		self.windowrules.read().unwrap()
+	}
+
+	pub fn recompute_windowrules(&self, config: &mayland_config::WindowRules) {
+		let windowrules = match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => with_states(xdg.wl_surface(), |states| {
+				let surface_data = states
+					.data_map
+					.get::<XdgToplevelSurfaceData>()
+					.unwrap()
+					.lock()
+					.unwrap();
+
+				config.compute(surface_data.app_id.as_deref(), surface_data.title.as_deref())
+			}),
+		};
+
+		*self.windowrules.write().unwrap() = windowrules;
+	}
+}
+
 impl IsAlive for MappedWindow {
 	fn alive(&self) -> bool {
 		self.window.alive()
@@ -206,7 +229,7 @@ where
 		scale: Scale<f64>,
 		alpha: f32,
 	) -> Vec<C> {
-		let opacity = self.windowrules.opacity.unwrap_or(1.).clamp(0., 1.);
+		let opacity = self.windowrules().opacity.unwrap_or(1.).clamp(0., 1.);
 		let alpha = opacity * alpha;
 
 		self.window.render_elements(renderer, location, scale, alpha)
@@ -226,6 +249,14 @@ impl MappedWindow {
 			.filter_map(|element| CropRenderElement::from_element(element, scale, rect))
 			.map(MaylandRenderElements::CropSurface)
 			.collect()
+	}
+}
+
+impl PartialEq<ToplevelSurface> for MappedWindow {
+	fn eq(&self, other: &ToplevelSurface) -> bool {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => xdg == other,
+		}
 	}
 }
 
@@ -420,7 +451,7 @@ impl UnmappedSurface {
 		self.0.toplevel()
 	}
 
-	pub fn windowrules(&self, windowrules: &mayland_config::WindowRules) -> WindowRule {
+	pub fn compute_windowrules(&self, windowrules: &mayland_config::WindowRules) -> WindowRule {
 		match self.0.underlying_surface() {
 			WindowSurface::Wayland(xdg) => with_states(xdg.wl_surface(), |states| {
 				let surface_data = states
