@@ -104,7 +104,11 @@ impl Visitor<'_> for MatchVis {
 
 	fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
 		if let Some(regex) = strip_prefix_suffix(v, '/') {
-			let regex = Regex::new(regex).map_err(serde::de::Error::custom)?;
+			// add an implicit `^(?:)$` around the regex, so you have a full-word match
+			// by default, which is, i think, what you usually want, and makes the matching more
+			// consistent with non-regex matching, which already is a full word match
+			let regex = format!("^(:?{})$", regex);
+			let regex = Regex::new(&regex).map_err(serde::de::Error::custom)?;
 			Ok(Match::Regex(regex))
 		} else {
 			let plain = Match::Plain(v.to_owned());
