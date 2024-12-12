@@ -284,6 +284,8 @@ impl State {
 			return;
 		}
 
+		self.mayland.queue_redraw_all();
+
 		let output = self.mayland.workspaces.output_under(location).next().cloned();
 		if let Some(output) = output.as_ref() {
 			let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
@@ -299,10 +301,11 @@ impl State {
 						WindowSurfaceType::ALL,
 					) {
 						keyboard.set_focus(self, Some(KeyboardFocusTarget::from(layer)), serial);
+						return;
 					}
 				}
 			}
-		};
+		}
 
 		if let Some((window, _)) = self
 			.mayland
@@ -311,6 +314,7 @@ impl State {
 			.map(|(w, p)| (w.clone(), p))
 		{
 			self.set_window_focus(window, &keyboard, serial);
+			return;
 		}
 
 		if let Some(output) = output.as_ref() {
@@ -331,8 +335,6 @@ impl State {
 				}
 			}
 		}
-
-		self.mayland.queue_redraw_all();
 	}
 
 	fn set_window_focus(&mut self, window: MappedWindow, keyboard: &KeyboardHandle<State>, serial: Serial) {
@@ -366,7 +368,12 @@ impl State {
 					location - output_geo.loc.to_f64() - layer_loc.loc.to_f64(),
 					WindowSurfaceType::ALL,
 				)
-				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc.to_f64()))
+				.map(|(surface, loc)| {
+					(
+						PointerFocusTarget::from(surface),
+						(loc + layer_loc.loc + output_geo.loc).to_f64(),
+					)
+				})
 		} else if let Some((window, loc)) = self.mayland.workspaces.window_under(location) {
 			Some((PointerFocusTarget::from(window), loc.to_f64()))
 		} else if let Some(layer) = layers
@@ -379,7 +386,12 @@ impl State {
 					location - output_geo.loc.to_f64() - layer_loc.loc.to_f64(),
 					WindowSurfaceType::ALL,
 				)
-				.map(|(surface, loc)| (PointerFocusTarget::from(surface), loc.to_f64()))
+				.map(|(surface, loc)| {
+					(
+						PointerFocusTarget::from(surface),
+						(loc + layer_loc.loc + output_geo.loc).to_f64(),
+					)
+				})
 		} else {
 			None
 		}
