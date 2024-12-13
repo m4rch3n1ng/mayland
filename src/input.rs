@@ -23,7 +23,10 @@ use smithay::{
 	output::Output,
 	reexports::wayland_server::protocol::{wl_pointer, wl_surface::WlSurface},
 	utils::{Logical, Point, Serial, SERIAL_COUNTER},
-	wayland::{input_method::InputMethodSeat, shell::wlr_layer::Layer as WlrLayer},
+	wayland::{
+		input_method::InputMethodSeat,
+		shell::wlr_layer::{KeyboardInteractivity, Layer as WlrLayer},
+	},
 };
 
 pub mod device;
@@ -369,6 +372,29 @@ impl State {
 		let layer_map = layer_map_for_output(output);
 
 		for wlr_layer in wlr_layers {
+			// give keyboard focus priority to surfaces with exclusive keyboard interactivity
+			if kind == SurfaceFocus::Keyboard {
+				let exclusive = layer_map.layers_on(*wlr_layer).find(|surface| {
+					surface.cached_state().keyboard_interactivity == KeyboardInteractivity::Exclusive
+				});
+
+				if let Some(exclusive) = exclusive {
+					let layer_geometry = layer_map.layer_geometry(exclusive).unwrap();
+
+					// this is not entirely accurate as the layer_map::surface_under location also
+					// returns the render surface view offset, which is added to this.
+					// currently (and probably in the future as well) this part of the function is
+					// exclusive to keyboard focus, which does not use the surface location.
+					let surface_location = output_geometry.loc + layer_geometry.loc;
+
+					return Some((
+						exclusive.clone(),
+						exclusive.wl_surface().clone(),
+						surface_location,
+					));
+				}
+			}
+
 			if let Some(layer) = layer_map.layer_under(*wlr_layer, location) {
 				if kind == SurfaceFocus::Keyboard && !layer.can_receive_keyboard_focus() {
 					continue;
