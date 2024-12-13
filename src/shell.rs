@@ -128,6 +128,26 @@ impl WlrLayerShellHandler for State {
 		let mut map = layer_map_for_output(&output);
 		map.map_layer(&LayerSurface::new(surface, namespace)).unwrap();
 	}
+
+	fn layer_destroyed(&mut self, surface: WlrLayerSurface) {
+		let output = self.mayland.workspaces.outputs().find_map(|output| {
+			let mut layer_map = layer_map_for_output(output);
+			let layer = layer_map
+				.layers()
+				.find(|layer| layer.layer_surface() == &surface)
+				.cloned()?;
+
+			layer_map.unmap_layer(&layer);
+			Some(output.clone())
+		});
+
+		if let Some(output) = output {
+			self.mayland.workspaces.resize_output(&output);
+			self.mayland.queue_redraw(output);
+		}
+
+		self.reset_focus();
+	}
 }
 
 impl ShmHandler for State {
