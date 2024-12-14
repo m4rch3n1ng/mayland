@@ -104,7 +104,7 @@ impl State {
 					let unmapped = self.mayland.unmapped_windows.remove(idx);
 					let mapped = MappedWindow::new(unmapped);
 
-					mapped.window.on_commit();
+					mapped.on_commit();
 
 					// add window to workspace
 					let location = self.mayland.pointer.current_location();
@@ -133,7 +133,7 @@ impl Mayland {
 	pub fn handle_surface_commit(&mut self, surface: &WlSurface) {
 		// handle toplevel commits
 		if let Some(window) = self.workspaces.window_for_surface(surface) {
-			window.window.on_commit();
+			window.on_commit();
 
 			if let Some(toplevel) = window.toplevel() {
 				if !initial_configure_sent(toplevel) {

@@ -72,6 +72,10 @@ impl MappedWindow {
 		}
 	}
 
+	pub fn on_commit(&self) {
+		self.window.on_commit();
+	}
+
 	pub fn underlying_surface(&self) -> &WindowSurface {
 		self.window.underlying_surface()
 	}
