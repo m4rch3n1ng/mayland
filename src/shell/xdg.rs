@@ -3,6 +3,7 @@ use crate::{
 	state::{Mayland, State},
 };
 use smithay::{
+	backend::renderer::utils::with_renderer_surface_state,
 	delegate_presentation, delegate_xdg_shell,
 	desktop::PopupKind,
 	reexports::wayland_server::protocol::{wl_seat::WlSeat, wl_surface::WlSurface},
@@ -15,6 +16,8 @@ use smithay::{
 		},
 	},
 };
+
+use super::window::MappedWindow;
 
 impl XdgShellHandler for State {
 	fn xdg_shell_state(&mut self) -> &mut XdgShellState {
@@ -75,7 +78,7 @@ impl XdgShellHandler for State {
 delegate_xdg_shell!(State);
 delegate_presentation!(State);
 
-pub fn initial_configure_sent(toplevel: &ToplevelSurface) -> bool {
+fn initial_configure_sent(toplevel: &ToplevelSurface) -> bool {
 	with_states(toplevel.wl_surface(), |states| {
 		states
 			.data_map
@@ -87,11 +90,55 @@ pub fn initial_configure_sent(toplevel: &ToplevelSurface) -> bool {
 	})
 }
 
+impl State {
+	/// handle unmapped windows
+	pub fn try_map_window(&mut self, surface: &WlSurface) {
+		if let Some((idx, unmapped)) = self
+			.mayland
+			.unmapped_windows
+			.iter()
+			.enumerate()
+			.find(|(_, w)| w == &surface)
+		{
+			if let Some(toplevel) = unmapped.toplevel() {
+				let is_mapped =
+					with_renderer_surface_state(surface, |state| state.buffer().is_some()).unwrap_or(false);
+
+				if is_mapped {
+					let unmapped = self.mayland.unmapped_windows.remove(idx);
+					let mapped = MappedWindow::from(unmapped);
+
+					mapped.window.on_commit();
+
+					// add window to workspace
+					let location = self.mayland.pointer.current_location();
+					self.mayland.workspaces.add_window(mapped.clone(), location);
+
+					// set the window state to be tiled, so that
+					// gtk apps don't round their corners
+					mapped.set_tiled();
+
+					// automatically focus new windows
+					self.focus_window(mapped);
+
+					return;
+				}
+
+				if !initial_configure_sent(toplevel) {
+					toplevel.send_configure();
+				}
+			}
+		}
+	}
+}
+
 impl Mayland {
 	/// should be called on `WlSurface::commit`
 	pub fn handle_surface_commit(&mut self, surface: &WlSurface) {
 		// handle toplevel commits
 		if let Some(window) = self.workspaces.window_for_surface(surface) {
+			window.window.on_commit();
+
 			if let Some(toplevel) = window.toplevel() {
 				if !initial_configure_sent(toplevel) {
 					toplevel.send_configure();
@@ -99,6 +146,7 @@ impl Mayland {
 			}
 
 			self.handle_resize(window.clone());
+			self.queue_redraw_all();
 		}
 
 		// handle popup commits.

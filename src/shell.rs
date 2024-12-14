@@ -1,7 +1,6 @@
-use self::window::MappedWindow;
 use crate::state::{ClientState, State};
 use smithay::{
-	backend::renderer::utils::{on_commit_buffer_handler, with_renderer_surface_state},
+	backend::renderer::utils::on_commit_buffer_handler,
 	delegate_compositor, delegate_layer_shell, delegate_shm,
 	desktop::{layer_map_for_output, LayerSurface},
 	output::Output,
@@ -57,47 +56,7 @@ impl CompositorHandler for State {
 		}
 
 		if surface == &root {
-			if let Some((idx, unmapped)) = self
-				.mayland
-				.unmapped_windows
-				.iter()
-				.enumerate()
-				.find(|(_, w)| w == &surface)
-			{
-				if let Some(toplevel) = unmapped.toplevel() {
-					let is_mapped = with_renderer_surface_state(surface, |state| state.buffer().is_some())
-						.unwrap_or(false);
-
-					if is_mapped {
-						let unmapped = self.mayland.unmapped_windows.remove(idx);
-						let mapped = MappedWindow::from(unmapped);
-
-						mapped.window.on_commit();
-
-						// add window to workspace
-						let location = self.mayland.pointer.current_location();
-						self.mayland.workspaces.add_window(mapped.clone(), location);
-
-						// set the window state to be tiled, so that
-						// gtk apps don't round their corners
-						mapped.set_tiled();
-
-						// automatically focus new windows
-						self.focus_window(mapped);
-
-						return;
-					}
-
-					if !xdg::initial_configure_sent(toplevel) {
-						toplevel.send_configure();
-					}
-				}
-			}
-
-			if let Some(mapped) = self.mayland.workspaces.window_for_surface(surface) {
-				mapped.window.on_commit();
-				self.mayland.queue_redraw_all();
-			}
+			self.try_map_window(&root);
 		}
 
 		// handle xdg surface commits
