@@ -147,35 +147,35 @@ impl IsAlive for MappedWindow {
 
 impl SpaceElement for MappedWindow {
 	fn geometry(&self) -> Rectangle<i32, Logical> {
-		self.window.geometry()
+		SpaceElement::geometry(&self.window)
 	}
 
 	fn bbox(&self) -> Rectangle<i32, Logical> {
-		self.window.bbox()
+		SpaceElement::bbox(&self.window)
 	}
 
 	fn is_in_input_region(&self, point: &smithay::utils::Point<f64, Logical>) -> bool {
-		self.window.is_in_input_region(point)
+		SpaceElement::is_in_input_region(&self.window, point)
 	}
 
 	fn z_index(&self) -> u8 {
-		self.window.z_index()
+		SpaceElement::z_index(&self.window)
 	}
 
 	fn set_activate(&self, activated: bool) {
-		self.window.set_activate(activated);
+		SpaceElement::set_activate(&self.window, activated);
 	}
 
 	fn output_enter(&self, output: &Output, overlap: Rectangle<i32, Logical>) {
-		self.window.output_enter(output, overlap);
+		SpaceElement::output_enter(&self.window, output, overlap);
 	}
 
 	fn output_leave(&self, output: &Output) {
-		self.window.output_leave(output);
+		SpaceElement::output_leave(&self.window, output);
 	}
 
 	fn refresh(&self) {
-		self.window.refresh();
+		SpaceElement::refresh(&self.window);
 	}
 }
 
