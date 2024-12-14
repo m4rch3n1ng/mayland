@@ -59,9 +59,9 @@ impl MappedWindow {
 }
 
 impl MappedWindow {
-	pub fn new(window: Window) -> Self {
+	pub fn new(unmapped: UnmappedSurface) -> Self {
 		MappedWindow {
-			window,
+			window: unmapped.0,
 			resize_state: Arc::new(Mutex::new(None)),
 		}
 	}
@@ -217,12 +217,6 @@ impl MappedWindow {
 impl PartialEq<WlSurface> for MappedWindow {
 	fn eq(&self, other: &WlSurface) -> bool {
 		self.wl_surface().is_some_and(|w| &*w == other)
-	}
-}
-
-impl From<UnmappedSurface> for MappedWindow {
-	fn from(unmapped: UnmappedSurface) -> Self {
-		MappedWindow::new(unmapped.0)
 	}
 }
 

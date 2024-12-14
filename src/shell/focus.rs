@@ -307,27 +307,9 @@ impl From<WlSurface> for PointerFocusTarget {
 	}
 }
 
-impl From<&WlSurface> for PointerFocusTarget {
-	fn from(wl_surface: &WlSurface) -> Self {
-		PointerFocusTarget::WlSurface(wl_surface.clone())
-	}
-}
-
-impl From<PopupKind> for PointerFocusTarget {
-	fn from(popup: PopupKind) -> Self {
-		PointerFocusTarget::WlSurface(popup.wl_surface().clone())
-	}
-}
-
 impl From<&MappedWindow> for PointerFocusTarget {
 	fn from(window: &MappedWindow) -> Self {
 		PointerFocusTarget::Window(window.clone())
-	}
-}
-
-impl From<LayerSurface> for KeyboardFocusTarget {
-	fn from(layer: LayerSurface) -> Self {
-		KeyboardFocusTarget::LayerSurface(layer)
 	}
 }
 
@@ -340,11 +322,5 @@ impl From<&LayerSurface> for KeyboardFocusTarget {
 impl From<PopupKind> for KeyboardFocusTarget {
 	fn from(popup: PopupKind) -> Self {
 		KeyboardFocusTarget::Popup(popup)
-	}
-}
-
-impl From<MappedWindow> for KeyboardFocusTarget {
-	fn from(window: MappedWindow) -> Self {
-		KeyboardFocusTarget::Window(window)
 	}
 }
