@@ -1,6 +1,5 @@
-use crate::shell::focus::KeyboardFocusTarget;
-
 use super::State;
+use crate::shell::focus::KeyboardFocusTarget;
 use smithay::{
 	delegate_pointer_gestures, delegate_relative_pointer,
 	desktop::LayerSurface,

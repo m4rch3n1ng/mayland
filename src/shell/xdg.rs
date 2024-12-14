@@ -1,7 +1,5 @@
-use crate::{
-	shell::window::UnmappedSurface,
-	state::{Mayland, State},
-};
+use super::window::{MappedWindow, UnmappedSurface};
+use crate::state::{Mayland, State};
 use smithay::{
 	backend::renderer::utils::with_renderer_surface_state,
 	delegate_presentation, delegate_xdg_shell,
@@ -16,8 +14,6 @@ use smithay::{
 		},
 	},
 };
-
-use super::window::MappedWindow;
 
 impl XdgShellHandler for State {
 	fn xdg_shell_state(&mut self) -> &mut XdgShellState {
