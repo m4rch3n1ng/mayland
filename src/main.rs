@@ -29,11 +29,5 @@ fn main() {
 		("GDK_BACKEND".to_owned(), "wayland".to_owned()),
 	]);
 
-	event_loop
-		.run(None, &mut state, |state| {
-			state.mayland.workspaces.refresh();
-			state.mayland.popups.cleanup();
-			state.mayland.display_handle.flush_clients().unwrap();
-		})
-		.unwrap();
+	event_loop.run(None, &mut state, |state| state.refresh()).unwrap();
 }

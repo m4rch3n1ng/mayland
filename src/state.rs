@@ -43,7 +43,7 @@ use smithay::{
 			Display, DisplayHandle,
 		},
 	},
-	utils::{Clock, Monotonic},
+	utils::{Clock, IsAlive, Monotonic},
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
 		cursor_shape::CursorShapeManagerState,
@@ -119,6 +119,15 @@ impl State {
 			let xkb = self.mayland.seat.get_keyboard().unwrap();
 			xkb.set_keymap_from_string(self, keymap).unwrap();
 		}
+	}
+
+	pub fn refresh(&mut self) {
+		self.mayland.workspaces.refresh();
+		self.mayland.popups.cleanup();
+		self.mayland.display_handle.flush_clients().unwrap();
+
+		self.mayland.unmapped_windows.retain(|window| window.alive());
+		self.mayland.unmapped_layers.retain(|(layer, _)| layer.alive());
 	}
 }
 

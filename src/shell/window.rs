@@ -145,6 +145,12 @@ impl IsAlive for MappedWindow {
 	}
 }
 
+impl WaylandFocus for MappedWindow {
+	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
+		self.window.wl_surface()
+	}
+}
+
 impl SpaceElement for MappedWindow {
 	fn geometry(&self) -> Rectangle<i32, Logical> {
 		SpaceElement::geometry(&self.window)
@@ -211,12 +217,6 @@ impl MappedWindow {
 			.filter_map(|element| CropRenderElement::from_element(element, scale, rect))
 			.map(MaylandRenderElements::CropSurface)
 			.collect()
-	}
-}
-
-impl PartialEq<WlSurface> for MappedWindow {
-	fn eq(&self, other: &WlSurface) -> bool {
-		self.wl_surface().is_some_and(|w| &*w == other)
 	}
 }
 
@@ -374,9 +374,9 @@ impl PointerTarget<State> for MappedWindow {
 	}
 }
 
-impl WaylandFocus for MappedWindow {
-	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
-		self.window.wl_surface()
+impl PartialEq<WlSurface> for MappedWindow {
+	fn eq(&self, other: &WlSurface) -> bool {
+		self.wl_surface().is_some_and(|w| &*w == other)
 	}
 }
 
@@ -412,6 +412,18 @@ impl UnmappedSurface {
 	}
 }
 
+impl IsAlive for UnmappedSurface {
+	fn alive(&self) -> bool {
+		self.0.alive()
+	}
+}
+
+impl WaylandFocus for UnmappedSurface {
+	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
+		self.0.wl_surface()
+	}
+}
+
 impl PartialEq<ToplevelSurface> for UnmappedSurface {
 	fn eq(&self, other: &ToplevelSurface) -> bool {
 		match self.0.underlying_surface() {
@@ -430,11 +442,5 @@ impl From<ToplevelSurface> for UnmappedSurface {
 	fn from(toplevel: ToplevelSurface) -> Self {
 		let window = Window::new_wayland_window(toplevel);
 		UnmappedSurface(window)
-	}
-}
-
-impl WaylandFocus for UnmappedSurface {
-	fn wl_surface(&self) -> Option<Cow<'_, WlSurface>> {
-		self.0.wl_surface()
 	}
 }
