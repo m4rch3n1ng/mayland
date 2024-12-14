@@ -57,6 +57,7 @@ impl CompositorHandler for State {
 
 		if surface == &root {
 			self.try_map_window(&root);
+			self.try_map_layer(&root);
 		}
 
 		// handle xdg surface commits
@@ -84,8 +85,9 @@ impl WlrLayerShellHandler for State {
 			.as_ref()
 			.and_then(Output::from_resource)
 			.unwrap_or_else(|| self.mayland.workspaces.outputs().next().unwrap().clone());
-		let mut map = layer_map_for_output(&output);
-		map.map_layer(&LayerSurface::new(surface, namespace)).unwrap();
+
+		let surface = LayerSurface::new(surface, namespace);
+		self.mayland.unmapped_layers.push((surface, output));
 	}
 
 	fn layer_destroyed(&mut self, surface: WlrLayerSurface) {

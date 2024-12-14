@@ -1,9 +1,57 @@
-use crate::state::Mayland;
+use crate::{state::Mayland, State};
 use smithay::{
-	desktop::{layer_map_for_output, WindowSurfaceType},
+	desktop::{layer_map_for_output, LayerSurface, WindowSurfaceType},
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
-	wayland::{compositor::with_states, shell::wlr_layer::LayerSurfaceData},
+	wayland::{
+		compositor::with_states,
+		shell::wlr_layer::{Layer, LayerSurfaceData},
+	},
 };
+
+fn initial_configure_sent(surface: &LayerSurface) -> bool {
+	let initial_configure_sent = with_states(surface.wl_surface(), |states| {
+		states
+			.data_map
+			.get::<LayerSurfaceData>()
+			.unwrap()
+			.lock()
+			.unwrap()
+			.initial_configure_sent
+	});
+
+	initial_configure_sent
+}
+
+impl State {
+	pub fn try_map_layer(&mut self, surface: &WlSurface) {
+		if let Some((idx, (layer_surface, _))) = self
+			.mayland
+			.unmapped_layers
+			.iter()
+			.enumerate()
+			.find(|(_, (l, _))| l.wl_surface() == surface)
+		{
+			if initial_configure_sent(layer_surface) {
+				let (layer_surface, output) = self.mayland.unmapped_layers.remove(idx);
+
+				let mut map = layer_map_for_output(&output);
+				map.map_layer(&layer_surface).unwrap();
+				map.arrange();
+				drop(map);
+
+				self.mayland.output_resized(&output);
+
+				if layer_surface.can_receive_keyboard_focus()
+					&& (layer_surface.layer() == Layer::Overlay || layer_surface.layer() == Layer::Top)
+				{
+					self.focus_layer_surface(layer_surface);
+				}
+			} else {
+				layer_surface.layer_surface().send_configure();
+			}
+		}
+	}
+}
 
 impl Mayland {
 	pub fn handle_layer_surface_commit(&mut self, surface: &WlSurface) {
@@ -20,27 +68,15 @@ impl Mayland {
 			return;
 		};
 
-		let initial_configure_sent = with_states(surface, |states| {
-			states
-				.data_map
-				.get::<LayerSurfaceData>()
-				.unwrap()
-				.lock()
-				.unwrap()
-				.initial_configure_sent
-		});
-
 		let mut layer_map = layer_map_for_output(&output);
-		layer_map.arrange();
-
-		if !initial_configure_sent {
-			let layer = layer_map
-				.layer_for_surface(surface, WindowSurfaceType::TOPLEVEL)
-				.unwrap();
-			layer.layer_surface().send_configure();
-		}
-
+		let has_changed = layer_map.arrange();
 		drop(layer_map);
-		self.output_resized(&output);
+
+		if has_changed {
+			self.output_resized(&output);
+			self.queue_redraw(output);
+		} else {
+			self.queue_redraw(output);
+		}
 	}
 }

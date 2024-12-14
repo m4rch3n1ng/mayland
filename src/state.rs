@@ -32,7 +32,7 @@ use smithay::{
 			surface_presentation_feedback_flags_from_states, surface_primary_scanout_output,
 			OutputPresentationFeedback,
 		},
-		PopupManager,
+		LayerSurface, PopupManager,
 	},
 	input::{keyboard::KeyboardHandle, pointer::PointerHandle, Seat, SeatState},
 	output::Output,
@@ -140,6 +140,7 @@ pub struct Mayland {
 
 	// unmapped_windows
 	pub unmapped_windows: Vec<UnmappedSurface>,
+	pub unmapped_layers: Vec<(LayerSurface, Output)>,
 
 	pub start_time: std::time::Instant,
 	pub loop_signal: LoopSignal,
@@ -263,6 +264,7 @@ impl Mayland {
 			workspaces,
 
 			unmapped_windows: Vec::new(),
+			unmapped_layers: Vec::new(),
 
 			start_time,
 			loop_signal,

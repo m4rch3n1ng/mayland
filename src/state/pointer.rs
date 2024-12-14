@@ -1,6 +1,9 @@
+use crate::shell::focus::KeyboardFocusTarget;
+
 use super::State;
 use smithay::{
 	delegate_pointer_gestures, delegate_relative_pointer,
+	desktop::LayerSurface,
 	input::pointer::MotionEvent,
 	utils::{Logical, Point, SERIAL_COUNTER},
 };
@@ -22,6 +25,14 @@ impl State {
 				time,
 			},
 		);
+	}
+
+	pub fn focus_layer_surface(&mut self, surface: LayerSurface) {
+		let serial = SERIAL_COUNTER.next_serial();
+		let keyboard = self.mayland.keyboard.clone();
+
+		keyboard.set_focus(self, Some(KeyboardFocusTarget::LayerSurface(surface)), serial);
+		self.refresh_pointer_focus();
 	}
 
 	/// resets the keyboard and pointer focus
