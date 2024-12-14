@@ -204,7 +204,7 @@ impl Tiling {
 		}
 	}
 
-	pub fn activate_window(&mut self, window: &MappedWindow) {
+	pub fn activate_window(&self, window: &MappedWindow) {
 		for w in self.windows() {
 			if w == window {
 				w.set_activate(true);
