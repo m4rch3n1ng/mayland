@@ -286,7 +286,7 @@ impl State {
 
 		self.mayland.queue_redraw_all();
 
-		let output = self.mayland.workspaces.output_under(location).next().cloned();
+		let output = self.mayland.workspaces.output_under(location).cloned();
 		if let Some(output) = output.as_ref() {
 			let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
 			let layers = layer_map_for_output(output);
@@ -353,7 +353,7 @@ impl State {
 		&self,
 		location: Point<f64, Logical>,
 	) -> Option<(PointerFocusTarget, Point<f64, Logical>)> {
-		let output = self.mayland.workspaces.output_under(location).next()?;
+		let output = self.mayland.workspaces.output_under(location)?;
 
 		let output_geo = self.mayland.workspaces.output_geometry(output).unwrap();
 		let layers = layer_map_for_output(output);

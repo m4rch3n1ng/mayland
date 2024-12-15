@@ -248,9 +248,9 @@ impl WorkspaceManager {
 		Some(geometry)
 	}
 
-	pub fn output_under(&self, point: Point<f64, Logical>) -> impl Iterator<Item = &Output> {
+	pub fn output_under(&self, point: Point<f64, Logical>) -> Option<&Output> {
 		debug_assert!(self.output_space.output_under(point).count() <= 1);
-		self.output_space.output_under(point)
+		self.output_space.output_under(point).next()
 	}
 }
 
@@ -312,7 +312,7 @@ impl WorkspaceManager {
 		&self,
 		location: Point<f64, Logical>,
 	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
-		if let Some(output) = self.output_under(location).next() {
+		if let Some(output) = self.output_under(location) {
 			let output_geometry = self.output_space.output_geometry(output).unwrap();
 			let location = location - output_geometry.loc.to_f64();
 
