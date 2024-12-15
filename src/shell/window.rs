@@ -30,13 +30,13 @@ use smithay::{
 use std::{
 	borrow::Cow,
 	num::NonZero,
-	sync::{Arc, Mutex, RwLock, RwLockReadGuard},
+	sync::{Arc, Mutex, RwLock},
 };
 
 #[derive(Debug, Clone)]
 pub struct MappedWindow {
 	pub window: Window,
-	pub windowrules: Arc<RwLock<WindowRule>>,
+	pub windowrules: ResolvedWindowRule,
 	pub resize_state: Arc<Mutex<Option<ResizeState>>>,
 }
 
@@ -65,7 +65,7 @@ impl MappedWindow {
 	pub fn new(unmapped: UnmappedSurface, windowrules: WindowRule) -> Self {
 		MappedWindow {
 			window: unmapped.0,
-			windowrules: Arc::new(RwLock::new(windowrules)),
+			windowrules: ResolvedWindowRule::new(windowrules),
 			resize_state: Arc::new(Mutex::new(None)),
 		}
 	}
@@ -164,10 +164,6 @@ impl MappedWindow {
 }
 
 impl MappedWindow {
-	pub fn windowrules(&self) -> RwLockReadGuard<'_, WindowRule> {
-		self.windowrules.read().unwrap()
-	}
-
 	pub fn recompute_windowrules(&self, config: &mayland_config::WindowRules) {
 		let windowrules = match self.underlying_surface() {
 			WindowSurface::Wayland(xdg) => with_states(xdg.wl_surface(), |states| {
@@ -182,7 +178,7 @@ impl MappedWindow {
 			}),
 		};
 
-		*self.windowrules.write().unwrap() = windowrules;
+		self.windowrules.write(windowrules)
 	}
 }
 
@@ -246,7 +242,7 @@ where
 		scale: Scale<f64>,
 		alpha: f32,
 	) -> Vec<C> {
-		let opacity = self.windowrules().opacity.unwrap_or(1.).clamp(0., 1.);
+		let opacity = self.windowrules.opacity().unwrap_or(1.).clamp(0., 1.);
 		let alpha = opacity * alpha;
 
 		self.window.render_elements(renderer, location, scale, alpha)
@@ -514,5 +510,27 @@ impl From<ToplevelSurface> for UnmappedSurface {
 	fn from(toplevel: ToplevelSurface) -> Self {
 		let window = Window::new_wayland_window(toplevel);
 		UnmappedSurface(window)
+	}
+}
+
+#[derive(Debug, Clone)]
+pub struct ResolvedWindowRule(Arc<RwLock<WindowRule>>);
+
+impl ResolvedWindowRule {
+	fn new(windowrules: WindowRule) -> Self {
+		let inner = Arc::new(RwLock::new(windowrules));
+		ResolvedWindowRule(inner)
+	}
+
+	fn write(&self, windowrules: WindowRule) {
+		*self.0.write().unwrap() = windowrules;
+	}
+
+	pub fn floating(&self) -> Option<bool> {
+		self.0.read().unwrap().floating
+	}
+
+	pub fn opacity(&self) -> Option<f32> {
+		self.0.read().unwrap().opacity
 	}
 }
