@@ -399,7 +399,7 @@ impl Workspace {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
 		let center = self.relative_center(window.geometry().size);
 
-		if window.is_non_resizable() || window.windowrules().floating.unwrap_or(false) {
+		if window.is_non_resizable() || window.windowrules.floating().unwrap_or(false) {
 			self.floating.map_element(window, center, true);
 		} else if let Some(window) = self.tiling.add_window(window, pointer) {
 			self.floating.map_element(window, center, true);
