@@ -27,8 +27,7 @@ impl InputDevice {
 			(DeviceCapability::Switch, InputDeviceType::Switch),
 		];
 
-		let mut devices = vec![];
-
+		let mut devices = Vec::new();
 		for (cap, r#type) in TYPES {
 			if dev.has_capability(cap) {
 				let device = InputDevice {

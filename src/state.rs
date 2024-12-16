@@ -342,7 +342,7 @@ impl Mayland {
 		let xdg_decoration_state = XdgDecorationState::new::<State>(&display_handle);
 		let xdg_shell_state = XdgShellState::new::<State>(&display_handle);
 		let presentation_state = PresentationState::new::<State>(&display_handle, clock.id() as u32);
-		let shm_state = ShmState::new::<State>(&display_handle, vec![]);
+		let shm_state = ShmState::new::<State>(&display_handle, Vec::new());
 		let cursor_shape_manager_state = CursorShapeManagerState::new::<State>(&display_handle);
 		let relative_pointer_manager_state = RelativePointerManagerState::new::<State>(&display_handle);
 		let viewporter_state = ViewporterState::new::<State>(&display_handle);
@@ -547,7 +547,7 @@ impl Mayland {
 
 		let render_cursor = self.cursor.get_render_cursor(1);
 		match render_cursor {
-			RenderCursor::Hidden => vec![],
+			RenderCursor::Hidden => Vec::new(),
 			RenderCursor::Surface { surface, hotspot } => {
 				let pointer_pos = pointer_pos.to_i32_round() - hotspot.to_physical(1);
 

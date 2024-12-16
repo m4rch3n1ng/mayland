@@ -176,7 +176,7 @@ impl XCursor {
 			yhot: 1,
 			delay: 0,
 			pixels_rgba: Vec::from(FALLBACK_CURSOR_DATA),
-			pixels_argb: vec![],
+			pixels_argb: Vec::new(),
 		};
 		let frame = Frame::new(icon);
 
