@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 mod action;
+mod error;
 
 pub use self::action::Action;
+pub use self::error::Error;
 
 pub const MAYLAND_SOCKET_VAR: &str = "MAYLAND_SOCKET";
 
@@ -18,6 +20,7 @@ pub enum Request {
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "tag", content = "val")]
 pub enum Response {
+	Err(Error),
 	Dispatch,
 	Workspaces(Vec<Workspace>),
 }

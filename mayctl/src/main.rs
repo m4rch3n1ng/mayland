@@ -43,6 +43,10 @@ fn main() -> Term {
 	};
 	stream.shutdown(Shutdown::Read).unwrap();
 
+	if let Response::Err(err) = reply {
+		return Term::MaylandError(err);
+	}
+
 	match request {
 		Request::Dispatch(_) => {
 			ensure_matches!(reply, Response::Dispatch, "dispatch");

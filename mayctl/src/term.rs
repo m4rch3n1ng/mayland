@@ -11,6 +11,8 @@ pub enum Term {
 	NotFound(String),
 	/// mayland returned a reply that couldn't be deserialized
 	InvalidReply(serde_json::Error),
+	/// mayland returned an error
+	MaylandError(mayland_comm::Error),
 	/// mayctl wasn't started inside mayland
 	MaylandNotRunning,
 	UnexpectedResponse {
@@ -62,6 +64,15 @@ impl Display for Term {
 					"  {} did you restart mayland after updating?",
 					"::".blue().bold()
 				)
+			}
+			Term::MaylandError(err) => {
+				writeln!(
+					f,
+					"{}: {}",
+					"error".red().bold(),
+					"mayland returned an error".bold()
+				)?;
+				writeln!(f, "  {} {}", "::".blue().bold(), err)
 			}
 			Term::MaylandNotRunning => {
 				writeln!(f, "{}: {}", "error".red().bold(), "mayland not running".bold())?;
@@ -120,6 +131,7 @@ pub(crate) use unexpected;
 #[doc(hidden)]
 pub(crate) fn get_response_name(response: &Response) -> &'static str {
 	match response {
+		Response::Err(_) => unreachable!("the error case should have been handled first"),
 		Response::Dispatch => "dispatch",
 		Response::Workspaces(_) => "workspaces",
 	}
