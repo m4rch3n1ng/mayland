@@ -204,7 +204,7 @@ impl Mayland {
 		display: Display<State>,
 		comp_mod: CompMod,
 	) -> Result<Self, MaylandError> {
-		let config = Config::read(comp_mod)?;
+		let config = Config::init(comp_mod)?;
 		let mut environment = HashMap::new();
 
 		let display_handle = display.handle();

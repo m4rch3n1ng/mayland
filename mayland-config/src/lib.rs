@@ -40,31 +40,20 @@ static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 });
 
 impl Config {
-	pub fn read(comp: CompMod) -> Result<Self, Error> {
-		let file = match std::fs::read_to_string(&*CONFIG_PATH) {
-			Ok(file) => file,
-			Err(err) if matches!(err.kind(), std::io::ErrorKind::NotFound) => {
+	pub fn init(comp: CompMod) -> Result<Self, Error> {
+		match Config::read(comp) {
+			Ok(config) => Ok(config),
+			Err(Error::NotFound) => {
 				let mut config = Config::default();
 				config.bind = config.bind.flatten_mod(comp);
 
-				return Ok(config);
-			}
-			Err(err) => return Err(From::from(err)),
-		};
-
-		// workaround for https://github.com/rust-lang/annotate-snippets-rs/issues/25
-		let file = file.replace('\t', "    ");
-
-		match mayfig::from_str::<Config>(&file) {
-			Ok(mut config) => {
-				config.bind = config.bind.flatten_mod(comp);
 				Ok(config)
 			}
-			Err(err) => {
-				let code = err.code().to_string();
+			Err(Error::Mayfig { error, file }) => {
+				let code = error.code().to_string();
 				let path = &*CONFIG_PATH.to_string_lossy();
 
-				let message = if let Some(span) = err.span() {
+				let message = if let Some(span) = error.span() {
 					Level::Error.title(&code).snippet(
 						Snippet::source(&file)
 							.origin(path)
@@ -80,6 +69,23 @@ impl Config {
 
 				Err(Error::AlreadyPrinted)
 			}
+			Err(e @ Error::IoError(_)) => Err(e),
+			Err(Error::AlreadyPrinted) => unreachable!(),
 		}
+	}
+
+	fn read(comp: CompMod) -> Result<Self, Error> {
+		let file = match std::fs::read_to_string(&*CONFIG_PATH) {
+			Ok(file) => file,
+			Err(err) if matches!(err.kind(), std::io::ErrorKind::NotFound) => return Err(Error::NotFound),
+			Err(err) => return Err(Error::IoError(err)),
+		};
+
+		// workaround for https://github.com/rust-lang/annotate-snippets-rs/issues/25
+		let file = file.replace('\t', "    ");
+
+		let mut config = mayfig::from_str::<Config>(&file).map_err(|error| Error::Mayfig { error, file })?;
+		config.bind = config.bind.flatten_mod(comp);
+		Ok(config)
 	}
 }
