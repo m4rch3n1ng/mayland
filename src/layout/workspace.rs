@@ -435,10 +435,6 @@ impl Workspace {
 		self.floating.elements().chain(self.tiling.windows())
 	}
 
-	pub fn window_location(&self, window: &MappedWindow) -> Option<Point<i32, Logical>> {
-		self.floating.element_location(window)
-	}
-
 	pub fn window_geometry(&self, window: &MappedWindow) -> Option<Rectangle<i32, Logical>> {
 		self.floating.element_geometry(window)
 	}
