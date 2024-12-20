@@ -2,6 +2,7 @@ use crate::State;
 use calloop::{io::Async, LoopHandle};
 use futures_util::{AsyncBufReadExt, AsyncWriteExt};
 use mayland_comm::{Request, Response};
+use mayland_config::bind::CompMod;
 use smithay::reexports::calloop::{generic::Generic, Interest, Mode, PostAction};
 use std::{
 	os::unix::net::{UnixListener, UnixStream},
@@ -47,15 +48,24 @@ impl MaySocket {
 
 fn handle_stream(state: &mut State, stream: UnixStream) {
 	let stream = state.mayland.loop_handle.adapt_io(stream).unwrap();
-	let loop_handle = state.mayland.loop_handle.clone();
+	let socket_state = SocketState {
+		event_loop: state.mayland.loop_handle.clone(),
+		comp_mod: state.mayland.comp_mod,
+	};
+
 	let future = async move {
-		handle_client(loop_handle, stream).await;
+		handle_client(stream, socket_state).await;
 	};
 
 	state.mayland.scheduler.schedule(future).unwrap();
 }
 
-async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async<'_, UnixStream>) {
+struct SocketState {
+	event_loop: LoopHandle<'static, State>,
+	comp_mod: CompMod,
+}
+
+async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) {
 	let mut read = futures_util::io::BufReader::new(&mut stream);
 	let mut buf = String::new();
 	read.read_line(&mut buf).await.unwrap();
@@ -64,7 +74,7 @@ async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async
 	let response = match request {
 		Ok(Request::Dispatch(action)) => {
 			let (tx, rx) = async_channel::bounded(1);
-			event_loop.insert_idle(move |state| {
+			state.event_loop.insert_idle(move |state| {
 				state.handle_action(action);
 				let _ = tx.send_blocking(());
 			});
@@ -73,13 +83,13 @@ async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async
 			Response::Dispatch
 		}
 		Ok(Request::Reload) => {
-			let Ok(config) = mayland_config::Config::read(mayland_config::bind::CompMod::Meta) else {
+			let Ok(config) = mayland_config::Config::read(state.comp_mod) else {
 				tracing::error!("failed to read config");
 				return;
 			};
 
 			let (tx, rx) = async_channel::bounded(1);
-			event_loop.insert_idle(move |state| {
+			state.event_loop.insert_idle(move |state| {
 				state.reload_config(config);
 				let _ = tx.send_blocking(());
 			});
@@ -89,7 +99,7 @@ async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async
 		}
 		Ok(Request::Workspaces) => {
 			let (tx, rx) = async_channel::bounded(1);
-			event_loop.insert_idle(move |state| {
+			state.event_loop.insert_idle(move |state| {
 				let workspaces = state
 					.mayland
 					.workspaces
