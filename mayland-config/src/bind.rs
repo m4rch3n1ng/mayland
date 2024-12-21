@@ -43,20 +43,7 @@ impl<'de> Deserialize<'de> for Binds {
 		let map = HashMap::<Mapping, self::action::Action>::deserialize(deserializer)?;
 		let map = map.into_iter().map(|(m, a)| (m, Action::from(a))).collect();
 
-		let mut binds = Binds(map);
-
-		// insert shortcut to close the compositor, if none is set
-		// so that you can always at least get out if your shortcuts are broken
-		if binds.0.values().all(|action| *action != Action::Quit) {
-			binds.0.insert(
-				Mapping {
-					mods: Modifiers::MOD,
-					key: Keysym::Escape,
-				},
-				Action::Quit,
-			);
-		}
-
+		let binds = Binds(map);
 		Ok(binds)
 	}
 }
