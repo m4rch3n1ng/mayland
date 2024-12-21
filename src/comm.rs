@@ -82,10 +82,9 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) {
 			let () = rx.recv().await.unwrap();
 			Response::Dispatch
 		}
-		Ok(Request::Reload) => {
+		Ok(Request::Reload) => 'reload: {
 			let Ok(config) = mayland_config::Config::read(state.comp_mod) else {
-				tracing::error!("failed to read config");
-				return;
+				break 'reload Response::Err(mayland_comm::Error::FailedToReadConfig);
 			};
 
 			let (tx, rx) = async_channel::bounded(1);
