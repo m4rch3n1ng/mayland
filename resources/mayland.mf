@@ -84,4 +84,8 @@ bind {
 	"mod 4" = "workspace" [ 3 ]
 	"mod 5" = "workspace" [ 4 ]
 	"mod 6" = "workspace" [ 5 ]
+
+	"XF86AudioMute" = "spawn" [ "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle" ]
+	"XF86AudioRaiseVolume" = "spawn" [ "wpctl" "set-volume" "-l" "1" "@DEFAULT_AUDIO_SINK@" "5%+" ]
+	"XF86AudioLowerVolume" = "spawn" [ "wpctl" "set-volume" "-l" "1" "@DEFAULT_AUDIO_SINK@" "5%-" ]
 }

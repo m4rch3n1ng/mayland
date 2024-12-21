@@ -147,7 +147,7 @@ impl Default for Binds {
 
 impl Binds {
 	pub fn find_action(&self, modifiers: &ModifiersState, keysym: Keysym) -> Option<Action> {
-		let mapping = Mapping::from_xkb(modifiers, keysym)?;
+		let mapping = Mapping::from_xkb(modifiers, keysym);
 		self.0.get(&mapping).cloned()
 	}
 
@@ -229,16 +229,10 @@ struct Mapping {
 }
 
 impl Mapping {
-	/// return an [`Option`] of a [`Mapping`]
-	///
-	/// returns None, if the Modifiers are empty
-	fn from_xkb(modifiers: &ModifiersState, key: Keysym) -> Option<Mapping> {
+	/// construct a [`Mapping`] from a [`ModifiersState`] and a [`Keysym`]
+	fn from_xkb(modifiers: &ModifiersState, key: Keysym) -> Mapping {
 		let mods = Modifiers::from_xkb(modifiers);
-		if mods.is_empty() {
-			return None;
-		}
-
-		Some(Mapping { mods, key })
+		Mapping { mods, key }
 	}
 
 	/// remove [`Modifiers::MOD`] from `self`
@@ -290,10 +284,6 @@ impl Visitor<'_> for MappingVisitor {
 		let Some(key) = key else {
 			return Err(serde::de::Error::custom("missing key"));
 		};
-
-		if mods.is_empty() {
-			return Err(serde::de::Error::custom("missing modifier"));
-		}
 
 		Ok(Mapping { mods, key })
 	}
