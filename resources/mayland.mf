@@ -56,7 +56,7 @@ decoration {
 	background = "#008080"
 
 	focus {
-		active = "#021caf"
+		active = "#a21caf"
 		inactive = "#71717a"
 		thickness = 4
 	}
