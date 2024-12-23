@@ -93,6 +93,7 @@ async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async
 
 	let reply = serde_json::to_vec(&reply).unwrap();
 	stream.write_all(&reply).await.unwrap();
+	stream.write_all(b"\n").await.unwrap();
 }
 
 impl Drop for MaySocket {
