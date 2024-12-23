@@ -1,7 +1,6 @@
 use self::{error::MaylandError, state::State};
 use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
 
-mod action;
 mod backend;
 mod comm;
 mod cursor;
