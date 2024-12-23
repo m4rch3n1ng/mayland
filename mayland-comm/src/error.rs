@@ -1,10 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
+/// a mayland error
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Error {
+	/// the request was invalid
 	InvalidRequest,
+	/// the config couldn't be read
 	FailedToReadConfig,
 }
 

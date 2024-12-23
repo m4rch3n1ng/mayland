@@ -1,3 +1,21 @@
+//! shared types for socket communication with mayland
+//!
+//! you can communicate with mayland over a unix domain socket. if you are running in a mayland
+//! instance, mayland exposes the path to the mayland socket in the environment variable
+//! [`MAYLAND_SOCKET_VAR`].
+//!
+//! all requests are sent as json, where the request is all on a single line to allow for future
+//! request batching.
+//! this is easily done with the default [`serde_json`](https://crates.io/crates/serde_json)
+//! Serializer, which already serializes the json content into a single line.
+//!
+//! all enums that have values are in the serde
+//! [adjacently tagged](https://serde.rs/enum-representations.html#adjacently-tagged)
+//! enum representation, with the tag being `"tag"` and the content being `"val"`, and
+//! everything being in `snake_case`.
+
+#![warn(missing_docs)]
+
 use serde::{Deserialize, Serialize};
 
 mod action;
@@ -6,40 +24,83 @@ mod error;
 pub use self::action::Action;
 pub use self::error::Error;
 
+/// the environment variable, where the path to the mayland socket is found.
+///
+/// this environment variable is available when inside of mayland.
 pub const MAYLAND_SOCKET_VAR: &str = "MAYLAND_SOCKET";
 
+/// send a request to mayland
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "tag", content = "val")]
 pub enum Request {
+	/// dispatch an action for mayland to handle
+	///
+	/// ```json
+	/// { "tag": "dispatch", "val": { "tag": "quit" }}
+	/// ```
 	Dispatch(Action),
+	/// request mayland to reload the config
+	///
+	/// ```json
+	/// { "tag": "reload" }
+	/// ```
 	Reload,
+	/// requset device info from mayland
+	///
+	/// ```json
+	/// { "tag": "reload" }
+	/// ```
 	Devices,
+	/// request output info from mayland
+	///
+	/// ```json
+	/// { "tag": "outputs" }
+	/// ```
 	Outputs,
+	/// request workspace info from mayland
+	///
+	/// ```json
+	/// { "tag": "workspaces" }
+	/// ```
 	Workspaces,
 }
 
+/// the response that mayland sends back
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "tag", content = "val")]
 pub enum Response {
+	/// mayland returned an error
 	Err(Error),
+	/// mayland successfully handled the dispatch request
 	Dispatch,
+	/// mayland successfully handled the reload request
 	Reload,
+	/// mayland device info
 	Devices(Vec<Device>),
+	/// mayland output info
 	Outputs(Vec<Output>),
+	/// mayland workspace info
 	Workspaces(Vec<Workspace>),
 }
 
+/// an input device registered in mayland
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Device {
+	/// device name
 	pub name: String,
+	/// device type
 	pub r#type: device::Type,
+	/// device vendor id
 	pub vid: u32,
+	/// device product id
 	pub pid: u32,
 }
 
 pub mod device {
+	//! mayland device extra info
+
 	use super::Device;
 	use serde::{Deserialize, Serialize};
 	use std::fmt::Display;
@@ -55,15 +116,26 @@ pub mod device {
 		}
 	}
 
+	/// device type
 	#[derive(Debug, Serialize, Deserialize)]
 	#[serde(rename_all = "kebab-case")]
 	pub enum Type {
+		/// a keyboard device
 		Keyboard,
+		/// a touchpad device
+		///
+		/// touchpad is, according to libinput, not a seperate device from a
+		/// regular pointer type that has a finger tab counter bigger than 0
 		Touchpad,
+		/// a pointer device
 		Pointer,
+		/// a touch device
 		Touch,
+		/// a tablet device
 		Tablet,
+		/// a tablet-pad
 		TabletPad,
+		/// a switch device
 		Switch,
 	}
 
@@ -82,19 +154,30 @@ pub mod device {
 	}
 }
 
+/// a mayland logical output
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Output {
+	/// output connector
 	pub name: String,
+	/// output display mode
 	pub mode: Option<output::Mode>,
+	/// output make
 	pub make: String,
+	/// output model
 	pub model: String,
+	/// ouput serial
 	pub serial: Option<String>,
+	/// physical output size in mm
 	pub size: Option<(u32, u32)>,
+	/// logical information of the output
 	pub logical: Option<output::Logical>,
+	/// available display modes
 	pub modes: Vec<output::Mode>,
 }
 
 pub mod output {
+	//! mayland output extra info
+
 	use super::Output;
 	use serde::{Deserialize, Serialize};
 	use std::fmt::Display;
@@ -132,12 +215,17 @@ pub mod output {
 		}
 	}
 
+	/// display mode
 	#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 	pub struct Mode {
+		/// udev mode height
 		pub w: u16,
+		/// udev mode width
 		pub h: u16,
+		/// refresh rate in ms
 		pub refresh: u32,
 
+		/// is the mode preferred?
 		pub preferred: bool,
 	}
 
@@ -152,31 +240,46 @@ pub mod output {
 		}
 	}
 
+	/// logical output information
 	#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 	pub struct Logical {
+		/// logical x position
 		pub x: i32,
+		/// logical y position
 		pub y: i32,
+		/// width in logical px
 		pub w: i32,
+		/// height in logical px
 		pub h: i32,
+		/// output transform
 		pub transform: Transform,
 		// scale
 	}
 
+	/// output transform
 	#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 	#[serde(rename_all = "snake_case")]
 	pub enum Transform {
+		/// normal
 		Normal,
+		/// rotated 90° counter-clockwise
 		#[serde(rename = "90")]
 		_90,
+		/// rotated 180°
 		#[serde(rename = "180")]
 		_180,
+		/// rotated 270° counter-clockwise
 		#[serde(rename = "270")]
 		_270,
+		/// flipped vertically
 		Flipped,
+		/// flipped vertically, rotated 90° counter-clockwise
 		#[serde(rename = "flipped_90")]
 		Flipped90,
+		/// flipped vertically, rotated 180°
 		#[serde(rename = "flipped_180")]
 		Flipped180,
+		/// flipped vertically, rotated 270° counter-clockwise
 		#[serde(rename = "flipped_270")]
 		Flipped270,
 	}
@@ -197,16 +300,27 @@ pub mod output {
 	}
 }
 
+/// a mayland workspace
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Workspace {
+	/// the index of the workspace
 	pub idx: usize,
+	/// the output the workspace is mapped on
+	///
+	/// this is None, when no outputs exist,
+	/// or if the workspace is orphaned after
+	/// its output was removed.
 	pub output: Option<String>,
 
+	/// is the workspace currently focussed
 	pub active: bool,
+	/// the windows that are mapped on the workspace
 	pub windows: Vec<workspace::Window>,
 }
 
 pub mod workspace {
+	//! mayland workspace extra info
+
 	use super::Workspace;
 	use serde::{Deserialize, Serialize};
 	use std::fmt::Display;
@@ -234,9 +348,12 @@ pub mod workspace {
 		}
 	}
 
+	/// a workspace window
 	#[derive(Debug, Serialize, Deserialize)]
 	pub struct Window {
+		/// the `app_id` of the window
 		pub app_id: Option<String>,
+		/// the `title` of the window
 		pub title: Option<String>,
 	}
 }
