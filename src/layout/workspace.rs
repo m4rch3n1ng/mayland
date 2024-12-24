@@ -1,4 +1,4 @@
-use super::tiling::Tiling;
+use super::{outputs::OutputSpace, tiling::Tiling};
 use crate::{
 	render::{FocusRing, MaylandRenderElements},
 	shell::window::MappedWindow,
@@ -20,10 +20,7 @@ use std::collections::{BTreeMap, HashMap};
 #[derive(Debug)]
 pub struct WorkspaceManager {
 	/// output space
-	///
-	/// only used to map the outputs to keep track
-	/// of their position
-	output_space: Space<MappedWindow>,
+	outputs: OutputSpace,
 
 	active_output: Option<Output>,
 	output_map: HashMap<Output, usize>,
@@ -37,7 +34,7 @@ pub struct WorkspaceManager {
 
 impl WorkspaceManager {
 	pub fn new(config: &mayland_config::Config) -> Self {
-		let output_space = Space::default();
+		let outputs = OutputSpace::new();
 
 		let active_output = None;
 		let output_map = HashMap::new();
@@ -46,7 +43,7 @@ impl WorkspaceManager {
 		let workspaces = BTreeMap::from([(0, workspace)]);
 
 		WorkspaceManager {
-			output_space,
+			outputs,
 
 			active_output,
 			output_map,
@@ -77,7 +74,7 @@ impl WorkspaceManager {
 				if active_output != output {
 					self.active_output = Some(output.clone());
 
-					let output_geometry = self.output_space.output_geometry(output).unwrap();
+					let output_geometry = self.outputs.output_geometry(output).unwrap();
 					let output_center = output_geometry.center();
 					Some(output_center)
 				} else {
@@ -148,7 +145,7 @@ impl WorkspaceManager {
 	) -> Option<Point<i32, Logical>> {
 		let output_info = output.user_data().get::<OutputInfo>().unwrap();
 		let output_config = config.get_output(output_info);
-		let new_active_position = self.position_outputs(config, Some(output));
+		self.outputs.add_output(config, output);
 
 		if let Some(workspace) = self.workspaces.values_mut().find(|ws| ws.output.is_none()) {
 			workspace.map_output(output);
@@ -168,17 +165,16 @@ impl WorkspaceManager {
 		if self.active_output.is_none() || output_config.is_some_and(|conf| conf.active) {
 			self.active_output = Some(output.clone());
 
-			let output_geometry = self.output_space.output_geometry(output).unwrap();
+			let output_geometry = self.outputs.output_geometry(output).unwrap();
 			Some(output_geometry.loc + output_geometry.size.center())
 		} else {
-			new_active_position
+			None
 		}
 	}
 
 	pub fn remove_output(&mut self, config: &mayland_config::Outputs, output: &Output) {
+		self.outputs.remove_output(config, output);
 		let idx = self.output_map.remove(output).unwrap();
-		self.output_space.unmap_output(output);
-		self.position_outputs(config, None);
 
 		let workspace = self.workspaces.get_mut(&idx).unwrap();
 		if workspace.is_empty() {
@@ -196,86 +192,6 @@ impl WorkspaceManager {
 		}
 	}
 
-	fn position_outputs(
-		&mut self,
-		config: &mayland_config::Outputs,
-		output: Option<&Output>,
-	) -> Option<Point<i32, Logical>> {
-		let active_position = self
-			.active_output
-			.as_ref()
-			.and_then(|output| self.output_space.output_geometry(output));
-
-		let mut outputs = self
-			.outputs()
-			.chain(output)
-			.map(|output| {
-				let output_info = output.user_data().get::<OutputInfo>().unwrap();
-				(output, config.get_output(output_info))
-			})
-			.map(|(output, config)| (output.clone(), config.and_then(|conf| conf.position)))
-			.collect::<Vec<_>>();
-
-		// first sort by output info
-		outputs.sort_by(|(out1, _), (out2, _)| {
-			let info1 = out1.user_data().get::<OutputInfo>().unwrap();
-			let info2 = out2.user_data().get::<OutputInfo>().unwrap();
-
-			info1.cmp(info2)
-		});
-		// then put the outputs with an explicit position first
-		outputs.sort_by_key(|(_, position)| position.is_none());
-
-		for (output, _) in &outputs {
-			self.output_space.unmap_output(output);
-		}
-
-		for (output, config) in outputs {
-			if let Some(config) = config {
-				let point = Point::from((config[0], config[1]));
-
-				let size = output_size(&output);
-				let rect = Rectangle { loc: point, size };
-
-				let overlaps = self
-					.output_space
-					.outputs()
-					.map(|output| self.output_space.output_geometry(output).unwrap())
-					.find(|geom| geom.overlaps(rect));
-
-				if let Some(overlaps) = overlaps {
-					panic!("output position {:?} overlaps with {:?}", rect, overlaps);
-				}
-
-				self.output_space.map_output(&output, point);
-			} else {
-				let x = self
-					.output_space
-					.outputs()
-					.map(|output| self.output_space.output_geometry(output).unwrap())
-					.map(|geom| geom.loc.x + geom.size.w)
-					.max()
-					.unwrap_or(0);
-
-				let point = Point::from((x, 0));
-				self.output_space.map_output(&output, point);
-			}
-		}
-
-		if let Some(active_position) = active_position {
-			let active_output = self.active_output.as_ref().unwrap();
-			let new_active_position = self.output_space.output_geometry(active_output).unwrap();
-
-			if active_position != new_active_position {
-				Some(new_active_position.center())
-			} else {
-				None
-			}
-		} else {
-			None
-		}
-	}
-
 	pub fn resize_output(&mut self, output: &Output) {
 		let idx = &self.output_map[output];
 		let workspace = self.workspaces.get_mut(idx).unwrap();
@@ -283,7 +199,7 @@ impl WorkspaceManager {
 	}
 
 	pub fn refresh(&mut self) {
-		self.output_space.refresh();
+		self.outputs.refresh();
 
 		for workspace in self.workspaces.values_mut() {
 			workspace.refresh();
@@ -305,7 +221,7 @@ impl WorkspaceManager {
 impl WorkspaceManager {
 	#[must_use = "you have to reset keyboard focus on active output change"]
 	pub fn update_active_output(&mut self, location: Point<f64, Logical>) -> bool {
-		if let Some(output) = self.output_space.output_under(location).next() {
+		if let Some(output) = self.outputs.output_under(location) {
 			if self.active_output.as_ref().is_none_or(|active| active != output) {
 				self.active_output = Some(output.clone());
 				return true;
@@ -318,11 +234,11 @@ impl WorkspaceManager {
 
 impl WorkspaceManager {
 	pub fn outputs(&self) -> impl Iterator<Item = &Output> {
-		self.output_space.outputs()
+		self.outputs.outputs()
 	}
 
 	pub fn output_geometry(&self, output: &Output) -> Option<Rectangle<i32, Logical>> {
-		self.output_space.output_geometry(output)
+		self.outputs.output_geometry(output)
 	}
 
 	pub fn active_output(&self) -> Option<&Output> {
@@ -332,13 +248,12 @@ impl WorkspaceManager {
 	pub fn active_output_geometry(&self) -> Option<Rectangle<i32, Logical>> {
 		let active_output = self.active_output.as_ref()?;
 
-		let geometry = self.output_space.output_geometry(active_output).unwrap();
+		let geometry = self.outputs.output_geometry(active_output).unwrap();
 		Some(geometry)
 	}
 
 	pub fn output_under(&self, point: Point<f64, Logical>) -> Option<&Output> {
-		debug_assert!(self.output_space.output_under(point).count() <= 1);
-		self.output_space.output_under(point).next()
+		self.outputs.output_under(point)
 	}
 }
 
@@ -357,7 +272,7 @@ impl WorkspaceManager {
 impl WorkspaceManager {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
 		if let Some(active) = &self.active_output {
-			let output_geo = self.output_space.output_geometry(active).unwrap();
+			let output_geo = self.outputs.output_geometry(active).unwrap();
 			let pointer = pointer - output_geo.loc.to_f64();
 
 			let workspace = self.output_map[active];
@@ -401,7 +316,7 @@ impl WorkspaceManager {
 		location: Point<f64, Logical>,
 	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
 		if let Some(output) = self.output_under(location) {
-			let output_geometry = self.output_space.output_geometry(output).unwrap();
+			let output_geometry = self.outputs.output_geometry(output).unwrap();
 			let location = location - output_geometry.loc.to_f64();
 
 			let workspace = &self.output_map[output];
