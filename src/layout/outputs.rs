@@ -1,4 +1,4 @@
-use crate::utils::output_size;
+use crate::utils::{output_size, RectExt};
 use mayland_config::outputs::OutputInfo;
 use smithay::{
 	output::Output,
@@ -22,16 +22,38 @@ impl OutputSpace {
 		}
 	}
 
+	#[must_use = "you have to reposition the cursor"]
 	pub fn add_output(
 		&mut self,
 		config: &mayland_config::Outputs,
 		output: &Output,
 	) -> Option<Point<i32, Logical>> {
+		let active_position = self.active.as_ref().map(|act| self.output_position(act).unwrap());
+
 		// todo make this a little cleaner
 		self.outputs.push((output.clone(), Point::from((0, 0))));
 		self.reposition(config);
 
-		None
+		let output_info = output.user_data().get::<OutputInfo>().unwrap();
+		let output_config = config.get_output(output_info);
+
+		if self.active.is_none() || output_config.is_some_and(|conf| conf.active) {
+			self.active = Some(output.clone());
+
+			let output_geometry = self.output_geometry(output).unwrap();
+			Some(output_geometry.center())
+		} else if let Some(active_position) = active_position {
+			let active_output = self.active.as_ref().unwrap();
+			let new_active_geometry = self.output_geometry(active_output).unwrap();
+
+			if active_position != new_active_geometry.loc {
+				Some(new_active_geometry.center())
+			} else {
+				None
+			}
+		} else {
+			None
+		}
 	}
 
 	pub fn remove_output(&mut self, config: &mayland_config::Outputs, output: &Output) {
@@ -39,6 +61,10 @@ impl OutputSpace {
 		self.outputs.remove(idx);
 
 		self.reposition(config);
+
+		if self.active.as_ref() == Some(output) {
+			self.active = self.outputs.first().map(|(output, _)| output).cloned();
+		}
 	}
 
 	fn reposition(&mut self, config: &mayland_config::Outputs) {
@@ -111,6 +137,13 @@ impl OutputSpace {
 
 			geometry.overlaps(rect)
 		})
+	}
+
+	fn output_position(&self, output: &Output) -> Option<Point<i32, Logical>> {
+		self.outputs
+			.iter()
+			.find(|(o, _)| o == output)
+			.map(|(_, pos)| *pos)
 	}
 
 	pub fn refresh(&self) {

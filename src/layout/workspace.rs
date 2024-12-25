@@ -4,7 +4,6 @@ use crate::{
 	shell::window::MappedWindow,
 	utils::{output_size, RectExt, SizeExt},
 };
-use mayland_config::outputs::OutputInfo;
 use smithay::{
 	backend::renderer::{
 		element::{surface::WaylandSurfaceRenderElement, AsRenderElements},
@@ -140,10 +139,6 @@ impl WorkspaceManager {
 		config: &mayland_config::Outputs,
 		output: &Output,
 	) -> Option<Point<i32, Logical>> {
-		let output_info = output.user_data().get::<OutputInfo>().unwrap();
-		let output_config = config.get_output(output_info);
-		self.outputs.add_output(config, output);
-
 		if let Some(workspace) = self.workspaces.values_mut().find(|ws| ws.output.is_none()) {
 			workspace.map_output(output);
 			self.output_map.insert(output.clone(), workspace.idx);
@@ -159,21 +154,11 @@ impl WorkspaceManager {
 			self.workspaces.insert(idx, workspace);
 		}
 
-		// todo put into space
-		if self.outputs.active.is_none() || output_config.is_some_and(|conf| conf.active) {
-			self.outputs.active = Some(output.clone());
-
-			let output_geometry = self.outputs.output_geometry(output).unwrap();
-			Some(output_geometry.loc + output_geometry.size.center())
-		} else {
-			None
-		}
+		self.outputs.add_output(config, output)
 	}
 
 	pub fn remove_output(&mut self, config: &mayland_config::Outputs, output: &Output) {
-		self.outputs.remove_output(config, output);
 		let idx = self.output_map.remove(output).unwrap();
-
 		let workspace = self.workspaces.get_mut(&idx).unwrap();
 		if workspace.is_empty() {
 			self.workspaces.remove(&idx);
@@ -185,9 +170,7 @@ impl WorkspaceManager {
 			}
 		}
 
-		if self.outputs.active.as_ref() == Some(output) {
-			self.outputs.active = self.output_map.keys().next().cloned();
-		}
+		self.outputs.remove_output(config, output);
 	}
 
 	pub fn resize_output(&mut self, output: &Output) {
