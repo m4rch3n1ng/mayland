@@ -1,4 +1,4 @@
-use super::{outputs::OutputSpace, tiling::Tiling};
+use super::{outputs::OutputSpace, tiling::Tiling, Relocate};
 use crate::{
 	render::{FocusRing, MaylandRenderElements},
 	shell::window::MappedWindow,
@@ -134,11 +134,7 @@ impl WorkspaceManager {
 
 impl WorkspaceManager {
 	#[must_use = "you have to reposition the cursor"]
-	pub fn add_output(
-		&mut self,
-		config: &mayland_config::Outputs,
-		output: &Output,
-	) -> Option<Point<i32, Logical>> {
+	pub fn add_output(&mut self, config: &mayland_config::Outputs, output: &Output) -> Option<Relocate> {
 		if let Some(workspace) = self.workspaces.values_mut().find(|ws| ws.output.is_none()) {
 			workspace.map_output(output);
 			self.output_map.insert(output.clone(), workspace.idx);

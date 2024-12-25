@@ -1,3 +1,4 @@
+use super::Relocate;
 use crate::utils::{output_size, RectExt};
 use mayland_config::outputs::OutputInfo;
 use smithay::{
@@ -23,11 +24,7 @@ impl OutputSpace {
 	}
 
 	#[must_use = "you have to reposition the cursor"]
-	pub fn add_output(
-		&mut self,
-		config: &mayland_config::Outputs,
-		output: &Output,
-	) -> Option<Point<i32, Logical>> {
+	pub fn add_output(&mut self, config: &mayland_config::Outputs, output: &Output) -> Option<Relocate> {
 		let active_position = self.active.as_ref().map(|act| self.output_position(act).unwrap());
 
 		// todo make this a little cleaner
@@ -41,13 +38,13 @@ impl OutputSpace {
 			self.active = Some(output.clone());
 
 			let output_geometry = self.output_geometry(output).unwrap();
-			Some(output_geometry.center())
+			Some(Relocate::Absolute(output_geometry.center()))
 		} else if let Some(active_position) = active_position {
 			let active_output = self.active.as_ref().unwrap();
-			let new_active_geometry = self.output_geometry(active_output).unwrap();
+			let new_active_position = self.output_position(active_output).unwrap();
 
-			if active_position != new_active_geometry.loc {
-				Some(new_active_geometry.center())
+			if active_position != new_active_position {
+				Some(Relocate::Relative(new_active_position - active_position))
 			} else {
 				None
 			}

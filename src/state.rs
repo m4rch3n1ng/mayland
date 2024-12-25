@@ -4,7 +4,7 @@ use crate::{
 	cursor::{Cursor, RenderCursor},
 	error::MaylandError,
 	input::device::InputDevice,
-	layout::workspace::WorkspaceManager,
+	layout::{workspace::WorkspaceManager, Relocate},
 	render::MaylandRenderElements,
 	shell::{focus::KeyboardFocusTarget, window::UnmappedSurface},
 	utils::output_size,
@@ -315,9 +315,19 @@ impl Mayland {
 	pub fn add_output(&mut self, output: Output) {
 		tracing::debug!("add output {:?}", output.description());
 
-		if let Some(location) = self.workspaces.add_output(&self.config.output, &output) {
+		if let Some(relocate) = self.workspaces.add_output(&self.config.output, &output) {
 			self.loop_handle.insert_idle(move |state| {
-				state.move_cursor(location.to_f64());
+				match relocate {
+					Relocate::Absolute(location) => {
+						state.move_cursor(location.to_f64());
+					}
+					Relocate::Relative(relative) => {
+						let current = state.mayland.pointer.current_location();
+						let location = current + relative.to_f64();
+						state.move_cursor(location);
+					}
+				}
+
 				state.mayland.queue_redraw_all();
 			});
 		}
