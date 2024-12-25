@@ -81,10 +81,11 @@ impl WlrLayerShellHandler for State {
 		_layer: Layer,
 		namespace: String,
 	) {
-		let output = wl_output
-			.as_ref()
-			.and_then(Output::from_resource)
-			.unwrap_or_else(|| self.mayland.workspaces.outputs().next().unwrap().clone());
+		let Some(output) = (wl_output.as_ref().and_then(Output::from_resource))
+			.or_else(|| self.mayland.workspaces.active_output().cloned())
+		else {
+			return;
+		};
 
 		let surface = LayerSurface::new(surface, namespace);
 		self.mayland.unmapped_layers.push((surface, output));

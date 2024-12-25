@@ -245,6 +245,10 @@ impl WorkspaceManager {
 		self.output_space.output_geometry(output)
 	}
 
+	pub fn active_output(&self) -> Option<&Output> {
+		self.active_output.as_ref()
+	}
+
 	pub fn active_output_geometry(&self) -> Option<Rectangle<i32, Logical>> {
 		let active_output = self.active_output.as_ref()?;
 
