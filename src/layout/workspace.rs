@@ -153,7 +153,8 @@ impl WorkspaceManager {
 		self.outputs.add_output(config, output)
 	}
 
-	pub fn remove_output(&mut self, config: &mayland_config::Outputs, output: &Output) {
+	#[must_use = "you have to reposition the cursor"]
+	pub fn remove_output(&mut self, config: &mayland_config::Outputs, output: &Output) -> Option<Relocate> {
 		let idx = self.output_map.remove(output).unwrap();
 		let workspace = self.workspaces.get_mut(&idx).unwrap();
 		if workspace.is_empty() {
@@ -166,7 +167,7 @@ impl WorkspaceManager {
 			}
 		}
 
-		self.outputs.remove_output(config, output);
+		self.outputs.remove_output(config, output)
 	}
 
 	pub fn resize_output(&mut self, output: &Output) {

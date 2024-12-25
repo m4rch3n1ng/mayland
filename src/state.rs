@@ -353,7 +353,22 @@ impl Mayland {
 			idle.cancel();
 		};
 
-		self.workspaces.remove_output(&self.config.output, output);
+		if let Some(relocate) = self.workspaces.remove_output(&self.config.output, output) {
+			self.loop_handle.insert_idle(move |state| {
+				match relocate {
+					Relocate::Absolute(location) => {
+						state.move_cursor(location.to_f64());
+					}
+					Relocate::Relative(relative) => {
+						let current = state.mayland.pointer.current_location();
+						let location = current + relative.to_f64();
+						state.move_cursor(location);
+					}
+				}
+
+				state.mayland.queue_redraw_all();
+			});
+		}
 	}
 
 	pub fn output_resized(&mut self, output: &Output) {

@@ -53,14 +53,34 @@ impl OutputSpace {
 		}
 	}
 
-	pub fn remove_output(&mut self, config: &mayland_config::Outputs, output: &Output) {
+	#[must_use = "you have to reposition the cursor"]
+	pub fn remove_output(&mut self, config: &mayland_config::Outputs, output: &Output) -> Option<Relocate> {
 		let idx = self.outputs.iter().position(|(o, _)| o == output).unwrap();
 		self.outputs.remove(idx);
 
+		self.active.take_if(|active| active == output);
+		let active_position = self.active.as_ref().map(|act| self.output_position(act).unwrap());
+
 		self.reposition(config);
 
-		if self.active.as_ref() == Some(output) {
-			self.active = self.outputs.first().map(|(output, _)| output).cloned();
+		// the active output was not removed
+		if let Some(active_position) = active_position {
+			let active_output = self.active.as_ref().unwrap();
+			let new_active_position = self.output_position(active_output).unwrap();
+
+			if active_position != new_active_position {
+				Some(Relocate::Relative(new_active_position - active_position))
+			} else {
+				None
+			}
+		} else if let Some((new_active, position)) = self.outputs.first().cloned() {
+			let size = output_size(&new_active);
+			let output_geometry = Rectangle { loc: position, size };
+
+			self.active = Some(new_active);
+			Some(Relocate::Absolute(output_geometry.center()))
+		} else {
+			None
 		}
 	}
 
