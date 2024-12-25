@@ -10,12 +10,16 @@ type OutputLayout = (Output, Point<i32, Logical>);
 
 #[derive(Debug)]
 pub struct OutputSpace {
+	pub active: Option<Output>,
 	outputs: Vec<OutputLayout>,
 }
 
 impl OutputSpace {
 	pub fn new() -> Self {
-		OutputSpace { outputs: Vec::new() }
+		OutputSpace {
+			active: None,
+			outputs: Vec::new(),
+		}
 	}
 
 	pub fn add_output(

@@ -22,7 +22,6 @@ pub struct WorkspaceManager {
 	/// output space
 	outputs: OutputSpace,
 
-	active_output: Option<Output>,
 	output_map: HashMap<Output, usize>,
 	pub workspaces: BTreeMap<usize, Workspace>,
 
@@ -36,7 +35,6 @@ impl WorkspaceManager {
 	pub fn new(config: &mayland_config::Config) -> Self {
 		let outputs = OutputSpace::new();
 
-		let active_output = None;
 		let output_map = HashMap::new();
 
 		let workspace = Workspace::new(0, &config.layout, &config.decoration);
@@ -45,7 +43,6 @@ impl WorkspaceManager {
 		WorkspaceManager {
 			outputs,
 
-			active_output,
 			output_map,
 			workspaces,
 
@@ -58,7 +55,7 @@ impl WorkspaceManager {
 impl WorkspaceManager {
 	#[must_use = "you have to reposition the cursor"]
 	pub fn switch_to_workspace(&mut self, idx: usize) -> Option<Point<i32, Logical>> {
-		let Some(active_output) = &self.active_output else {
+		let Some(active_output) = &self.outputs.active else {
 			return None;
 		};
 
@@ -72,7 +69,7 @@ impl WorkspaceManager {
 				*self.output_map.get_mut(output).unwrap() = idx;
 
 				if active_output != output {
-					self.active_output = Some(output.clone());
+					self.outputs.active = Some(output.clone());
 
 					let output_geometry = self.outputs.output_geometry(output).unwrap();
 					let output_center = output_geometry.center();
@@ -114,7 +111,7 @@ impl WorkspaceManager {
 
 	/// get the currently active workspace, if one exists
 	pub fn workspace(&self) -> Option<&Workspace> {
-		if let Some(output) = &self.active_output {
+		if let Some(output) = &self.outputs.active {
 			let idx = self.output_map[output];
 			let workspace = &self.workspaces[&idx];
 			Some(workspace)
@@ -126,7 +123,7 @@ impl WorkspaceManager {
 	/// get mutable access to the currently active workspace,
 	/// if one exists
 	pub fn workspace_mut(&mut self) -> Option<&mut Workspace> {
-		if let Some(output) = &self.active_output {
+		if let Some(output) = &self.outputs.active {
 			let idx = self.output_map[output];
 			let workspace = self.workspaces.get_mut(&idx).unwrap();
 			Some(workspace)
@@ -162,8 +159,9 @@ impl WorkspaceManager {
 			self.workspaces.insert(idx, workspace);
 		}
 
-		if self.active_output.is_none() || output_config.is_some_and(|conf| conf.active) {
-			self.active_output = Some(output.clone());
+		// todo put into space
+		if self.outputs.active.is_none() || output_config.is_some_and(|conf| conf.active) {
+			self.outputs.active = Some(output.clone());
 
 			let output_geometry = self.outputs.output_geometry(output).unwrap();
 			Some(output_geometry.loc + output_geometry.size.center())
@@ -187,8 +185,8 @@ impl WorkspaceManager {
 			}
 		}
 
-		if self.active_output.as_ref() == Some(output) {
-			self.active_output = self.output_map.keys().next().cloned();
+		if self.outputs.active.as_ref() == Some(output) {
+			self.outputs.active = self.output_map.keys().next().cloned();
 		}
 	}
 
@@ -222,8 +220,8 @@ impl WorkspaceManager {
 	#[must_use = "you have to reset keyboard focus on active output change"]
 	pub fn update_active_output(&mut self, location: Point<f64, Logical>) -> bool {
 		if let Some(output) = self.outputs.output_under(location) {
-			if self.active_output.as_ref().is_none_or(|active| active != output) {
-				self.active_output = Some(output.clone());
+			if self.outputs.active.as_ref().is_none_or(|active| active != output) {
+				self.outputs.active = Some(output.clone());
 				return true;
 			}
 		}
@@ -242,12 +240,11 @@ impl WorkspaceManager {
 	}
 
 	pub fn active_output(&self) -> Option<&Output> {
-		self.active_output.as_ref()
+		self.outputs.active.as_ref()
 	}
 
 	pub fn active_output_geometry(&self) -> Option<Rectangle<i32, Logical>> {
-		let active_output = self.active_output.as_ref()?;
-
+		let active_output = self.outputs.active.as_ref()?;
 		let geometry = self.outputs.output_geometry(active_output).unwrap();
 		Some(geometry)
 	}
@@ -271,7 +268,7 @@ impl WorkspaceManager {
 
 impl WorkspaceManager {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
-		if let Some(active) = &self.active_output {
+		if let Some(active) = &self.outputs.active {
 			let output_geo = self.outputs.output_geometry(active).unwrap();
 			let pointer = pointer - output_geo.loc.to_f64();
 
