@@ -333,7 +333,6 @@ impl State {
 		}
 
 		let start_data = pointer.grab_start_data().unwrap();
-
 		if start_data
 			.focus
 			.as_ref()
@@ -368,7 +367,6 @@ impl State {
 		}
 
 		let start_data = pointer.grab_start_data().unwrap();
-
 		if start_data
 			.focus
 			.as_ref()

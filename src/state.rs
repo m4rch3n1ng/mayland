@@ -609,10 +609,9 @@ impl Mayland {
 				let frame = xcursor.frame(self.start_time.elapsed());
 
 				let hotspot = frame.hotspot();
-				let buffer = frame.buffer();
-
 				let pointer_pos = pointer_pos - hotspot.to_f64();
 
+				let buffer = frame.buffer();
 				let texture = MemoryRenderBufferRenderElement::from_buffer(
 					renderer,
 					pointer_pos,
