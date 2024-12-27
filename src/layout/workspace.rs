@@ -50,6 +50,15 @@ impl WorkspaceManager {
 			layout: config.layout,
 		}
 	}
+
+	pub fn reload_config(&mut self, config: &mayland_config::Config) {
+		self.layout = config.layout;
+		self.decoration = config.decoration;
+
+		for workspace in self.workspaces.values_mut() {
+			workspace.reload_config(&self.layout, &self.decoration);
+		}
+	}
 }
 
 impl WorkspaceManager {
@@ -353,6 +362,10 @@ impl Workspace {
 			tiling,
 			floating,
 		}
+	}
+
+	fn reload_config(&mut self, layout: &mayland_config::Layout, decoration: &mayland_config::Decoration) {
+		self.tiling.reload_config(&layout.tiling, decoration);
 	}
 }
 

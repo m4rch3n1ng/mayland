@@ -53,10 +53,23 @@ impl Layout {
 		}
 	}
 
+	/// the config has changed
+	fn config(&mut self, tiling: &mayland_config::layout::Tiling, decoration: &mayland_config::Decoration) {
+		self.border = i32::from(tiling.border);
+		self.gaps = i32::from(tiling.gaps);
+		self.ring = i32::from(decoration.focus.thickness);
+
+		self.useable_area = self.working_area.borderless(self.border);
+		self.resplit();
+	}
+
 	fn resize(&mut self, working_area: Rectangle<i32, Logical>) {
 		self.working_area = working_area;
 		self.useable_area = working_area.borderless(self.border);
+		self.resplit();
+	}
 
+	fn resplit(&mut self) {
 		let x = self.useable_area.size.w as f64 * self.ratio;
 		let x = x.round() as i32;
 
@@ -124,6 +137,15 @@ impl Tiling {
 			layout,
 			windows: [None, None],
 		}
+	}
+
+	pub fn reload_config(
+		&mut self,
+		config: &mayland_config::layout::Tiling,
+		decoration: &mayland_config::Decoration,
+	) {
+		self.layout.config(config, decoration);
+		self.resize_windows();
 	}
 }
 
@@ -226,7 +248,10 @@ impl Tiling {
 
 	fn resize(&mut self, working_area: Rectangle<i32, Logical>) {
 		self.layout.resize(working_area);
+		self.resize_windows();
+	}
 
+	fn resize_windows(&mut self) {
 		match &mut self.windows {
 			[Some(w1), Some(w2)] => {
 				let [one, two] = self.layout.double();

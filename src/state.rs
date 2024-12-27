@@ -148,6 +148,12 @@ impl State {
 			}
 		}
 
+		if self.mayland.config.decoration.focus != config.decoration.focus
+			|| self.mayland.config.layout != config.layout
+		{
+			self.mayland.workspaces.reload_config(&config);
+		}
+
 		if self.mayland.config.windowrules != config.windowrules {
 			for window in self.mayland.workspaces.windows() {
 				window.recompute_windowrules(&config.windowrules);
