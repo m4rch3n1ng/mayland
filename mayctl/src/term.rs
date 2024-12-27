@@ -9,8 +9,8 @@ pub enum Term {
 	IoError(std::io::Error),
 	/// the mayland socket was not found
 	NotFound(String),
-	/// mayland returned a reply that couldn't be deserialized
-	InvalidReply(serde_json::Error),
+	/// mayland returned a response that couldn't be deserialized
+	InvalidResponse(serde_json::Error),
 	/// mayland returned an error
 	MaylandError(mayland_comm::Error),
 	/// mayctl wasn't started inside mayland
@@ -46,12 +46,12 @@ impl Display for Term {
 				writeln!(f, "{}: {}", "error".red().bold(), "socket not found".bold())?;
 				writeln!(f, "  {} file {} does not exist", "::".blue().bold(), socket_path)
 			}
-			Term::InvalidReply(err) => {
+			Term::InvalidResponse(err) => {
 				writeln!(
 					f,
 					"{}: {}",
 					"error".red().bold(),
-					"couldn't deserialize mayland reply".bold()
+					"couldn't deserialize mayland response".bold()
 				)?;
 				writeln!(f, "  {} {}", "::".blue().bold(), err)?;
 				writeln!(

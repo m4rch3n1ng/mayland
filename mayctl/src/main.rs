@@ -37,24 +37,24 @@ fn main() -> Term {
 	let mut buf = String::new();
 	read.read_line(&mut buf).unwrap();
 
-	let reply = match serde_json::from_str::<Response>(&buf) {
-		Ok(reply) => reply,
-		Err(err) => return Term::InvalidReply(err),
+	let response = match serde_json::from_str::<Response>(&buf) {
+		Ok(response) => response,
+		Err(err) => return Term::InvalidResponse(err),
 	};
 	stream.shutdown(Shutdown::Read).unwrap();
 
-	if let Response::Err(err) = reply {
+	if let Response::Err(err) = response {
 		return Term::MaylandError(err);
 	}
 
 	match request {
 		Request::Dispatch(_) => {
-			ensure_matches!(reply, Response::Dispatch, "dispatch");
+			ensure_matches!(response, Response::Dispatch, "dispatch");
 			println!("ok dispatch");
 		}
 		Request::Workspaces => {
-			let Response::Workspaces(workspaces) = reply else {
-				unexpected!(reply, "workspaces")
+			let Response::Workspaces(workspaces) = response else {
+				unexpected!(response, "workspaces")
 			};
 
 			if cli.json {

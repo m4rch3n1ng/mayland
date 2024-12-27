@@ -61,7 +61,7 @@ async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async
 	read.read_line(&mut buf).await.unwrap();
 
 	let request = serde_json::from_str::<Request>(&buf);
-	let reply = match request {
+	let response = match request {
 		Ok(Request::Dispatch(action)) => {
 			let (tx, rx) = async_channel::bounded(1);
 			event_loop.insert_idle(move |state| {
@@ -92,8 +92,8 @@ async fn handle_client(event_loop: LoopHandle<'static, State>, mut stream: Async
 		Err(_) => Response::Err(mayland_comm::Error::InvalidRequest),
 	};
 
-	let reply = serde_json::to_vec(&reply).unwrap();
-	stream.write_all(&reply).await.unwrap();
+	let response = serde_json::to_vec(&response).unwrap();
+	stream.write_all(&response).await.unwrap();
 	stream.write_all(b"\n").await.unwrap();
 }
 
