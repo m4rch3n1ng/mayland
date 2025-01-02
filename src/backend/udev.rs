@@ -13,7 +13,10 @@ use smithay::{
 			gbm::{GbmAllocator, GbmBufferFlags, GbmDevice},
 			Fourcc,
 		},
-		drm::{compositor::DrmCompositor, DrmDevice, DrmDeviceFd, DrmEvent, DrmEventMetadata, DrmEventTime},
+		drm::{
+			compositor::{DrmCompositor, FrameFlags},
+			DrmDevice, DrmDeviceFd, DrmEvent, DrmEventMetadata, DrmEventTime,
+		},
 		egl::{EGLContext, EGLDevice, EGLDisplay},
 		input::InputEvent,
 		libinput::{LibinputInputBackend, LibinputSessionInterface},
@@ -143,7 +146,7 @@ impl Udev {
 		let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
 		let drm_compositor = device.surfaces.get_mut(&udev_state.crtc).unwrap();
 
-		match drm_compositor.render_frame(&mut device.glow, elements, [0.; 4]) {
+		match drm_compositor.render_frame(&mut device.glow, elements, [0.; 4], FrameFlags::DEFAULT) {
 			Ok(render_output_res) => {
 				mayland.post_repaint(output);
 
@@ -461,7 +464,7 @@ impl Udev {
 			Some(planes),
 			allocator,
 			device.gbm.clone(),
-			SUPPORTED_COLOR_FORMATS,
+			SUPPORTED_COLOR_FORMATS.iter().copied(),
 			device.formats.clone(),
 			device.drm.cursor_size(),
 			Some(device.gbm.clone()),

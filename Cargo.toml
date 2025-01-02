@@ -14,9 +14,9 @@ license = "GPL-3.0-or-later"
 dirs = "5.0.1"
 mayland-config = { path = "mayland-config" }
 mayland-comm = { path = "mayland-comm" }
-serde = "1.0.215"
-serde_json = "1.0.133"
-thiserror = "2.0.3"
+serde = "1.0.217"
+serde_json = "1.0.134"
+thiserror = "2.0.9"
 
 [workspace.dependencies.smithay]
 git = "https://github.com/Smithay/smithay"
@@ -33,13 +33,13 @@ edition = { workspace = true }
 
 [dependencies]
 async-channel = "2.3.1"
-calloop = { version = "0.14.1", features = ["executor", "futures-io"] }
-chrono = { version = "0.4.38", features = ["clock", "std"] }
+calloop = { version = "0.14.2", features = ["executor", "futures-io"] }
+chrono = { version = "0.4.39", features = ["clock", "std"] }
 dirs = { workspace = true }
 futures-util = { version = "0.3.31", default-features = false, features = ["std", "io"] }
-indexmap = "2.6.0"
+indexmap = "2.7.0"
 input = { version = "0.9.1", default-features = false, features = ["libinput_1_21"] }
-libc = "0.2.167"
+libc = "0.2.169"
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 mayland-config = { workspace = true }
 mayland-comm = { workspace = true }

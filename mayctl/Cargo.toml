@@ -6,7 +6,7 @@ license = { workspace = true }
 
 [dependencies]
 anstream = "0.6.18"
-clap = { version = "4.5.21", features = ["derive"] }
+clap = { version = "4.5.23", features = ["derive"] }
 mayland-comm = { workspace = true }
 owo-colors = "4.1.0"
 serde = { workspace = true }
