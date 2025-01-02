@@ -157,7 +157,7 @@ impl Udev {
 					match drm_compositor.queue_frame(output_presentation_feedback) {
 						Ok(()) => {
 							let output_state = mayland.output_state.get_mut(output).unwrap();
-							output_state.waiting_for_vblank = true;
+							output_state.queued.waiting_for_vblank();
 						}
 						Err(err) => tracing::error!("error queueing frame {:?}", err),
 					}
@@ -553,7 +553,7 @@ impl Udev {
 			.clone();
 
 		let output_state = mayland.output_state.get_mut(&output).unwrap();
-		output_state.waiting_for_vblank = false;
+		output_state.queued.on_vblank();
 
 		mayland.queue_redraw(output);
 	}

@@ -40,5 +40,9 @@ fn main() {
 		("GDK_BACKEND".to_owned(), "wayland".to_owned()),
 	]);
 
-	event_loop.run(None, &mut state, |state| state.refresh()).unwrap();
+	event_loop
+		.run(None, &mut state, |state| {
+			state.refresh_and_redraw();
+		})
+		.unwrap();
 }

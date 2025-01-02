@@ -36,7 +36,7 @@ use smithay::{
 	input::{keyboard::KeyboardHandle, pointer::PointerHandle, Seat, SeatState},
 	output::Output,
 	reexports::{
-		calloop::{generic::Generic, EventLoop, Idle, Interest, LoopHandle, LoopSignal, Mode, PostAction},
+		calloop::{generic::Generic, EventLoop, Interest, LoopHandle, LoopSignal, Mode, PostAction},
 		wayland_server::{
 			backend::{ClientData, GlobalId},
 			Display, DisplayHandle,
@@ -120,11 +120,16 @@ impl State {
 		}
 	}
 
-	pub fn refresh(&mut self) {
+	pub fn refresh_and_redraw(&mut self) {
+		// refresh workspaces and popups
 		self.mayland.workspaces.refresh();
 		self.mayland.popups.cleanup();
+
+		// redraw the queued outputs
+		self.mayland.redraw_all_queued(&mut self.backend);
 		self.mayland.display_handle.flush_clients().unwrap();
 
+		// cleanup dead surfaces
 		self.mayland.unmapped_windows.retain(|window| window.alive());
 		self.mayland.unmapped_layers.retain(|(layer, _)| layer.alive());
 	}
@@ -187,14 +192,65 @@ pub struct Mayland {
 #[derive(Debug)]
 pub struct OutputState {
 	pub global: GlobalId,
-	pub queued: Option<Idle<'static>>,
-	pub waiting_for_vblank: bool,
+	/// queued state
+	pub queued: QueueState,
 	/// use a solid color buffer instead of a clear color, so that
 	/// the background color cuts out at the sides when mirroring
 	/// outputs instead of filling the entire output
 	///
 	/// apparently it also avoids damage tracking issues
 	pub background: SolidColorBuffer,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum QueueState {
+	Idle,
+	WaitingForVBlank { queued: bool },
+	Queued,
+}
+
+impl QueueState {
+	pub fn is_queued(&self) -> bool {
+		matches!(self, QueueState::Queued)
+	}
+
+	pub fn queue(&mut self) {
+		match *self {
+			QueueState::Idle => *self = QueueState::Queued,
+			QueueState::WaitingForVBlank { queued: false } => {
+				*self = QueueState::WaitingForVBlank { queued: true }
+			}
+			QueueState::Queued | QueueState::WaitingForVBlank { queued: true } => {}
+		}
+	}
+
+	pub fn idle(&mut self) {
+		if let QueueState::Queued = *self {
+			*self = QueueState::Idle
+		} else {
+			unreachable!()
+		}
+	}
+
+	pub fn waiting_for_vblank(&mut self) {
+		if let QueueState::Queued = *self {
+			unreachable!()
+		} else {
+			*self = QueueState::WaitingForVBlank { queued: false };
+		}
+	}
+
+	pub fn on_vblank(&mut self) {
+		if let QueueState::WaitingForVBlank { queued } = *self {
+			if queued {
+				*self = QueueState::Queued
+			} else {
+				*self = QueueState::Idle
+			}
+		} else {
+			unreachable!()
+		}
+	}
 }
 
 impl Mayland {
@@ -324,8 +380,7 @@ impl Mayland {
 		let size = output_size(&output);
 		let state = OutputState {
 			global: output.create_global::<State>(&self.display_handle),
-			queued: None,
-			waiting_for_vblank: false,
+			queued: QueueState::Idle,
 			background: SolidColorBuffer::new(size, background_color),
 		};
 
@@ -334,12 +389,8 @@ impl Mayland {
 	}
 
 	pub fn remove_output(&mut self, output: &Output) {
-		let mut state = self.output_state.remove(output).unwrap();
+		let state = self.output_state.remove(output).unwrap();
 		self.display_handle.remove_global::<State>(state.global);
-
-		if let Some(idle) = state.queued.take() {
-			idle.cancel();
-		};
 
 		if let Some(relocate) = self.workspaces.remove_output(&self.config.output, output) {
 			self.loop_handle.insert_idle(move |state| {
@@ -358,30 +409,30 @@ impl Mayland {
 	}
 
 	pub fn queue_redraw_all(&mut self) {
-		let outputs = self.output_state.keys().cloned().collect::<Vec<_>>();
-		for output in outputs {
-			self.queue_redraw(output);
+		for state in self.output_state.values_mut() {
+			state.queued.queue();
 		}
 	}
 
 	pub fn queue_redraw(&mut self, output: Output) {
 		let output_state = self.output_state.get_mut(&output).unwrap();
+		output_state.queued.queue();
+	}
 
-		if output_state.queued.is_some() || output_state.waiting_for_vblank {
-			return;
+	fn redraw_all_queued(&mut self, backend: &mut Backend) {
+		while let Some((output, _)) = self
+			.output_state
+			.iter()
+			.find(|(_, state)| state.queued.is_queued())
+		{
+			let output = output.clone();
+			self.redraw(backend, &output);
 		}
-
-		let idle = self.loop_handle.insert_idle(move |state| {
-			state.mayland.redraw(&mut state.backend, &output);
-		});
-		output_state.queued = Some(idle);
 	}
 
 	fn redraw(&mut self, backend: &mut Backend, output: &Output) {
 		let output_state = self.output_state.get_mut(output).unwrap();
-
-		assert!(output_state.queued.take().is_some());
-		assert!(!output_state.waiting_for_vblank);
+		output_state.queued.idle();
 
 		let renderer = backend.renderer();
 		let elements = self.elements(renderer, output);
