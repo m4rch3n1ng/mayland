@@ -241,7 +241,7 @@ impl Tiling {
 		self.resize(layout_size);
 	}
 
-	pub fn resize_output(&mut self, output: &Output) {
+	pub fn output_area_changed(&mut self, output: &Output) {
 		let layout_size = layer_map_for_output(output).non_exclusive_zone();
 		self.resize(layout_size);
 	}

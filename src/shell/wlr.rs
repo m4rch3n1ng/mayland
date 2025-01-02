@@ -39,7 +39,7 @@ impl State {
 				map.arrange();
 				drop(map);
 
-				self.mayland.output_resized(&output);
+				self.mayland.output_area_changed(&output);
 
 				if layer_surface.can_receive_keyboard_focus()
 					&& (layer_surface.layer() == Layer::Overlay || layer_surface.layer() == Layer::Top)
@@ -73,7 +73,7 @@ impl Mayland {
 		drop(layer_map);
 
 		if has_changed {
-			self.output_resized(&output);
+			self.output_area_changed(&output);
 			self.queue_redraw(output);
 		} else {
 			self.queue_redraw(output);

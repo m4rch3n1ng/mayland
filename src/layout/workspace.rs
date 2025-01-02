@@ -172,7 +172,7 @@ impl WorkspaceManager {
 		}
 
 		for workspace in self.workspaces.values_mut() {
-			if workspace.output.as_ref().is_some_and(|wo| wo == output) {
+			if workspace.output.as_ref() == Some(output) {
 				workspace.remove_output(output);
 			}
 		}
@@ -180,10 +180,17 @@ impl WorkspaceManager {
 		self.outputs.remove_output(config, output)
 	}
 
-	pub fn resize_output(&mut self, output: &Output) {
-		let idx = &self.output_map[output];
-		let workspace = self.workspaces.get_mut(idx).unwrap();
-		workspace.resize_output(output);
+	pub fn output_size_changed(&mut self, config: &mayland_config::Outputs, output: &Output) {
+		self.outputs.reconfigure(config);
+		self.output_area_changed(output);
+	}
+
+	pub fn output_area_changed(&mut self, output: &Output) {
+		for workspace in self.workspaces.values_mut() {
+			if workspace.output.as_ref() == Some(output) {
+				workspace.output_area_changed(output);
+			}
+		}
 	}
 
 	pub fn refresh(&mut self) {
@@ -393,8 +400,8 @@ impl Workspace {
 		self.floating.unmap_output(output);
 	}
 
-	fn resize_output(&mut self, output: &Output) {
-		self.tiling.resize_output(output);
+	fn output_area_changed(&mut self, output: &Output) {
+		self.tiling.output_area_changed(output);
 	}
 
 	fn refresh(&mut self) {

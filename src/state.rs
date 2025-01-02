@@ -451,9 +451,18 @@ impl Mayland {
 		}
 	}
 
-	pub fn output_resized(&mut self, output: &Output) {
+	/// only the working area of the output has changed
+	///
+	/// the output does not need to be remapped
+	pub fn output_area_changed(&mut self, output: &Output) {
 		layer_map_for_output(output).arrange();
-		self.workspaces.resize_output(output);
+		self.workspaces.output_area_changed(output);
+	}
+
+	/// the output changed actual size and needs to (potentially) be remapped
+	pub fn output_size_changed(&mut self, output: &Output) {
+		layer_map_for_output(output).arrange();
+		self.workspaces.output_size_changed(&self.config.output, output);
 
 		let size = output_size(output);
 		let output_state = self.output_state.get_mut(output).unwrap();

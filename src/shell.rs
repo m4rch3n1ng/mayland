@@ -104,7 +104,7 @@ impl WlrLayerShellHandler for State {
 		});
 
 		if let Some(output) = output {
-			self.mayland.workspaces.resize_output(&output);
+			self.mayland.output_area_changed(&output);
 			self.mayland.queue_redraw(output);
 		}
 

@@ -80,6 +80,11 @@ impl OutputSpace {
 		}
 	}
 
+	/// todo `Option<Relocate>`
+	pub fn reconfigure(&mut self, config: &mayland_config::Outputs) {
+		self.reposition(config);
+	}
+
 	fn reposition(&mut self, config: &mayland_config::Outputs) {
 		let outputs = self.outputs.drain(..).map(|(output, _)| {
 			let output_info = output.user_data().get::<OutputInfo>().unwrap();

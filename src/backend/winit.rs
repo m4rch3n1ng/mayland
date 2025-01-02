@@ -148,7 +148,7 @@ impl State {
 				winit.output.change_current_state(Some(mode), None, None, None);
 				winit.output.set_preferred(mode);
 
-				self.mayland.output_resized(&winit.output);
+				self.mayland.output_size_changed(&winit.output);
 				self.mayland.queue_redraw(winit.output.clone());
 			}
 			WinitEvent::Redraw => {
