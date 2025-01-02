@@ -80,9 +80,25 @@ impl OutputSpace {
 		}
 	}
 
-	/// todo `Option<Relocate>`
-	pub fn reconfigure(&mut self, config: &mayland_config::Outputs) {
+	/// reconfigure the outputs on the output space
+	///
+	/// has to be called e.g. when an output changes size or the output
+	/// config changes
+	#[must_use = "you have to reposition the cursor"]
+	pub fn reconfigure(&mut self, config: &mayland_config::Outputs) -> Option<Relocate> {
+		// if we have no active outputs, we do not have any outputs,
+		// so we can short circuit and return immediately
+		let active_position = self.active_output_position()?;
+
 		self.reposition(config);
+
+		// as we didn't short circuit earlier we must still have an active output
+		let new_active_position = self.active_output_position().unwrap();
+		if active_position != new_active_position {
+			Some(Relocate::Relative(new_active_position - active_position))
+		} else {
+			None
+		}
 	}
 
 	fn reposition(&mut self, config: &mayland_config::Outputs) {

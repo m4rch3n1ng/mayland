@@ -180,9 +180,14 @@ impl WorkspaceManager {
 		self.outputs.remove_output(config, output)
 	}
 
-	pub fn output_size_changed(&mut self, config: &mayland_config::Outputs, output: &Output) {
-		self.outputs.reconfigure(config);
+	#[must_use = "you have to reposition the cursor"]
+	pub fn output_size_changed(
+		&mut self,
+		config: &mayland_config::Outputs,
+		output: &Output,
+	) -> Option<Relocate> {
 		self.output_area_changed(output);
+		self.outputs.reconfigure(config)
 	}
 
 	pub fn output_area_changed(&mut self, output: &Output) {

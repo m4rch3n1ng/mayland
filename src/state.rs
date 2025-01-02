@@ -462,7 +462,12 @@ impl Mayland {
 	/// the output changed actual size and needs to (potentially) be remapped
 	pub fn output_size_changed(&mut self, output: &Output) {
 		layer_map_for_output(output).arrange();
-		self.workspaces.output_size_changed(&self.config.output, output);
+
+		if let Some(relocate) = self.workspaces.output_size_changed(&self.config.output, output) {
+			self.loop_handle.insert_idle(move |state| {
+				state.relocate(relocate);
+			});
+		}
 
 		let size = output_size(output);
 		let output_state = self.output_state.get_mut(output).unwrap();
