@@ -25,7 +25,7 @@ impl OutputSpace {
 
 	#[must_use = "you have to reposition the cursor"]
 	pub fn add_output(&mut self, config: &mayland_config::Outputs, output: &Output) -> Option<Relocate> {
-		let active_position = self.active.as_ref().map(|act| self.output_position(act).unwrap());
+		let active_position = self.active_output_position();
 
 		// todo make this a little cleaner
 		self.outputs.push((output.clone(), Point::from((0, 0))));
@@ -40,9 +40,7 @@ impl OutputSpace {
 			let output_geometry = self.output_geometry(output).unwrap();
 			Some(Relocate::Absolute(output_geometry.center()))
 		} else if let Some(active_position) = active_position {
-			let active_output = self.active.as_ref().unwrap();
-			let new_active_position = self.output_position(active_output).unwrap();
-
+			let new_active_position = self.active_output_position().unwrap();
 			if active_position != new_active_position {
 				Some(Relocate::Relative(new_active_position - active_position))
 			} else {
@@ -59,15 +57,13 @@ impl OutputSpace {
 		self.outputs.remove(idx);
 
 		self.active.take_if(|active| active == output);
-		let active_position = self.active.as_ref().map(|act| self.output_position(act).unwrap());
+		let active_position = self.active_output_position();
 
 		self.reposition(config);
 
 		// the active output was not removed
 		if let Some(active_position) = active_position {
-			let active_output = self.active.as_ref().unwrap();
-			let new_active_position = self.output_position(active_output).unwrap();
-
+			let new_active_position = self.active_output_position().unwrap();
 			if active_position != new_active_position {
 				Some(Relocate::Relative(new_active_position - active_position))
 			} else {
@@ -156,11 +152,11 @@ impl OutputSpace {
 		})
 	}
 
-	fn output_position(&self, output: &Output) -> Option<Point<i32, Logical>> {
-		self.outputs
-			.iter()
-			.find(|(o, _)| o == output)
-			.map(|(_, pos)| *pos)
+	fn active_output_position(&self) -> Option<Point<i32, Logical>> {
+		self.active.as_ref().map(|active| {
+			let (_, position) = self.outputs.iter().find(|(o, _)| o == active).unwrap();
+			*position
+		})
 	}
 
 	pub fn refresh(&self) {
