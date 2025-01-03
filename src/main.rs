@@ -1,10 +1,9 @@
-use self::{error::MaylandError, state::State};
+use self::state::State;
 use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
 
 mod backend;
 mod comm;
 mod cursor;
-mod error;
 mod input;
 mod layout;
 mod render;
@@ -28,7 +27,7 @@ fn main() {
 
 	let mut state = match state {
 		Ok(state) => Ok(state),
-		Err(MaylandError::AlreadyPrinted) => return,
+		Err(mayland_config::Error::AlreadyPrinted) => return,
 		Err(e) => Err(e),
 	}
 	.unwrap();

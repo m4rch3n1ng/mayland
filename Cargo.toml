@@ -16,7 +16,6 @@ mayland-config = { path = "mayland-config" }
 mayland-comm = { path = "mayland-comm" }
 serde = "1.0.217"
 serde_json = "1.0.134"
-thiserror = "2.0.9"
 
 [workspace.dependencies.smithay]
 git = "https://github.com/Smithay/smithay"
@@ -44,7 +43,6 @@ log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 mayland-config = { workspace = true }
 mayland-comm = { workspace = true }
 serde_json = { workspace = true }
-thiserror = { workspace = true }
 tracing = "0.1.41"
 tracing-journald = "0.3.1"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }

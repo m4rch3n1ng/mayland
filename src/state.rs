@@ -2,7 +2,6 @@ use crate::{
 	backend::{udev::Udev, winit::Winit, Backend},
 	comm::MaySocket,
 	cursor::{Cursor, RenderCursor},
-	error::MaylandError,
 	input::device::InputDevice,
 	layout::workspace::WorkspaceManager,
 	render::MaylandRenderElements,
@@ -83,7 +82,7 @@ impl State {
 	pub fn new_winit(
 		event_loop: &mut EventLoop<'static, State>,
 		display: Display<State>,
-	) -> Result<Self, MaylandError> {
+	) -> Result<Self, mayland_config::Error> {
 		let mut mayland = Mayland::new(event_loop, display, CompMod::Alt)?;
 
 		let winit = Winit::init(&mut mayland);
@@ -98,7 +97,7 @@ impl State {
 	pub fn new_udev(
 		event_loop: &mut EventLoop<'static, State>,
 		display: Display<State>,
-	) -> Result<Self, MaylandError> {
+	) -> Result<Self, mayland_config::Error> {
 		let mut mayland = Mayland::new(event_loop, display, CompMod::Meta)?;
 
 		let udev = Udev::init(&mut mayland);
@@ -203,7 +202,7 @@ impl Mayland {
 		event_loop: &mut EventLoop<'static, State>,
 		display: Display<State>,
 		comp_mod: CompMod,
-	) -> Result<Self, MaylandError> {
+	) -> Result<Self, mayland_config::Error> {
 		let config = Config::init(comp_mod)?;
 		let mut environment = HashMap::new();
 

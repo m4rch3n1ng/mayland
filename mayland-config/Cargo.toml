@@ -12,7 +12,7 @@ dirs = { workspace = true }
 mayland-comm = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 smithay = { workspace = true, features = ["backend_libinput"] }
-thiserror = { workspace = true }
+thiserror = "2.0.9"
 
 [dependencies.mayfig]
 git = "https://github.com/m4rch3n1ng/mayfig"
