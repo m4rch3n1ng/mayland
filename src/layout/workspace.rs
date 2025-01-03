@@ -577,7 +577,7 @@ impl Workspace {
 			let elements = window.render_elements(renderer, window_render_location, 1.0.into(), 1.0);
 			render_elements.extend(elements);
 
-			let color = if focus.as_ref().is_some_and(|focus| focus == window) {
+			let color = if focus.as_ref() == Some(window) {
 				decoration.focus.active
 			} else {
 				decoration.focus.inactive

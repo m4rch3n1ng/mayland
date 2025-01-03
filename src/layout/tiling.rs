@@ -303,7 +303,7 @@ impl Tiling {
 			let render_location = window_rect.to_physical_precise_round(scale);
 			let mut elements = window.crop_render_elements(renderer, render_location, scale.into(), 1.);
 
-			let color = if focus.as_ref().is_some_and(|focus| focus == window) {
+			let color = if focus.as_ref() == Some(window) {
 				decoration.focus.active
 			} else {
 				decoration.focus.inactive
