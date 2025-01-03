@@ -74,9 +74,8 @@ impl Mayland {
 
 		if has_changed {
 			self.output_area_changed(&output);
-			self.queue_redraw(output);
-		} else {
-			self.queue_redraw(output);
 		}
+
+		self.queue_redraw(output);
 	}
 }
