@@ -1051,6 +1051,7 @@ dependencies = [
 name = "mayland"
 version = "0.1.0"
 dependencies = [
+ "anstream",
  "async-channel",
  "calloop 0.14.2",
  "chrono",
@@ -1083,7 +1084,6 @@ name = "mayland-config"
 version = "0.1.0"
 dependencies = [
  "annotate-snippets",
- "anstream",
  "bitflags 2.6.0",
  "dirs",
  "mayfig",

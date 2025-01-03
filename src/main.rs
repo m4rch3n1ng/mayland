@@ -26,11 +26,13 @@ fn main() {
 	};
 
 	let mut state = match state {
-		Ok(state) => Ok(state),
-		Err(mayland_config::Error::AlreadyPrinted) => return,
-		Err(e) => Err(e),
-	}
-	.unwrap();
+		Ok(state) => state,
+		Err(err) => {
+			anstream::println!("{}", err);
+			return;
+		}
+	};
+
 	state.load_config();
 
 	state.mayland.environment.extend([

@@ -6,7 +6,6 @@ license = { workspace = true }
 
 [dependencies]
 annotate-snippets = "0.11.5"
-anstream = "0.6.18"
 bitflags = "2.6.0"
 dirs = { workspace = true }
 mayland-comm = { workspace = true }

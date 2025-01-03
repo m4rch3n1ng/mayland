@@ -1,4 +1,3 @@
-use annotate_snippets::{Level, Renderer, Snippet};
 use bind::CompMod;
 use serde::Deserialize;
 use std::{path::PathBuf, sync::LazyLock};
@@ -49,28 +48,7 @@ impl Config {
 
 				Ok(config)
 			}
-			Err(Error::Mayfig { error, file }) => {
-				let code = error.code().to_string();
-				let path = &*CONFIG_PATH.to_string_lossy();
-
-				let message = if let Some(span) = error.span() {
-					Level::Error.title(&code).snippet(
-						Snippet::source(&file)
-							.origin(path)
-							.fold(true)
-							.annotation(Level::Error.span(span.range())),
-					)
-				} else {
-					Level::Error.title(&code)
-				};
-
-				let renderer = Renderer::styled();
-				anstream::println!("{}", renderer.render(message));
-
-				Err(Error::AlreadyPrinted)
-			}
-			Err(e @ Error::IoError(_)) => Err(e),
-			Err(Error::AlreadyPrinted) => unreachable!(),
+			Err(e) => Err(e),
 		}
 	}
 
