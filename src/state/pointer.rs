@@ -11,19 +11,19 @@ impl State {
 	pub fn relocate(&mut self, relocate: Relocate) {
 		match relocate {
 			Relocate::Absolute(location) => {
-				self.move_cursor(location.to_f64());
+				self.move_pointer(location.to_f64());
 			}
 			Relocate::Relative(relative) => {
 				let current = self.mayland.pointer.current_location();
 				let location = current + relative.to_f64();
-				self.move_cursor(location);
+				self.move_pointer(location);
 			}
 		}
 
 		self.mayland.queue_redraw_all();
 	}
 
-	pub fn move_cursor(&mut self, location: Point<f64, Logical>) {
+	pub fn move_pointer(&mut self, location: Point<f64, Logical>) {
 		let pointer = self.mayland.pointer.clone();
 		let under = self.surface_under(location);
 
