@@ -39,6 +39,7 @@ impl State {
 				time,
 			},
 		);
+		pointer.frame(self);
 	}
 
 	pub fn focus_layer_surface(&mut self, surface: LayerSurface) {
