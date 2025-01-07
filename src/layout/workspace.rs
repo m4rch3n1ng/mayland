@@ -411,8 +411,19 @@ impl Workspace {
 		self.floating.elements().chain(self.tiling.windows())
 	}
 
+	pub fn windows_geometry(
+		&self,
+	) -> impl DoubleEndedIterator<Item = (&MappedWindow, Rectangle<i32, Logical>)> {
+		self.floating
+			.elements()
+			.map(|window| (window, self.floating.element_geometry(window).unwrap()))
+			.chain(self.tiling.windows_geometry())
+	}
+
 	pub fn window_geometry(&self, window: &MappedWindow) -> Option<Rectangle<i32, Logical>> {
-		self.floating.element_geometry(window)
+		self.windows_geometry()
+			.find(|(w, _)| w == &window)
+			.map(|(_, geom)| geom)
 	}
 
 	pub fn window_under(

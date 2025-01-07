@@ -257,8 +257,10 @@ impl Tiling {
 		self.windows.iter().flatten().map(|w| &w.0)
 	}
 
-	fn windows_geometry(&self) -> impl DoubleEndedIterator<Item = &(MappedWindow, Rectangle<i32, Logical>)> {
-		self.windows.iter().flatten()
+	pub fn windows_geometry(
+		&self,
+	) -> impl DoubleEndedIterator<Item = (&MappedWindow, Rectangle<i32, Logical>)> {
+		self.windows.iter().flatten().map(|(w, g)| (w, *g))
 	}
 
 	pub fn window_under(
@@ -298,7 +300,7 @@ impl Tiling {
 		focus: Option<MappedWindow>,
 	) -> impl Iterator<Item = MaylandRenderElements> + use<'_, 'a, 'b> {
 		self.windows_geometry().flat_map(move |(window, geom)| {
-			let window_rect = window.render_rectangle(*geom);
+			let window_rect = window.render_rectangle(geom);
 
 			let render_location = window_rect.to_physical_precise_round(scale);
 			let mut elements = window.crop_render_elements(renderer, render_location, scale.into(), 1.);
@@ -309,7 +311,7 @@ impl Tiling {
 				decoration.focus.inactive
 			};
 
-			let focus_ring = FocusRing::element(renderer, *geom, color.as_f32s(), decoration.focus.thickness);
+			let focus_ring = FocusRing::element(renderer, geom, color.as_f32s(), decoration.focus.thickness);
 			elements.push(MaylandRenderElements::FocusElement(focus_ring));
 
 			elements
