@@ -288,13 +288,11 @@ impl State {
 				self.mayland.loop_signal.wakeup();
 			}
 			Action::CloseWindow => {
-				let Some(focus) = self.mayland.keyboard.current_focus() else {
+				let Some(KeyboardFocusTarget::Window(window)) = self.mayland.keyboard.current_focus() else {
 					return;
 				};
 
-				if let KeyboardFocusTarget::Window(window) = focus {
-					window.close();
-				}
+				window.close();
 			}
 			Action::Workspace(idx) => {
 				let location = self.mayland.workspaces.switch_to_workspace(idx);
