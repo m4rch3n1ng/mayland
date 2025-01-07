@@ -148,22 +148,28 @@ impl Udev {
 
 		match drm_compositor.render_frame(&mut device.glow, elements, [0.; 4], FrameFlags::DEFAULT) {
 			Ok(render_output_res) => {
+				// todo put into on_vblank
 				mayland.post_repaint(output);
+
+				if render_output_res.is_empty {
+					return;
+				}
 
 				let output_presentation_feedback =
 					mayland.presentation_feedback(output, &render_output_res.states);
 
-				if !render_output_res.is_empty {
-					match drm_compositor.queue_frame(output_presentation_feedback) {
-						Ok(()) => {
-							let output_state = mayland.output_state.get_mut(output).unwrap();
-							output_state.queued.waiting_for_vblank();
-						}
-						Err(err) => tracing::error!("error queueing frame {:?}", err),
+				match drm_compositor.queue_frame(output_presentation_feedback) {
+					Ok(()) => {
+						let output_state = mayland.output_state.get_mut(output).unwrap();
+						output_state.queued.waiting_for_vblank();
 					}
+					Err(err) => tracing::error!("error queueing frame {:?}", err),
 				}
 			}
-			Err(err) => tracing::error!("error rendering frame {:?}", err),
+			Err(err) => {
+				drm_compositor.reset_buffers();
+				tracing::error!("error rendering frame {:?}", err);
+			}
 		};
 	}
 
