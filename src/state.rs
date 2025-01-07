@@ -240,15 +240,13 @@ impl QueueState {
 		}
 	}
 
-	pub fn on_vblank(&mut self) -> bool {
+	pub fn on_vblank(&mut self) {
 		if let QueueState::WaitingForVBlank { queued } = *self {
 			if queued {
 				*self = QueueState::Queued;
 			} else {
 				*self = QueueState::Idle;
 			}
-
-			queued
 		} else {
 			unreachable!()
 		}

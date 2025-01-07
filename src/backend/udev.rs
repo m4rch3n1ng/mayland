@@ -556,11 +556,9 @@ impl Udev {
 			.clone();
 
 		let output_state = mayland.output_state.get_mut(&output).unwrap();
-		let requeued = output_state.queued.on_vblank();
+		output_state.queued.on_vblank();
 
-		if !requeued {
-			mayland.send_frame_callbacks(&output);
-		}
+		mayland.send_frame_callbacks(&output);
 	}
 }
 
