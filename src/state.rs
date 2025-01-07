@@ -240,13 +240,15 @@ impl QueueState {
 		}
 	}
 
-	pub fn on_vblank(&mut self) {
+	pub fn on_vblank(&mut self) -> bool {
 		if let QueueState::WaitingForVBlank { queued } = *self {
 			if queued {
-				*self = QueueState::Queued
+				*self = QueueState::Queued;
 			} else {
-				*self = QueueState::Idle
+				*self = QueueState::Idle;
 			}
+
+			queued
 		} else {
 			unreachable!()
 		}
@@ -539,7 +541,7 @@ impl Mayland {
 		output_presentation_feedback
 	}
 
-	pub fn post_repaint(&self, output: &Output) {
+	pub fn send_frame_callbacks(&self, output: &Output) {
 		for mapped in self.workspaces.windows_for_output(output) {
 			mapped
 				.window

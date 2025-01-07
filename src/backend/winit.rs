@@ -111,7 +111,7 @@ impl Winit {
 
 		self.backend.submit(Some(&[damage])).unwrap();
 
-		mayland.post_repaint(output);
+		mayland.send_frame_callbacks(output);
 
 		// ask for redraw to schedule new frame.
 		self.backend.window().request_redraw();

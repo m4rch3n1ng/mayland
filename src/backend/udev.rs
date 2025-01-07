@@ -148,9 +148,6 @@ impl Udev {
 
 		match drm_compositor.render_frame(&mut device.glow, elements, [0.; 4], FrameFlags::DEFAULT) {
 			Ok(render_output_res) => {
-				// todo put into on_vblank
-				mayland.post_repaint(output);
-
 				if render_output_res.is_empty {
 					return;
 				}
@@ -559,9 +556,11 @@ impl Udev {
 			.clone();
 
 		let output_state = mayland.output_state.get_mut(&output).unwrap();
-		output_state.queued.on_vblank();
+		let requeued = output_state.queued.on_vblank();
 
-		mayland.queue_redraw(output);
+		if !requeued {
+			mayland.send_frame_callbacks(&output);
+		}
 	}
 }
 
