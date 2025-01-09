@@ -4,8 +4,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 pub enum Action {
 	Quit,
+
 	#[serde(alias = "close")]
 	CloseWindow,
+	ToggleFloating,
 
 	Workspace(usize),
 
@@ -16,7 +18,9 @@ impl From<Action> for mayland_comm::Action {
 	fn from(action: Action) -> Self {
 		match action {
 			Action::Quit => mayland_comm::Action::Quit,
+
 			Action::CloseWindow => mayland_comm::Action::CloseWindow,
+			Action::ToggleFloating => mayland_comm::Action::ToggleFloating,
 
 			Action::Workspace(workspace) => mayland_comm::Action::Workspace(workspace),
 
@@ -32,7 +36,9 @@ impl From<mayland_comm::Action> for Action {
 	fn from(action: mayland_comm::Action) -> Self {
 		match action {
 			mayland_comm::Action::Quit => Action::Quit,
+
 			mayland_comm::Action::CloseWindow => Action::CloseWindow,
+			mayland_comm::Action::ToggleFloating => Action::ToggleFloating,
 
 			mayland_comm::Action::Workspace(workspace) => Action::Workspace(workspace),
 

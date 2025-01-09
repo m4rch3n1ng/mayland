@@ -11,10 +11,11 @@ use smithay::{
 	},
 	desktop::{layer_map_for_output, space::SpaceElement, LayerMap, LayerSurface, Space},
 	output::Output,
-	utils::{Logical, Physical, Point, Rectangle, Scale},
+	utils::{Logical, Physical, Point, Rectangle, Scale, Size},
 	wayland::shell::wlr_layer::Layer,
 };
 use std::collections::{BTreeMap, HashMap};
+use tracing::instrument;
 
 #[derive(Debug)]
 pub struct WorkspaceManager {
@@ -307,6 +308,26 @@ impl WorkspaceManager {
 	}
 }
 
+impl WorkspaceManager {
+	#[instrument(skip_all)]
+	pub fn toggle_floating(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
+		if let Some(active) = &self.outputs.active {
+			let workspace = self.output_map[active];
+			let workspace = self.workspaces.get_mut(&workspace).unwrap();
+
+			if !workspace.has_window(&window) {
+				tracing::warn!("window was not on the active workspace?");
+				return;
+			}
+
+			let output_geometry = self.outputs.output_geometry(active).unwrap();
+			let pointer = pointer - output_geometry.loc.to_f64();
+
+			workspace.toggle_floating(window, pointer);
+		}
+	}
+}
+
 #[derive(Debug)]
 pub struct Workspace {
 	idx: usize,
@@ -354,6 +375,21 @@ impl Workspace {
 		self.floating.refresh();
 	}
 
+	/// get the [`Point`], that the window would have to be mapped to
+	/// to be centered.
+	///
+	/// calculated by subtracting the relative center of the window by the
+	/// relative center of the output.
+	fn relative_center(&self, window_size: Size<i32, Logical>) -> Point<i32, Logical> {
+		if let Some(output) = &self.output {
+			let window_center = window_size.center();
+			let output_center = output_size(output).center();
+			output_center - window_center
+		} else {
+			Point::from((0, 0))
+		}
+	}
+
 	pub fn is_empty(&self) -> bool {
 		self.windows().count() == 0
 	}
@@ -361,15 +397,7 @@ impl Workspace {
 
 impl Workspace {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
-		let center = if let Some(output) = &self.output {
-			let window_geom = window.geometry();
-			let window_center = window_geom.size.center();
-
-			let output_center = output_size(output).center();
-			output_center - window_center
-		} else {
-			Point::from((0, 0))
-		};
+		let center = self.relative_center(window.geometry().size);
 
 		if window.is_non_resizable() {
 			self.floating.map_element(window, center, true);
@@ -439,6 +467,30 @@ impl Workspace {
 					(w, w.render_location(location))
 				})
 			})
+	}
+}
+
+impl Workspace {
+	fn toggle_floating(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
+		if self.tiling.remove_window(&window) {
+			let (min, max) = window.min_max_size();
+			let output_size = self.output.as_ref().map(output_size).unwrap_or_default();
+
+			let size = Size::from((
+				(output_size.w * 3 / 4).clamp(min.w, max.w),
+				(output_size.h * 3 / 4).clamp(min.h, max.h),
+			));
+
+			window.resize(size);
+
+			let center = self.relative_center(size);
+			self.floating.map_element(window, center, true);
+		} else if !self.tiling.is_full() {
+			debug_assert!(self.floating.element_location(&window).is_some());
+
+			self.floating.unmap_elem(&window);
+			self.tiling.add_window(window, pointer);
+		}
 	}
 }
 

@@ -79,7 +79,9 @@ layout {
 
 bind {
 	"mod escape" = "quit"
+
 	"mod q" = "close"
+	"mod v" = "toggle_floating"
 
 	"mod t" = "spawn" [ "kitty" ]
 	"mod e" = "spawn" [ "nautilus" ]

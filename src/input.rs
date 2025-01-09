@@ -294,6 +294,15 @@ impl State {
 
 				window.close();
 			}
+			Action::ToggleFloating => {
+				let Some(KeyboardFocusTarget::Window(window)) = self.mayland.keyboard.current_focus() else {
+					return;
+				};
+
+				let pointer = self.mayland.pointer.current_location();
+				self.mayland.workspaces.toggle_floating(window, pointer);
+				self.mayland.queue_redraw_all();
+			}
 			Action::Workspace(idx) => {
 				let location = self.mayland.workspaces.switch_to_workspace(idx);
 

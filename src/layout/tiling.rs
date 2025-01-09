@@ -257,6 +257,14 @@ impl Tiling {
 		self.windows.iter().flatten().map(|w| &w.0)
 	}
 
+	pub fn is_full(&self) -> bool {
+		match self.windows {
+			[None, None] | [Some(_), None] => false,
+			[None, Some(_)] => unreachable!(),
+			[Some(_), Some(_)] => true,
+		}
+	}
+
 	pub fn windows_geometry(
 		&self,
 	) -> impl DoubleEndedIterator<Item = (&MappedWindow, Rectangle<i32, Logical>)> {

@@ -28,6 +28,7 @@ use smithay::{
 };
 use std::{
 	borrow::Cow,
+	num::NonZero,
 	sync::{Arc, Mutex},
 };
 
@@ -117,6 +118,22 @@ impl MappedWindow {
 
 				min.w > 0 && min.h > 0 && min == max
 			}
+		}
+	}
+
+	pub fn min_max_size(&self) -> (Size<i32, Logical>, Size<i32, Logical>) {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => with_states(xdg.wl_surface(), |states| {
+				let mut guard = states.cached_state.get::<SurfaceCachedState>();
+				let data = guard.current();
+
+				let max_size = Size::from((
+					NonZero::new(data.max_size.w).map_or(i32::MAX, NonZero::get),
+					NonZero::new(data.max_size.h).map_or(i32::MAX, NonZero::get),
+				));
+
+				(data.min_size, max_size)
+			}),
 		}
 	}
 

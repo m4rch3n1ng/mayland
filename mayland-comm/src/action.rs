@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 #[serde(tag = "tag", content = "val")]
 pub enum Action {
 	Quit,
+
 	CloseWindow,
+	ToggleFloating,
 
 	Workspace(usize),
 

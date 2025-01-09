@@ -61,13 +61,22 @@ impl Default for Binds {
 			Action::Quit,
 		);
 
-		// close a window
+		// close the active window
 		binds.insert(
 			Mapping {
 				mods: Modifiers::MOD,
 				key: Keysym::q,
 			},
 			Action::CloseWindow,
+		);
+
+		// toggle the active window between floating and tiling
+		binds.insert(
+			Mapping {
+				mods: Modifiers::MOD,
+				key: Keysym::v,
+			},
+			Action::ToggleFloating,
 		);
 
 		// spawn kitty
