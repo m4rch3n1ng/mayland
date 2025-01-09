@@ -97,6 +97,15 @@ impl Default for Binds {
 			Action::Spawn(vec!["firefox".to_owned()]),
 		);
 
+		// spawn fuzzel
+		binds.insert(
+			Mapping {
+				mods: Modifiers::MOD,
+				key: Keysym::space,
+			},
+			Action::Spawn(vec!["fuzzel".to_owned()]),
+		);
+
 		// workspaces
 		binds.insert(
 			Mapping {
