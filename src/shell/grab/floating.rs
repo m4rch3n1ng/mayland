@@ -382,7 +382,7 @@ impl State {
 		let window_geometry = workspace.window_geometry(&window).unwrap();
 		let pointer_location = pointer.current_location().to_i32_round();
 
-		let output_location = self.mayland.workspaces.active_output_geometry().unwrap().loc;
+		let output_location = self.mayland.workspaces.active_output_position().unwrap();
 		let relative_position = pointer_location - output_location - window_geometry.loc;
 		let window_size = window_geometry.size;
 

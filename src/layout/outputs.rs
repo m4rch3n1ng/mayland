@@ -152,11 +152,10 @@ impl OutputSpace {
 		})
 	}
 
-	fn active_output_position(&self) -> Option<Point<i32, Logical>> {
-		self.active.as_ref().map(|active| {
-			let (_, position) = self.outputs.iter().find(|(o, _)| o == active).unwrap();
-			*position
-		})
+	pub fn active_output_position(&self) -> Option<Point<i32, Logical>> {
+		let active = self.active.as_ref()?;
+		let position = self.output_position(active).unwrap();
+		Some(position)
 	}
 
 	pub fn refresh(&self) {
@@ -171,6 +170,10 @@ impl OutputSpace {
 		let size = output_size(output);
 		let geometry = Rectangle { loc: *location, size };
 		Some(geometry)
+	}
+
+	pub fn output_position(&self, output: &Output) -> Option<Point<i32, Logical>> {
+		self.outputs.iter().find(|(o, _)| o == output).map(|(_, p)| *p)
 	}
 
 	pub fn output_under(&self, point: Point<f64, Logical>) -> Option<&Output> {

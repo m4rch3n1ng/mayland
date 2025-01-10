@@ -157,8 +157,8 @@ impl State {
 
 	fn on_pointer_move_absolute<I: InputBackend>(&mut self, event: I::PointerMotionAbsoluteEvent) {
 		let output = self.mayland.workspaces.outputs().next().unwrap().clone();
-		let output_geo = self.mayland.workspaces.output_geometry(&output).unwrap();
-		let location = event.position_transformed(output_geo.size) + output_geo.loc.to_f64();
+		let output_geometry = self.mayland.workspaces.output_geometry(&output).unwrap();
+		let location = event.position_transformed(output_geometry.size) + output_geometry.loc.to_f64();
 
 		let under = self.surface_under(location);
 		let serial = SERIAL_COUNTER.next_serial();
@@ -407,7 +407,7 @@ impl State {
 		wlr_layers: &[WlrLayer],
 		kind: SurfaceFocus,
 	) -> Option<(LayerSurface, WlSurface, Point<i32, Logical>)> {
-		let output_geometry = self.mayland.workspaces.output_geometry(output).unwrap();
+		let output_position = self.mayland.workspaces.output_position(output).unwrap();
 		let layer_map = layer_map_for_output(output);
 
 		for wlr_layer in wlr_layers {
@@ -424,7 +424,7 @@ impl State {
 					// returns the render surface view offset, which is added to this.
 					// currently (and probably in the future as well) this part of the function is
 					// exclusive to keyboard focus, which does not use the surface location.
-					let surface_location = output_geometry.loc + layer_geometry.loc;
+					let surface_location = output_position + layer_geometry.loc;
 
 					return Some((
 						exclusive.clone(),
@@ -440,10 +440,10 @@ impl State {
 				}
 
 				let layer_geometry = layer_map.layer_geometry(layer).unwrap();
-				let layer_location = location - output_geometry.loc.to_f64() - layer_geometry.loc.to_f64();
+				let layer_location = location - output_position.to_f64() - layer_geometry.loc.to_f64();
 
 				if let Some((surface, loc)) = layer.surface_under(layer_location, WindowSurfaceType::ALL) {
-					let surface_location = loc + layer_geometry.loc + output_geometry.loc;
+					let surface_location = loc + layer_geometry.loc + output_position;
 					return Some((layer.clone(), surface, surface_location));
 				}
 			}

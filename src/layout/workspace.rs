@@ -229,14 +229,16 @@ impl WorkspaceManager {
 		self.outputs.output_geometry(output)
 	}
 
+	pub fn output_position(&self, output: &Output) -> Option<Point<i32, Logical>> {
+		self.outputs.output_position(output)
+	}
+
 	pub fn active_output(&self) -> Option<&Output> {
 		self.outputs.active.as_ref()
 	}
 
-	pub fn active_output_geometry(&self) -> Option<Rectangle<i32, Logical>> {
-		let active_output = self.outputs.active.as_ref()?;
-		let geometry = self.outputs.output_geometry(active_output).unwrap();
-		Some(geometry)
+	pub fn active_output_position(&self) -> Option<Point<i32, Logical>> {
+		self.outputs.active_output_position()
 	}
 
 	pub fn output_under(&self, point: Point<f64, Logical>) -> Option<&Output> {
@@ -259,8 +261,8 @@ impl WorkspaceManager {
 impl WorkspaceManager {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
 		if let Some(active) = &self.outputs.active {
-			let output_geo = self.outputs.output_geometry(active).unwrap();
-			let pointer = pointer - output_geo.loc.to_f64();
+			let output_position = self.outputs.output_position(active).unwrap();
+			let pointer = pointer - output_position.to_f64();
 
 			let workspace = self.output_map[active];
 			let workspace = self.workspaces.get_mut(&workspace).unwrap();
@@ -307,14 +309,14 @@ impl WorkspaceManager {
 		location: Point<f64, Logical>,
 	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
 		if let Some(output) = self.output_under(location) {
-			let output_geometry = self.outputs.output_geometry(output).unwrap();
-			let location = location - output_geometry.loc.to_f64();
+			let output_position = self.outputs.output_position(output).unwrap();
+			let location = location - output_position.to_f64();
 
 			let workspace = &self.output_map[output];
 			let workspace = &self.workspaces[workspace];
 
 			let (window, location) = workspace.window_under(location)?;
-			Some((window, location + output_geometry.loc))
+			Some((window, location + output_position))
 		} else {
 			None
 		}

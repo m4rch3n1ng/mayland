@@ -526,9 +526,9 @@ impl Mayland {
 		renderer: &mut GlowRenderer,
 		output: &Output,
 	) -> Vec<MaylandRenderElements> {
-		let geometry = self.workspaces.output_geometry(output).unwrap();
+		let output_position = self.workspaces.output_position(output).unwrap();
 
-		let pointer_pos = self.pointer.current_location() - geometry.loc.to_f64();
+		let pointer_pos = self.pointer.current_location() - output_position.to_f64();
 		let pointer_pos = pointer_pos.to_physical(1.);
 
 		let render_cursor = self.cursor.get_render_cursor(1);
