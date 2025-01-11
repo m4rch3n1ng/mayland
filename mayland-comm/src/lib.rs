@@ -4,6 +4,9 @@
 //! instance, mayland exposes the path to the mayland socket in the environment variable
 //! [`MAYLAND_SOCKET_VAR`].
 //!
+//! to communicate with mayland, you have to send a [`Request`] and then mayland will send
+//! a [`Response`] back.
+//!
 //! all requests are sent as json, where the request is all on a single line to allow for future
 //! request batching.
 //! this is easily done with the default [`serde_json`](https://crates.io/crates/serde_json)
