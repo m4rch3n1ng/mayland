@@ -1,4 +1,4 @@
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 use serde::{de::Visitor, Deserialize};
 
 #[derive(Debug, Default)]
@@ -74,14 +74,18 @@ impl Matcher {
 
 #[derive(Debug)]
 pub enum Match {
-	Regex { regex: Regex, inverted: bool },
+	Regex {
+		regex: Regex,
+		inverted: bool,
+		case_insensitive: bool,
+	},
 	Plain(String),
 }
 
 impl Match {
 	fn r#match(&self, haystack: &str) -> bool {
 		match self {
-			Match::Regex { regex, inverted } => regex.is_match(haystack) ^ inverted,
+			Match::Regex { regex, inverted, .. } => regex.is_match(haystack) ^ inverted,
 			Match::Plain(plain) => plain == haystack,
 		}
 	}
@@ -110,11 +114,15 @@ impl Visitor<'_> for MatchVis {
 			// by default, which is, i think, what you usually want, and makes the matching more
 			// consistent with non-regex matching, which already is a full word match
 			let regex = format!("^(:?{})$", regex_opts.pattern);
-			let regex = Regex::new(&regex).map_err(serde::de::Error::custom)?;
+			let regex = RegexBuilder::new(&regex)
+				.case_insensitive(regex_opts.case_insensitive)
+				.build()
+				.map_err(serde::de::Error::custom)?;
 
 			Ok(Match::Regex {
 				regex,
 				inverted: regex_opts.inverted,
+				case_insensitive: regex_opts.case_insensitive,
 			})
 		} else {
 			let plain = Match::Plain(v.to_owned());
@@ -136,6 +144,8 @@ struct RegexOptions<'a> {
 	pattern: &'a str,
 	// invert the regex match
 	inverted: bool,
+	/// make the regex match case-insensitive
+	case_insensitive: bool,
 }
 
 fn parse_regex_windowrules(v: &str) -> Option<Result<RegexOptions, RegexError>> {
@@ -145,12 +155,18 @@ fn parse_regex_windowrules(v: &str) -> Option<Result<RegexOptions, RegexError>> 
 	let opts = RegexOptions {
 		pattern,
 		inverted: false,
+		case_insensitive: false,
 	};
 
 	let opts = flags.chars().try_fold(opts, |mut opts, f| match f {
 		'v' if opts.inverted => Err(RegexError::DuplicateFlag('v')),
 		'v' => {
 			opts.inverted = true;
+			Ok(opts)
+		}
+		'i' if opts.case_insensitive => Err(RegexError::DuplicateFlag('i')),
+		'i' => {
+			opts.case_insensitive = true;
 			Ok(opts)
 		}
 		c => Err(RegexError::UnknownFlag(c)),
@@ -166,12 +182,14 @@ impl PartialEq for Match {
 				Match::Regex {
 					regex: r1,
 					inverted: v1,
+					case_insensitive: i1,
 				},
 				Match::Regex {
 					regex: r2,
 					inverted: v2,
+					case_insensitive: i2,
 				},
-			) => r1.as_str() == r2.as_str() && v1 == v2,
+			) => r1.as_str() == r2.as_str() && v1 == v2 && i1 == i2,
 			(Match::Plain(p1), Match::Plain(p2)) => p1 == p2,
 			_ => false,
 		}
