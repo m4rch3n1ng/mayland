@@ -74,14 +74,14 @@ impl Matcher {
 
 #[derive(Debug)]
 pub enum Match {
-	Regex(Regex),
+	Regex { regex: Regex, inverted: bool },
 	Plain(String),
 }
 
 impl Match {
 	fn r#match(&self, haystack: &str) -> bool {
 		match self {
-			Match::Regex(regex) => regex.is_match(haystack),
+			Match::Regex { regex, inverted } => regex.is_match(haystack) ^ inverted,
 			Match::Plain(plain) => plain == haystack,
 		}
 	}
@@ -103,13 +103,19 @@ impl Visitor<'_> for MatchVis {
 	}
 
 	fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
-		if let Some(regex) = strip_prefix_suffix(v, '/') {
+		if let Some(regex_opts) = parse_regex_windowrules(v) {
+			let regex_opts = regex_opts.map_err(serde::de::Error::custom)?;
+
 			// add an implicit `^(?:)$` around the regex, so you have a full-word match
 			// by default, which is, i think, what you usually want, and makes the matching more
 			// consistent with non-regex matching, which already is a full word match
-			let regex = format!("^(:?{})$", regex);
+			let regex = format!("^(:?{})$", regex_opts.pattern);
 			let regex = Regex::new(&regex).map_err(serde::de::Error::custom)?;
-			Ok(Match::Regex(regex))
+
+			Ok(Match::Regex {
+				regex,
+				inverted: regex_opts.inverted,
+			})
 		} else {
 			let plain = Match::Plain(v.to_owned());
 			Ok(plain)
@@ -117,16 +123,55 @@ impl Visitor<'_> for MatchVis {
 	}
 }
 
-fn strip_prefix_suffix(v: &str, s: char) -> Option<&str> {
-	let v = v.strip_prefix(s)?;
-	let v = v.strip_suffix(s)?;
-	Some(v)
+#[derive(Debug, thiserror::Error)]
+enum RegexError {
+	#[error("duplicate regex flag {0:?}")]
+	DuplicateFlag(char),
+	#[error("unknown regex flag {0:?}")]
+	UnknownFlag(char),
+}
+
+struct RegexOptions<'a> {
+	/// regex body
+	pattern: &'a str,
+	// invert the regex match
+	inverted: bool,
+}
+
+fn parse_regex_windowrules(v: &str) -> Option<Result<RegexOptions, RegexError>> {
+	let v = v.strip_prefix('/')?;
+	let (pattern, flags) = v.rsplit_once('/')?;
+
+	let opts = RegexOptions {
+		pattern,
+		inverted: false,
+	};
+
+	let opts = flags.chars().try_fold(opts, |mut opts, f| match f {
+		'v' if opts.inverted => Err(RegexError::DuplicateFlag('v')),
+		'v' => {
+			opts.inverted = true;
+			Ok(opts)
+		}
+		c => Err(RegexError::UnknownFlag(c)),
+	});
+
+	Some(opts)
 }
 
 impl PartialEq for Match {
 	fn eq(&self, other: &Self) -> bool {
 		match (self, other) {
-			(Match::Regex(r1), Match::Regex(r2)) => r1.as_str() == r2.as_str(),
+			(
+				Match::Regex {
+					regex: r1,
+					inverted: v1,
+				},
+				Match::Regex {
+					regex: r2,
+					inverted: v2,
+				},
+			) => r1.as_str() == r2.as_str() && v1 == v2,
 			(Match::Plain(p1), Match::Plain(p2)) => p1 == p2,
 			_ => false,
 		}

@@ -105,4 +105,9 @@ windowrules {
 		floating = true
 		opacity = 0.8
 	}
+
+	match [ "firefox" "/.*Mozilla Firefox.*/v" ] {
+		floating = true
+		opacity = 0.8
+	}
 }
