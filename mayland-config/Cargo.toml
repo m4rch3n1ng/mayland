@@ -10,6 +10,7 @@ bitflags = "2.6.0"
 dirs = { workspace = true }
 mayland-comm = { workspace = true }
 regex = "1.11.1"
+regex-syntax = "0.8.5"
 serde = { workspace = true, features = ["derive"] }
 smithay = { workspace = true, features = ["backend_libinput"] }
 thiserror = "2.0.9"

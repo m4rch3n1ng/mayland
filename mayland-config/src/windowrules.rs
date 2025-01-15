@@ -110,6 +110,12 @@ impl Visitor<'_> for MatchVis {
 		if let Some(regex_opts) = parse_regex_windowrules(v) {
 			let regex_opts = regex_opts.map_err(serde::de::Error::custom)?;
 
+			// first check if the regex itself is valid, before wrapping
+			// it in ^(?:)$, to disallow regexes like /)(/
+			if let Err(err) = regex_syntax::parse(regex_opts.pattern) {
+				return Err(serde::de::Error::custom(err));
+			}
+
 			// add an implicit `^(?:)$` around the regex, so you have a full-word match
 			// by default, which is, i think, what you usually want, and makes the matching more
 			// consistent with non-regex matching, which already is a full word match
