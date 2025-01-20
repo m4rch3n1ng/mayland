@@ -148,6 +148,12 @@ impl State {
 			}
 		}
 
+		if self.mayland.config.windowrules != config.windowrules {
+			for window in self.mayland.workspaces.windows() {
+				window.recompute_windowrules(&config.windowrules);
+			}
+		}
+
 		self.mayland.config = config;
 		self.mayland.queue_redraw_all();
 	}

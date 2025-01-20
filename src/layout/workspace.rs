@@ -283,6 +283,10 @@ impl WorkspaceManager {
 		}
 	}
 
+	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
+		self.workspaces.values().flat_map(|workspace| workspace.windows())
+	}
+
 	pub fn windows_for_output(&self, output: &Output) -> impl DoubleEndedIterator<Item = &MappedWindow> {
 		let workspace = self.output_map[output];
 		let workspace = &self.workspaces[&workspace];
