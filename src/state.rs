@@ -303,7 +303,16 @@ impl Mayland {
 		display: Display<State>,
 		comp_mod: CompMod,
 	) -> Result<Self, mayland_config::Error> {
-		let config = Config::init(comp_mod)?;
+		let loop_handle = event_loop.handle();
+
+		let (config, rx) = Config::init(comp_mod)?;
+		loop_handle
+			.insert_source(rx, |event, (), state| match event {
+				calloop::channel::Event::Msg(config) => state.reload_config(config),
+				calloop::channel::Event::Closed => (),
+			})
+			.unwrap();
+
 		let mut environment = HashMap::new();
 
 		let display_handle = display.handle();
@@ -319,7 +328,6 @@ impl Mayland {
 
 		let start_time = Instant::now();
 		let loop_signal = event_loop.get_signal();
-		let loop_handle = event_loop.handle();
 		let (executor, scheduler) = calloop::futures::executor().unwrap();
 		loop_handle.insert_source(executor, |(), (), _| ()).unwrap();
 

@@ -1094,6 +1094,7 @@ dependencies = [
  "serde",
  "smithay",
  "thiserror 2.0.9",
+ "tracing",
 ]
 
 [[package]]
