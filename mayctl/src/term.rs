@@ -13,6 +13,10 @@ pub enum Term {
 	InvalidResponse(serde_json::Error),
 	/// mayland returned an error
 	MaylandError(mayland_comm::Error),
+	/// error parsing config file
+	Mayfig(mayland_config::error::MayfigError),
+	/// config was not found
+	ConfigNotFound,
 	/// mayctl wasn't started inside mayland
 	MaylandNotRunning,
 	UnexpectedResponse {
@@ -73,6 +77,18 @@ impl Display for Term {
 					"mayland returned an error".bold()
 				)?;
 				writeln!(f, "  {} {}", "::".blue().bold(), err)
+			}
+			Term::Mayfig(mayfig) => {
+				writeln!(f, "{}", mayfig)?;
+				writeln!(
+					f,
+					"{}: {}",
+					"error".red().bold(),
+					"failed to deserialize config".bold()
+				)
+			}
+			Term::ConfigNotFound => {
+				writeln!(f, "{}: {}", "error".red().bold(), "config not found".bold())
 			}
 			Term::MaylandNotRunning => {
 				writeln!(f, "{}: {}", "error".red().bold(), "mayland not running".bold())?;

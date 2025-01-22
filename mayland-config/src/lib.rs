@@ -1,10 +1,11 @@
 use bind::CompMod;
+use error::MayfigError;
 use serde::Deserialize;
 use std::{path::PathBuf, sync::LazyLock};
 
 pub mod bind;
 pub mod decoration;
-mod error;
+pub mod error;
 pub mod input;
 pub mod layout;
 pub mod outputs;
@@ -65,7 +66,7 @@ impl Config {
 		// workaround for https://github.com/rust-lang/annotate-snippets-rs/issues/25
 		let file = file.replace('\t', "    ");
 
-		let mut config = mayfig::from_str::<Config>(&file).map_err(|error| Error::Mayfig { error, file })?;
+		let mut config = mayfig::from_str::<Config>(&file).map_err(|error| MayfigError { error, file })?;
 		config.bind = config.bind.flatten_mod(comp);
 		Ok(config)
 	}

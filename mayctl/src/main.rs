@@ -22,6 +22,18 @@ fn main() -> Term {
 	};
 
 	let request = Request::from(cli.cmd);
+	if let Request::Reload = request {
+		if let Err(err) = mayland_config::Config::read(mayland_config::bind::CompMod::Meta) {
+			let term = match err {
+				mayland_config::Error::IoError(err) => Term::IoError(err),
+				mayland_config::Error::Mayfig(mayfig) => Term::Mayfig(mayfig),
+				mayland_config::Error::NotFound => Term::ConfigNotFound,
+			};
+
+			return term;
+		}
+	}
+
 	let message = serde_json::to_vec(&request).unwrap();
 
 	let mut stream = match UnixStream::connect(&socket_path) {

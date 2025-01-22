@@ -1030,6 +1030,7 @@ dependencies = [
  "anstream",
  "clap",
  "mayland-comm",
+ "mayland-config",
  "owo-colors",
  "serde",
  "serde_json",

@@ -8,6 +8,7 @@ license = { workspace = true }
 anstream = "0.6.18"
 clap = { version = "4.5.23", features = ["derive"] }
 mayland-comm = { workspace = true }
+mayland-config = { workspace = true }
 owo-colors = "4.1.0"
 serde = { workspace = true }
 serde_json = { workspace = true }
