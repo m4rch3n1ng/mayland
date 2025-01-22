@@ -43,68 +43,93 @@ impl Display for Term {
 		match self {
 			Term::Ok => Ok(()),
 			Term::IoError(err) => {
-				writeln!(f, "{}: {}", "error".red().bold(), "io error".bold())?;
-				writeln!(f, "  {} {}", "::".blue().bold(), err)
+				writeln!(f, "{}: {}", "error".bright_red().bold(), "io error".bold())?;
+				writeln!(f, "  {} {}", "::".bright_blue().bold(), err)
 			}
 			Term::NotFound(socket_path) => {
-				writeln!(f, "{}: {}", "error".red().bold(), "socket not found".bold())?;
-				writeln!(f, "  {} file {} does not exist", "::".blue().bold(), socket_path)
+				writeln!(
+					f,
+					"{}: {}",
+					"error".bright_red().bold(),
+					"socket not found".bold()
+				)?;
+				writeln!(
+					f,
+					"  {} file {} does not exist",
+					"::".bright_blue().bold(),
+					socket_path
+				)
 			}
 			Term::InvalidResponse(err) => {
 				writeln!(
 					f,
 					"{}: {}",
-					"error".red().bold(),
+					"error".bright_red().bold(),
 					"couldn't deserialize mayland response".bold()
 				)?;
-				writeln!(f, "  {} {}", "::".blue().bold(), err)?;
+				writeln!(f, "  {} {}", "::".bright_blue().bold(), err)?;
 				writeln!(
 					f,
 					"  {} is your version of mayctl up-to-date?",
-					"::".blue().bold()
+					"::".bright_blue().bold()
 				)?;
 				writeln!(
 					f,
 					"  {} did you restart mayland after updating?",
-					"::".blue().bold()
+					"::".bright_blue().bold()
 				)
 			}
 			Term::MaylandError(err) => {
 				writeln!(
 					f,
 					"{}: {}",
-					"error".red().bold(),
+					"error".bright_red().bold(),
 					"mayland returned an error".bold()
 				)?;
-				writeln!(f, "  {} {}", "::".blue().bold(), err)
+				writeln!(f, "  {} {}", "::".bright_blue().bold(), err)
 			}
 			Term::Mayfig(mayfig) => {
 				writeln!(f, "{}", mayfig)?;
 				writeln!(
 					f,
 					"{}: {}",
-					"error".red().bold(),
+					"error".bright_red().bold(),
 					"failed to deserialize config".bold()
 				)
 			}
 			Term::ConfigNotFound => {
-				writeln!(f, "{}: {}", "error".red().bold(), "config not found".bold())
+				writeln!(
+					f,
+					"{}: {}",
+					"error".bright_red().bold(),
+					"config not found".bold()
+				)
 			}
 			Term::MaylandNotRunning => {
-				writeln!(f, "{}: {}", "error".red().bold(), "mayland not running".bold())?;
-				writeln!(f, "  {} env ${} not set", "::".blue().bold(), MAYLAND_SOCKET_VAR)
+				writeln!(
+					f,
+					"{}: {}",
+					"error".bright_red().bold(),
+					"mayland not running".bold()
+				)?;
+				writeln!(
+					f,
+					"  {} env ${} not set",
+					"::".bright_blue().bold(),
+					MAYLAND_SOCKET_VAR
+				)
 			}
 			Term::UnexpectedResponse { expected, actual } => {
 				writeln!(
 					f,
 					"{}: {}",
-					"error".red().bold(),
+					"error".bright_red().bold(),
 					"mayland returned unexpected response".bold()
 				)?;
 				writeln!(
 					f,
 					"  {} expected {}, got {}",
-					"::".blue().bold(),
+					"::".bright_blue().bold(),
 					expected,
 					actual
 				)
