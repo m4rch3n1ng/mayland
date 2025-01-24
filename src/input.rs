@@ -97,23 +97,13 @@ impl State {
 		let mut location = pointer.current_location();
 		location += event.delta();
 
-		let mut min_max_y = None::<(i32, i32)>;
-		let mut min_max_x = None::<(i32, i32)>;
+		let (min, max) = match self.mayland.workspaces.bbox() {
+			Some(bbox) => (bbox.loc.to_f64(), bbox.loc.to_f64() + bbox.size.to_f64()),
+			None => return,
+		};
 
-		for output in self.mayland.workspaces.outputs() {
-			let geom = self.mayland.workspaces.output_geometry(output).unwrap();
-			min_max_y = min_max_y
-				.map(|(min, max)| (i32::min(min, geom.loc.y), i32::max(max, geom.loc.y + geom.size.h)))
-				.or(Some((geom.loc.y, geom.loc.y + geom.size.h)));
-			min_max_x = min_max_x
-				.map(|(min, max)| (i32::min(min, geom.loc.x), i32::max(max, geom.loc.x + geom.size.w)))
-				.or(Some((geom.loc.x, geom.loc.x + geom.size.w)));
-		}
-
-		if let Some(((min_y, max_y), (min_x, max_x))) = min_max_y.zip(min_max_x) {
-			location.y = location.y.clamp(f64::from(min_y), f64::from(max_y));
-			location.x = location.x.clamp(f64::from(min_x), f64::from(max_x));
-		}
+		location.x = location.x.clamp(min.x, max.x);
+		location.y = location.y.clamp(min.y, max.y);
 
 		let under = self.surface_under(location);
 		let serial = SERIAL_COUNTER.next_serial();
@@ -156,9 +146,8 @@ impl State {
 	}
 
 	fn on_pointer_move_absolute<I: InputBackend>(&mut self, event: I::PointerMotionAbsoluteEvent) {
-		let output = self.mayland.workspaces.outputs().next().unwrap().clone();
-		let output_geometry = self.mayland.workspaces.output_geometry(&output).unwrap();
-		let location = event.position_transformed(output_geometry.size) + output_geometry.loc.to_f64();
+		let Some(bbox) = self.mayland.workspaces.bbox() else { return };
+		let location = event.position_transformed(bbox.size) + bbox.loc.to_f64();
 
 		let under = self.surface_under(location);
 		let serial = SERIAL_COUNTER.next_serial();

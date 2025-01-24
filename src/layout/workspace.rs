@@ -221,6 +221,13 @@ impl WorkspaceManager {
 }
 
 impl WorkspaceManager {
+	pub fn bbox(&self) -> Option<Rectangle<i32, Logical>> {
+		self.outputs
+			.outputs_geometry()
+			.map(|(_, g)| g)
+			.reduce(|acc, curr| acc.merge(curr))
+	}
+
 	pub fn outputs(&self) -> impl Iterator<Item = &Output> {
 		self.outputs.outputs()
 	}
