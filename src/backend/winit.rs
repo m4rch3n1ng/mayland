@@ -117,16 +117,16 @@ impl Winit {
 		self.backend.window().request_redraw();
 	}
 
+	pub fn renderer(&mut self) -> &mut GlowRenderer {
+		self.backend.renderer()
+	}
+
 	pub fn import_dmabuf(&mut self, dmabuf: &Dmabuf) -> bool {
 		self.backend
 			.renderer()
 			.import_dmabuf(dmabuf, None)
 			.inspect_err(|err| tracing::error!("error importing dmabuf: {:?}", err))
 			.is_ok()
-	}
-
-	pub fn renderer(&mut self) -> &mut GlowRenderer {
-		self.backend.renderer()
 	}
 }
 
