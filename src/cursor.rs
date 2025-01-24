@@ -46,6 +46,19 @@ impl Cursor {
 		}
 	}
 
+	pub fn reconfigure(
+		&mut self,
+		config: &mayland_config::Cursor,
+		environment: &mut HashMap<String, String>,
+	) {
+		let (theme, size) = load_cursor_theme(config, environment);
+
+		self.theme = theme;
+		self.size = size;
+
+		self.cache.clear();
+	}
+
 	fn get_named_cursor(&mut self, icon: CursorIcon) -> &mut XCursor {
 		self.cache.entry(icon).or_insert_with(|| {
 			// todo scale

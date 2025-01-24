@@ -172,6 +172,12 @@ impl State {
 			}
 		}
 
+		if self.mayland.config.cursor != config.cursor {
+			self.mayland
+				.cursor
+				.reconfigure(&config.cursor, &mut self.mayland.environment);
+		}
+
 		if self.mayland.config.decoration.background != config.decoration.background {
 			for output_state in self.mayland.output_state.values_mut() {
 				output_state.background.set_color(config.decoration.background);
