@@ -65,7 +65,12 @@ pub struct OutputDevice {
 	glow: GlowRenderer,
 	formats: FormatSet,
 	drm_scanner: DrmScanner,
-	surfaces: HashMap<crtc::Handle, GbmDrmCompositor>,
+	surfaces: HashMap<crtc::Handle, Surface>,
+}
+
+#[derive(Debug)]
+struct Surface {
+	compositor: GbmDrmCompositor,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -144,8 +149,9 @@ impl Udev {
 	pub fn render(&mut self, mayland: &mut Mayland, output: &Output, elements: &[MaylandRenderElements]) {
 		let device = self.output_device.as_mut().unwrap();
 		let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
-		let drm_compositor = device.surfaces.get_mut(&udev_state.crtc).unwrap();
+		let surface = device.surfaces.get_mut(&udev_state.crtc).unwrap();
 
+		let drm_compositor = &mut surface.compositor;
 		match drm_compositor.render_frame(&mut device.glow, elements, [0.; 4], FrameFlags::DEFAULT) {
 			Ok(render_output_res) => {
 				if render_output_res.is_empty {
@@ -196,7 +202,7 @@ impl Udev {
 		if let Some(device) = &self.output_device {
 			for (connector, crtc) in device.drm_scanner.crtcs() {
 				let surface = device.surfaces.get(&crtc);
-				let mode = surface.map(|surface| surface.pending_mode());
+				let mode = surface.map(|surface| surface.compositor.pending_mode());
 				let mode = mode.map(|mode| mayland_comm::output::Mode {
 					w: mode.size().0,
 					h: mode.size().1,
@@ -520,8 +526,9 @@ impl Udev {
 		)
 		.unwrap();
 
-		let res = device.surfaces.insert(crtc, compositor);
-		assert!(res.is_none(), "crtc must not have already existed");
+		let surface = Surface { compositor };
+		let prev = device.surfaces.insert(crtc, surface);
+		assert!(prev.is_none(), "crtc must not have already existed");
 
 		mayland.add_output(output.clone());
 		mayland.queue_redraw(output);
@@ -560,7 +567,7 @@ impl Udev {
 			}
 		};
 
-		match surface.frame_submitted() {
+		match surface.compositor.frame_submitted() {
 			Ok(Some(mut feedback)) => {
 				let seq = meta.sequence;
 				let flags = wp_presentation_feedback::Kind::Vsync
