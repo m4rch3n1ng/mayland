@@ -172,6 +172,11 @@ impl State {
 			}
 		}
 
+		if self.mayland.config.output != config.output {
+			self.backend
+				.reload_output_config(&mut self.mayland, &config.output);
+		}
+
 		if self.mayland.config.cursor != config.cursor {
 			self.mayland
 				.cursor
@@ -495,19 +500,30 @@ impl Mayland {
 		self.workspaces.output_area_changed(output);
 	}
 
-	/// the output changed actual size and needs to (potentially) be remapped
+	/// the output changed actual size
+	///
+	/// beware: you have to call [`Mayland::reconfigure_outputs`] somewhere after this
 	pub fn output_size_changed(&mut self, output: &Output) {
 		layer_map_for_output(output).arrange();
-
-		if let Some(relocate) = self.workspaces.output_size_changed(&self.config.output, output) {
-			self.loop_handle.insert_idle(move |state| {
-				state.relocate(relocate);
-			});
-		}
+		self.workspaces.output_area_changed(output);
 
 		let size = output_size(output);
 		let output_state = self.output_state.get_mut(output).unwrap();
 		output_state.background.resize(size);
+	}
+
+	/// reconfigure outputs in the output space and relocate the cursor if
+	/// necessary.
+	///
+	/// you can give it an output config to use, otherwise it'll fall back to
+	/// the output config in [`Mayland::config`]
+	pub fn reconfigure_outputs(&mut self, config: Option<&mayland_config::Outputs>) {
+		let config = config.unwrap_or(&self.config.output);
+		if let Some(relocate) = self.workspaces.reconfigure_outputs(config) {
+			self.loop_handle.insert_idle(move |state| {
+				state.relocate(relocate);
+			});
+		}
 	}
 
 	pub fn queue_redraw_all(&mut self) {

@@ -70,6 +70,7 @@ pub struct OutputDevice {
 
 #[derive(Debug)]
 struct Surface {
+	info: OutputInfo,
 	compositor: GbmDrmCompositor,
 }
 
@@ -249,6 +250,31 @@ impl Udev {
 		}
 
 		outputs
+	}
+
+	pub fn reload_output_config(&mut self, mayland: &mut Mayland, config: &mayland_config::Outputs) {
+		let Some(device) = &mut self.output_device else { return };
+
+		for (connector, crtc) in device.drm_scanner.crtcs() {
+			let surface = device.surfaces.get_mut(&crtc).unwrap();
+
+			let config = config.get_output(&surface.info);
+			let output = mayland.workspaces.udev_output(device.id, crtc).cloned().unwrap();
+
+			let mode = pick_mode(connector, config.and_then(|conf| conf.mode));
+			if surface.compositor.pending_mode() != mode {
+				surface.compositor.use_mode(mode).unwrap();
+
+				let wl_mode = Mode::from(mode);
+				output.change_current_state(Some(wl_mode), None, None, None);
+				output.set_preferred(wl_mode);
+
+				mayland.output_size_changed(&output);
+			}
+		}
+
+		mayland.reconfigure_outputs(Some(config));
+		mayland.queue_redraw_all();
 	}
 }
 
@@ -507,7 +533,7 @@ impl Udev {
 		output.change_current_state(Some(wl_mode), None, None, None);
 		output.set_preferred(wl_mode);
 
-		output.user_data().insert_if_missing(|| output_info);
+		output.user_data().insert_if_missing(|| output_info.clone());
 		output.user_data().insert_if_missing(|| UdevOutputState {
 			device_id: device.id,
 			crtc,
@@ -526,7 +552,10 @@ impl Udev {
 		)
 		.unwrap();
 
-		let surface = Surface { compositor };
+		let surface = Surface {
+			info: output_info,
+			compositor,
+		};
 		let prev = device.surfaces.insert(crtc, surface);
 		assert!(prev.is_none(), "crtc must not have already existed");
 

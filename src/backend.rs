@@ -50,6 +50,13 @@ impl Backend {
 		}
 	}
 
+	pub fn reload_output_config(&mut self, mayland: &mut Mayland, config: &mayland_config::Outputs) {
+		match self {
+			Backend::Udev(udev) => udev.reload_output_config(mayland, config),
+			Backend::Winit(winit) => winit.reload_output_config(mayland, config),
+		}
+	}
+
 	pub fn winit(&mut self) -> &mut Winit {
 		match self {
 			Backend::Udev(_udev) => unreachable!("should only be called in winit context"),
