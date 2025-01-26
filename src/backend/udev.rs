@@ -70,9 +70,9 @@ pub struct OutputDevice {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct UdevOutputState {
-	device_id: dev_t,
-	crtc: crtc::Handle,
+pub struct UdevOutputState {
+	pub device_id: dev_t,
+	pub crtc: crtc::Handle,
 }
 
 #[derive(Debug)]
@@ -223,11 +223,7 @@ impl Udev {
 
 				let logical = mayland
 					.workspaces
-					.outputs()
-					.find(|output| {
-						let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
-						udev_state.device_id == device.id && udev_state.crtc == crtc
-					})
+					.udev_output(device.id, crtc)
 					.map(logical_output);
 
 				let output_info = output_info(&device.drm, connector);
@@ -546,16 +542,7 @@ impl Udev {
 			return;
 		}
 
-		let output = mayland
-			.workspaces
-			.outputs()
-			.find(|output| {
-				let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
-				udev_state.crtc == crtc && udev_state.device_id == device.id
-			})
-			.unwrap()
-			.clone();
-
+		let output = mayland.workspaces.udev_output(device.id, crtc).unwrap().clone();
 		mayland.remove_output(&output);
 	}
 
@@ -596,15 +583,7 @@ impl Udev {
 			}
 		}
 
-		let output = mayland
-			.workspaces
-			.outputs()
-			.find(|output| {
-				let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
-				udev_state.device_id == device.id && udev_state.crtc == crtc
-			})
-			.unwrap()
-			.clone();
+		let output = mayland.workspaces.udev_output(device.id, crtc).unwrap().clone();
 
 		let output_state = mayland.output_state.get_mut(&output).unwrap();
 		output_state.queued.on_vblank();

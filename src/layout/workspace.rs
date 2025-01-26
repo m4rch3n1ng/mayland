@@ -1,9 +1,11 @@
 use super::{outputs::OutputSpace, tiling::Tiling, Relocate};
 use crate::{
+	backend::udev::UdevOutputState,
 	render::{FocusRing, MaylandRenderElements},
 	shell::window::MappedWindow,
 	utils::{output_size, RectExt, SizeExt},
 };
+use libc::dev_t;
 use smithay::{
 	backend::renderer::{
 		element::{surface::WaylandSurfaceRenderElement, AsRenderElements},
@@ -11,6 +13,7 @@ use smithay::{
 	},
 	desktop::{layer_map_for_output, space::SpaceElement, LayerMap, LayerSurface, Space},
 	output::Output,
+	reexports::drm::control::crtc,
 	utils::{Logical, Physical, Point, Rectangle, Scale, Size},
 	wayland::shell::wlr_layer::Layer,
 };
@@ -254,6 +257,19 @@ impl WorkspaceManager {
 
 	pub fn active_output(&self) -> Option<&Output> {
 		self.outputs.active.as_ref()
+	}
+
+	/// get the [`Output`] associated with its [`UdevOutputState`].
+	///
+	/// # panics
+	///
+	/// calling this function on a backend other than the udev backend
+	/// will cause it to panic
+	pub fn udev_output(&self, device_id: dev_t, crtc: crtc::Handle) -> Option<&Output> {
+		self.outputs().find(|output| {
+			let udev_state = output.user_data().get::<UdevOutputState>().unwrap();
+			udev_state.device_id == device_id && udev_state.crtc == crtc
+		})
 	}
 
 	pub fn active_output_position(&self) -> Option<Point<i32, Logical>> {
