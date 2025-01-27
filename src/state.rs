@@ -88,10 +88,13 @@ impl State {
 		let winit = Winit::init(&mut mayland);
 		let winit = Backend::Winit(winit);
 
-		Ok(State {
+		let mut state = State {
 			backend: winit,
 			mayland,
-		})
+		};
+		state.load_xkb_file();
+
+		Ok(state)
 	}
 
 	pub fn new_udev(
@@ -103,21 +106,44 @@ impl State {
 		let udev = Udev::init(&mut mayland);
 		let udev = Backend::Udev(udev);
 
-		Ok(State {
+		let mut state = State {
 			backend: udev,
 			mayland,
-		})
+		};
+		state.load_xkb_file();
+
+		Ok(state)
 	}
 }
 
 impl State {
-	pub fn load_config(&mut self) {
-		if let Some(xkb_file) = self.mayland.config.input.keyboard.xkb_file.as_deref() {
-			let keymap = std::fs::read_to_string(xkb_file).unwrap();
+	/// set the keyboard keymap from a file
+	///
+	/// returns true if the keymap was successfully set
+	fn set_xkb_file(&mut self, xkb_file: Option<&str>) -> bool {
+		let Some(xkb_file) = xkb_file else {
+			return false;
+		};
 
-			let xkb = self.mayland.seat.get_keyboard().unwrap();
-			xkb.set_keymap_from_string(self, keymap).unwrap();
-		}
+		let keymap = match std::fs::read_to_string(xkb_file) {
+			Ok(keymap) => keymap,
+			Err(err) => {
+				tracing::warn!("failed to read xkb_file: {:?}", err);
+				return false;
+			}
+		};
+
+		let xkb = self.mayland.seat.get_keyboard().unwrap();
+		xkb.set_keymap_from_string(self, keymap)
+			.inspect_err(|err| tracing::warn!("failed to set keymap: {:?}", err))
+			.is_ok()
+	}
+
+	/// i can't actually set this in the [`Mayland`] constructor,
+	/// so i have to do it here afterwards
+	fn load_xkb_file(&mut self) {
+		let xkb_file = self.mayland.config.input.keyboard.xkb_file.clone();
+		self.set_xkb_file(xkb_file.as_deref());
 	}
 
 	pub fn reload_config(&mut self, config: Config) {
@@ -131,13 +157,13 @@ impl State {
 			}
 
 			if self.mayland.config.input.keyboard != config.input.keyboard {
-				let xkb_config = config.input.keyboard.xkb_config();
-
 				let xkb = self.mayland.seat.get_keyboard().unwrap();
-				xkb.set_xkb_config(self, xkb_config).unwrap();
-				if let Some(xkb_file) = config.input.keyboard.xkb_file.as_deref() {
-					let keymap = std::fs::read_to_string(xkb_file).unwrap();
-					xkb.set_keymap_from_string(self, keymap).unwrap();
+
+				if !self.set_xkb_file(config.input.keyboard.xkb_file.as_deref()) {
+					let xkb_config = config.input.keyboard.xkb_config();
+					if let Err(err) = xkb.set_xkb_config(self, xkb_config) {
+						tracing::error!("failed to reload xkb config: {:?}", err)
+					}
 				}
 
 				xkb.change_repeat_info(

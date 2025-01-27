@@ -33,8 +33,6 @@ fn main() {
 		}
 	};
 
-	state.load_config();
-
 	state.mayland.environment.extend([
 		("WAYLAND_DISPLAY".to_owned(), state.mayland.socket_name.clone()),
 		("GDK_BACKEND".to_owned(), "wayland".to_owned()),
