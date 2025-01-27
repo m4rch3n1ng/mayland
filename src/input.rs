@@ -253,7 +253,7 @@ impl State {
 		};
 
 		if key_state == KeyState::Released {
-			if self.mayland.suppressed_keys.take(&code).is_some() {
+			if self.mayland.suppressed_keys.remove(&code) {
 				return FilterResult::Intercept(None);
 			} else {
 				return FilterResult::Forward;
