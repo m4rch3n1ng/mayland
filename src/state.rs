@@ -162,7 +162,7 @@ impl State {
 				if !self.set_xkb_file(config.input.keyboard.xkb_file.as_deref()) {
 					let xkb_config = config.input.keyboard.xkb_config();
 					if let Err(err) = xkb.set_xkb_config(self, xkb_config) {
-						tracing::error!("failed to reload xkb config: {:?}", err)
+						tracing::error!("failed to reload xkb config: {:?}", err);
 					}
 				}
 
@@ -293,7 +293,7 @@ impl QueueState {
 		match *self {
 			QueueState::Idle => *self = QueueState::Queued,
 			QueueState::WaitingForVBlank { queued: false } => {
-				*self = QueueState::WaitingForVBlank { queued: true }
+				*self = QueueState::WaitingForVBlank { queued: true };
 			}
 			QueueState::Queued | QueueState::WaitingForVBlank { queued: true } => {}
 		}
@@ -301,15 +301,15 @@ impl QueueState {
 
 	pub fn idle(&mut self) {
 		if let QueueState::Queued = *self {
-			*self = QueueState::Idle
+			*self = QueueState::Idle;
 		} else {
-			unreachable!()
+			unreachable!();
 		}
 	}
 
 	pub fn waiting_for_vblank(&mut self) {
 		if let QueueState::Queued = *self {
-			unreachable!()
+			unreachable!();
 		} else {
 			*self = QueueState::WaitingForVBlank { queued: false };
 		}
@@ -323,7 +323,7 @@ impl QueueState {
 				*self = QueueState::Idle;
 			}
 		} else {
-			unreachable!()
+			unreachable!();
 		}
 	}
 }

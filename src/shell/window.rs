@@ -178,7 +178,7 @@ impl MappedWindow {
 			}),
 		};
 
-		self.windowrules.write(windowrules)
+		self.windowrules.write(windowrules);
 	}
 }
 

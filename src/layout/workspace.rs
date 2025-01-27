@@ -240,7 +240,7 @@ impl WorkspaceManager {
 		self.outputs
 			.outputs_geometry()
 			.map(|(_, g)| g)
-			.reduce(|acc, curr| acc.merge(curr))
+			.reduce(Rectangle::merge)
 	}
 
 	pub fn outputs(&self) -> impl Iterator<Item = &Output> {
