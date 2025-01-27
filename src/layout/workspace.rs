@@ -247,10 +247,6 @@ impl WorkspaceManager {
 		self.outputs.outputs()
 	}
 
-	pub fn output_geometry(&self, output: &Output) -> Option<Rectangle<i32, Logical>> {
-		self.outputs.output_geometry(output)
-	}
-
 	pub fn output_position(&self, output: &Output) -> Option<Point<i32, Logical>> {
 		self.outputs.output_position(output)
 	}
