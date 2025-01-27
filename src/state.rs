@@ -139,6 +139,11 @@ impl State {
 					let keymap = std::fs::read_to_string(xkb_file).unwrap();
 					xkb.set_keymap_from_string(self, keymap).unwrap();
 				}
+
+				xkb.change_repeat_info(
+					config.input.keyboard.repeat_rate,
+					config.input.keyboard.repeat_delay,
+				);
 			}
 		}
 
