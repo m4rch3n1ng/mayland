@@ -614,8 +614,8 @@ impl Workspace {
 		layer_map: &LayerMap,
 		output_scale: f64,
 	) -> (
-		impl Iterator<Item = LayerSurfacePoint>,
-		impl Iterator<Item = LayerSurfacePoint>,
+		impl Iterator<Item = LayerSurfacePoint<'_>>,
+		impl Iterator<Item = LayerSurfacePoint<'_>>,
 	) {
 		let upper = layer_map
 			.layers()

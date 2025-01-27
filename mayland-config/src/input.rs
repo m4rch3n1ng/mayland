@@ -27,7 +27,7 @@ pub struct Keyboard {
 }
 
 impl Keyboard {
-	pub fn xkb_config(&self) -> XkbConfig {
+	pub fn xkb_config(&self) -> XkbConfig<'_> {
 		XkbConfig {
 			rules: &self.xkb_rules,
 			model: &self.xkb_model,

@@ -58,7 +58,7 @@ impl Cursor {
 	}
 
 	// todo scale
-	pub fn get_render_cursor(&mut self, _scale: i32) -> RenderCursor {
+	pub fn get_render_cursor(&mut self, _scale: i32) -> RenderCursor<'_> {
 		if let Some(icon) = self.icon {
 			let xcursor = self.get_named_cursor(icon);
 			return RenderCursor::Named(xcursor);

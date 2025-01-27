@@ -85,7 +85,7 @@ struct ColorVis;
 impl Visitor<'_> for ColorVis {
 	type Value = Color;
 
-	fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+	fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.write_str("a mayfig color")
 	}
 

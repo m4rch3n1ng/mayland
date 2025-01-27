@@ -654,7 +654,7 @@ impl Mayland {
 	}
 }
 
-fn init_wayland_display(display: Display<State>, event_loop: &mut EventLoop<State>) -> String {
+fn init_wayland_display(display: Display<State>, event_loop: &mut EventLoop<'_, State>) -> String {
 	// create socket for clients to connect to
 	let source = ListeningSocketSource::new_auto().unwrap();
 	let socket_name = source.socket_name().to_os_string().into_string().unwrap();

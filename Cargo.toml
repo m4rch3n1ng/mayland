@@ -21,6 +21,9 @@ serde_json = "1.0.134"
 git = "https://github.com/Smithay/smithay"
 default-features = false
 
+[workspace.lints.rust]
+elided_lifetimes_in_paths = "warn"
+
 [workspace.lints.clippy]
 new_without_default = "allow"
 undocumented_unsafe_blocks = "warn"

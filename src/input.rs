@@ -237,7 +237,7 @@ impl State {
 		code: Keycode,
 		key_state: KeyState,
 		mods: &ModifiersState,
-		keysym: KeysymHandle,
+		keysym: KeysymHandle<'_>,
 	) -> FilterResult<Option<Action>> {
 		if let vt_key @ KEY_XF86Switch_VT_1..=KEY_XF86Switch_VT_12 = keysym.modified_sym().raw() {
 			let vt = (vt_key - KEY_XF86Switch_VT_1 + 1) as i32;

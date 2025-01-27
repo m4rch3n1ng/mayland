@@ -77,7 +77,7 @@ struct ModeVis;
 impl Visitor<'_> for ModeVis {
 	type Value = Mode;
 
-	fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+	fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.write_str("a valid mode")
 	}
 

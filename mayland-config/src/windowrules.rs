@@ -15,7 +15,7 @@ struct WindowRulesVis;
 impl<'v> Visitor<'v> for WindowRulesVis {
 	type Value = WindowRules;
 
-	fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+	fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.write_str("valid windowrules")
 	}
 
@@ -106,7 +106,7 @@ struct MatchVis;
 impl Visitor<'_> for MatchVis {
 	type Value = Match;
 
-	fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+	fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.write_str("a valid matcher")
 	}
 
@@ -158,7 +158,7 @@ struct RegexOptions<'a> {
 	case_insensitive: bool,
 }
 
-fn parse_regex_windowrules(v: &str) -> Option<Result<RegexOptions, RegexError>> {
+fn parse_regex_windowrules(v: &str) -> Option<Result<RegexOptions<'_>, RegexError>> {
 	let v = v.strip_prefix('/')?;
 	let (pattern, flags) = v.rsplit_once('/')?;
 

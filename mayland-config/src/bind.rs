@@ -283,7 +283,7 @@ struct MappingVisitor;
 impl Visitor<'_> for MappingVisitor {
 	type Value = Mapping;
 
-	fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+	fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.write_str("a valid key map")
 	}
 
