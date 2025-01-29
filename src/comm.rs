@@ -2,7 +2,7 @@ use crate::State;
 use calloop::{io::Async, LoopHandle};
 use futures_util::{AsyncBufReadExt, AsyncWriteExt};
 use mayland_comm::{Request, Response};
-use mayland_config::bind::CompMod;
+use mayland_config::{bind::CompMod, Action};
 use smithay::reexports::calloop::{generic::Generic, Interest, Mode, PostAction};
 use std::{
 	os::unix::net::{UnixListener, UnixStream},
@@ -73,6 +73,7 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) {
 	let request = serde_json::from_str::<Request>(&buf);
 	let response = match request {
 		Ok(Request::Dispatch(action)) => {
+			let action = Action::from(action);
 			let (tx, rx) = async_channel::bounded(1);
 			state.event_loop.insert_idle(move |state| {
 				state.handle_action(action);

@@ -1,5 +1,4 @@
 use bitflags::bitflags;
-use mayland_comm::Action;
 use serde::{de::Visitor, Deserialize};
 use smithay::input::keyboard::{
 	keysyms::KEY_NoSymbol,
@@ -9,6 +8,8 @@ use smithay::input::keyboard::{
 use std::{collections::HashMap, fmt::Debug};
 
 mod action;
+
+pub use self::action::Action;
 
 /// defines what the modifier `"mod"` binds to
 ///
@@ -35,18 +36,8 @@ impl PartialEq<CompMod> for ModifiersState {
 	}
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct Binds(HashMap<Mapping, Action>);
-
-impl<'de> Deserialize<'de> for Binds {
-	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-		let map = HashMap::<Mapping, self::action::Action>::deserialize(deserializer)?;
-		let map = map.into_iter().map(|(m, a)| (m, Action::from(a))).collect();
-
-		let binds = Binds(map);
-		Ok(binds)
-	}
-}
 
 impl Default for Binds {
 	fn default() -> Self {

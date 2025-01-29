@@ -7,7 +7,7 @@ use crate::{
 	state::State,
 	utils::spawn,
 };
-use mayland_comm::Action;
+use mayland_config::Action;
 use smithay::{
 	backend::input::{
 		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState, KeyboardKeyEvent,

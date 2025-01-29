@@ -13,7 +13,12 @@ pub mod outputs;
 pub mod windowrules;
 
 pub use self::{
-	bind::Binds, decoration::Decoration, error::Error, input::Input, layout::Layout, outputs::Outputs,
+	bind::{Action, Binds},
+	decoration::Decoration,
+	error::Error,
+	input::Input,
+	layout::Layout,
+	outputs::Outputs,
 	windowrules::WindowRules,
 };
 

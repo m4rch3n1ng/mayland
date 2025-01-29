@@ -15,6 +15,9 @@ pub enum Action {
 }
 
 impl From<Action> for mayland_comm::Action {
+	/// this implementation is not strictly necessary and should
+	/// probably not be used, but it exists so that the compiler warns
+	/// if the two enums are out of sync
 	fn from(action: Action) -> Self {
 		match action {
 			Action::Quit => mayland_comm::Action::Quit,
@@ -30,9 +33,6 @@ impl From<Action> for mayland_comm::Action {
 }
 
 impl From<mayland_comm::Action> for Action {
-	/// this implementation is not strictly necessary and should
-	/// probably not be used, but it exists so that the compiler warns
-	/// if the two enums are out of sync
 	fn from(action: mayland_comm::Action) -> Self {
 		match action {
 			mayland_comm::Action::Quit => Action::Quit,
