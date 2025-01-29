@@ -12,6 +12,7 @@ use smithay::{
 		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
 	output::{Mode, Output, PhysicalProperties, Subpixel},
+	reexports::winit::window::Window,
 	utils::{Point, Rectangle, Transform},
 	wayland::dmabuf::DmabufFeedbackBuilder,
 };
@@ -26,7 +27,8 @@ pub struct Winit {
 
 impl Winit {
 	pub fn init(mayland: &mut Mayland) -> Self {
-		let (mut backend, winit_evt) = winit::init::<GlowRenderer>().unwrap();
+		let window = Window::default_attributes().with_title("mayland");
+		let (mut backend, winit_evt) = winit::init_from_attributes::<GlowRenderer>(window).unwrap();
 		backend.window().set_cursor_visible(false);
 
 		shaders::init(backend.renderer().borrow_mut());
