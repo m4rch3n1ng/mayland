@@ -7,37 +7,55 @@ use smithay::input::keyboard::{
 };
 use std::{collections::HashMap, fmt::Debug};
 
-mod action;
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+pub struct Binds(HashMap<Mapping, Action>);
 
-pub use self::action::Action;
+#[derive(Debug, PartialEq, Eq, Clone, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Action {
+	Quit,
 
-/// defines what the modifier `"mod"` binds to
-///
-/// set to [`CompMod::Alt`] in winit
-/// and [`CompMod::Meta`] in udev mode
-#[derive(Debug, Clone, Copy)]
-pub enum CompMod {
-	Alt,
-	Meta,
+	#[serde(alias = "close")]
+	CloseWindow,
+	ToggleFloating,
+
+	Workspace(usize),
+
+	Spawn(Vec<String>),
 }
 
-impl CompMod {
-	fn modifiers(self) -> Modifiers {
-		match self {
-			CompMod::Alt => Modifiers::ALT,
-			CompMod::Meta => Modifiers::META,
+impl From<Action> for mayland_comm::Action {
+	/// this implementation is not strictly necessary and should
+	/// probably not be used, but it exists so that the compiler warns
+	/// if the two enums are out of sync
+	fn from(action: Action) -> Self {
+		match action {
+			Action::Quit => mayland_comm::Action::Quit,
+
+			Action::CloseWindow => mayland_comm::Action::CloseWindow,
+			Action::ToggleFloating => mayland_comm::Action::ToggleFloating,
+
+			Action::Workspace(workspace) => mayland_comm::Action::Workspace(workspace),
+
+			Action::Spawn(spawn) => mayland_comm::Action::Spawn(spawn),
 		}
 	}
 }
 
-impl PartialEq<CompMod> for ModifiersState {
-	fn eq(&self, other: &CompMod) -> bool {
-		Modifiers::from_xkb(self) == other.modifiers()
+impl From<mayland_comm::Action> for Action {
+	fn from(action: mayland_comm::Action) -> Self {
+		match action {
+			mayland_comm::Action::Quit => Action::Quit,
+
+			mayland_comm::Action::CloseWindow => Action::CloseWindow,
+			mayland_comm::Action::ToggleFloating => Action::ToggleFloating,
+
+			mayland_comm::Action::Workspace(workspace) => Action::Workspace(workspace),
+
+			mayland_comm::Action::Spawn(spawn) => Action::Spawn(spawn),
+		}
 	}
 }
-
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-pub struct Binds(HashMap<Mapping, Action>);
 
 impl Default for Binds {
 	fn default() -> Self {
@@ -295,5 +313,30 @@ impl Visitor<'_> for MappingVisitor {
 		};
 
 		Ok(Mapping { mods, key })
+	}
+}
+
+/// defines what the modifier `"mod"` binds to
+///
+/// set to [`CompMod::Alt`] in winit
+/// and [`CompMod::Meta`] in udev mode
+#[derive(Debug, Clone, Copy)]
+pub enum CompMod {
+	Alt,
+	Meta,
+}
+
+impl CompMod {
+	fn modifiers(self) -> Modifiers {
+		match self {
+			CompMod::Alt => Modifiers::ALT,
+			CompMod::Meta => Modifiers::META,
+		}
+	}
+}
+
+impl PartialEq<CompMod> for ModifiersState {
+	fn eq(&self, other: &CompMod) -> bool {
+		Modifiers::from_xkb(self) == other.modifiers()
 	}
 }
