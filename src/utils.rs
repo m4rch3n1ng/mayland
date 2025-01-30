@@ -91,7 +91,12 @@ pub fn spawn(spawn: Vec<String>, mayland: &Mayland) {
 		.stdin(Stdio::null())
 		.stdout(Stdio::null())
 		.stderr(Stdio::null())
-		.envs(&mayland.environment);
+		.envs(&mayland.environment)
+		.envs(&mayland.config.environment.envs);
+
+	for key in &mayland.config.environment.remove {
+		cmd.env_remove(key);
+	}
 
 	// SAFETY: the pre_exec closure does not access
 	// any memory of the parent process and is therefore safe to use

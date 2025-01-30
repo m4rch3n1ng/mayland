@@ -1,8 +1,13 @@
 use bind::CompMod;
 use error::MayfigError;
-use serde::Deserialize;
+use serde::{de::Visitor, Deserialize};
 use smithay::reexports::calloop;
-use std::{path::PathBuf, sync::LazyLock, time::Duration};
+use std::{
+	collections::{HashMap, HashSet},
+	path::PathBuf,
+	sync::LazyLock,
+	time::Duration,
+};
 
 pub mod bind;
 pub mod decoration;
@@ -30,6 +35,8 @@ pub struct Config {
 	pub cursor: Cursor,
 	pub decoration: Decoration,
 	pub layout: Layout,
+	#[serde(rename = "env")]
+	pub environment: Environment,
 	pub bind: Binds,
 	pub windowrules: WindowRules,
 }
@@ -39,6 +46,44 @@ pub struct Config {
 pub struct Cursor {
 	pub xcursor_theme: Option<String>,
 	pub xcursor_size: Option<u32>,
+}
+
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Environment {
+	pub envs: HashMap<String, String>,
+	pub remove: HashSet<String>,
+}
+
+impl<'de> Deserialize<'de> for Environment {
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		deserializer.deserialize_map(EnvVis)
+	}
+}
+
+struct EnvVis;
+
+impl<'a> Visitor<'a> for EnvVis {
+	type Value = Environment;
+
+	fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.write_str("environment variables")
+	}
+
+	fn visit_map<A: serde::de::MapAccess<'a>>(self, mut map: A) -> Result<Self::Value, A::Error> {
+		let mut environment = Environment::default();
+
+		while let Some((key, val)) = map.next_entry::<String, String>()? {
+			if val.is_empty() {
+				environment.envs.remove(&key);
+				environment.remove.insert(key);
+			} else {
+				environment.remove.remove(&key);
+				environment.envs.insert(key, val);
+			}
+		}
+
+		Ok(environment)
+	}
 }
 
 static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {

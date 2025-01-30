@@ -84,6 +84,14 @@ layout {
 	}
 }
 
+env {
+	# QT_QPA_BACKEND = "wayland"
+	# SDL_VIDEODRIVER = "wayland"
+
+	# you can unset variables like this
+	# DISPLAY = ""
+}
+
 bind {
 	mod+escape = "quit"
 
