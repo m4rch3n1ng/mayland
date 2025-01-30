@@ -35,6 +35,7 @@ fn main() {
 
 	state.mayland.environment.extend([
 		("WAYLAND_DISPLAY".to_owned(), state.mayland.socket_name.clone()),
+		("XDG_SESSION_TYPE".to_owned(), "wayland".to_owned()),
 		("GDK_BACKEND".to_owned(), "wayland".to_owned()),
 	]);
 
