@@ -40,9 +40,12 @@ pub enum Cmd {
 pub enum Dispatch {
 	/// issue a dispatch to quit the compositor
 	Quit,
+
 	/// close active window
 	#[clap(name = "close", visible_alias = "close-window")]
 	CloseWindow,
+	/// toggle floating status of active window
+	ToggleFloating,
 
 	/// switch to another workspace
 	Workspace { workspace: usize },
@@ -69,11 +72,31 @@ impl From<Dispatch> for Action {
 	fn from(value: Dispatch) -> Self {
 		match value {
 			Dispatch::Quit => Action::Quit,
+
 			Dispatch::CloseWindow => Action::CloseWindow,
+			Dispatch::ToggleFloating => Action::ToggleFloating,
 
 			Dispatch::Workspace { workspace } => Action::Workspace(workspace),
 
 			Dispatch::Spawn { spawn } => Action::Spawn(spawn),
+		}
+	}
+}
+
+impl From<Action> for Dispatch {
+	/// this implementation is not strictly necessary and should
+	/// probably not be used, but it exists so that the compiler warns
+	/// if the two enums are out of sync
+	fn from(value: Action) -> Self {
+		match value {
+			Action::Quit => Dispatch::Quit,
+
+			Action::CloseWindow => Dispatch::CloseWindow,
+			Action::ToggleFloating => Dispatch::ToggleFloating,
+
+			Action::Workspace(workspace) => Dispatch::Workspace { workspace },
+
+			Action::Spawn(spawn) => Dispatch::Spawn { spawn },
 		}
 	}
 }
