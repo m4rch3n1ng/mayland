@@ -58,9 +58,9 @@ impl From<Cmd> for Request {
 	fn from(value: Cmd) -> Self {
 		match value {
 			Cmd::Dispatch { dispatch: action } => Request::Dispatch(mayland_comm::Action::from(action)),
+			Cmd::Reload => Request::Reload,
 			Cmd::Outputs => Request::Outputs,
 			Cmd::Workspaces => Request::Workspaces,
-			Cmd::Reload => Request::Reload,
 		}
 	}
 }
