@@ -41,6 +41,13 @@ input {
 		accel_speed = 0
 		# accel_profile = "adaptive"
 	}
+
+	# you can specify config options for specific
+	# devices
+
+	# mouse [ "some gaming mouse" ] {
+	#	accel_profile = "flat"
+	# }
 }
 
 output {
