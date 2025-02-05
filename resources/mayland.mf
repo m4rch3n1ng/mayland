@@ -22,7 +22,7 @@ input {
 		natural_scroll = true
 		# scroll_method = "two_finger"
 
-		click_method = "clickfinger"
+		# click_method = "clickfinger"
 
 		middle_emulation = true
 		tap_button_map = "left_right_middle"
