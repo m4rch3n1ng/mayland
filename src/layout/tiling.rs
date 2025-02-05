@@ -34,7 +34,7 @@ struct Layout {
 
 impl Layout {
 	fn new(tiling: &mayland_config::layout::Tiling, decoration: &mayland_config::Decoration) -> Self {
-		let working_area = Rectangle::default();
+		let working_area = Rectangle::zero();
 		let useable_area = Rectangle {
 			loc: Point::from((i32::from(tiling.border), i32::from(tiling.border))),
 			size: Size::from((0, 0)),

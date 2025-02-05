@@ -12,7 +12,7 @@ use smithay::{
 		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
 	output::{Mode, Output, PhysicalProperties, Subpixel},
-	utils::{Rectangle, Transform},
+	utils::{Point, Rectangle, Transform},
 	wayland::dmabuf::DmabufFeedbackBuilder,
 };
 use std::borrow::BorrowMut;
@@ -105,7 +105,7 @@ impl Winit {
 impl Winit {
 	pub fn render(&mut self, mayland: &mut Mayland, output: &Output, elements: &[MaylandRenderElements]) {
 		let size = self.backend.window_size();
-		let damage = Rectangle::from_loc_and_size((0, 0), size);
+		let damage = Rectangle::new(Point::from((0, 0)), size);
 
 		self.backend.bind().unwrap();
 		let renderer = self.backend.renderer();

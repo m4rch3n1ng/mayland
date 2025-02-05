@@ -288,7 +288,7 @@ impl Visitor<'_> for MappingVisitor {
 	}
 
 	fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
-		let mut mods = Modifiers::default();
+		let mut mods = Modifiers::empty();
 		let mut key = None;
 
 		for split in v.split_whitespace() {

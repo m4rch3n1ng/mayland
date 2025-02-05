@@ -215,7 +215,7 @@ impl OutputSpace {
 	) -> impl DoubleEndedIterator<Item = (&Output, Rectangle<i32, Logical>)> + ExactSizeIterator {
 		self.outputs.iter().map(|(output, location)| {
 			let size = output_size(output);
-			(output, Rectangle::from_loc_and_size(*location, size))
+			(output, Rectangle::new(*location, size))
 		})
 	}
 
