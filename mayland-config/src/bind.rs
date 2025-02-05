@@ -291,7 +291,10 @@ impl Visitor<'_> for MappingVisitor {
 		let mut mods = Modifiers::empty();
 		let mut key = None;
 
-		for split in v.split_whitespace() {
+		for split in v
+			.split(|c: char| c.is_whitespace() || c == '+')
+			.filter(|word| !word.is_empty())
+		{
 			if !mods.add(split) {
 				let keysym = keysym_from_name(split, KEYSYM_CASE_INSENSITIVE);
 

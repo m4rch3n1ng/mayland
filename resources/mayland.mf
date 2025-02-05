@@ -78,26 +78,26 @@ layout {
 }
 
 bind {
-	"mod escape" = "quit"
+	mod+escape = "quit"
 
-	"mod q" = "close"
-	"mod v" = "toggle_floating"
+	mod+q = "close"
+	mod+v = "toggle_floating"
 
-	"mod t" = "spawn" [ "kitty" ]
-	"mod e" = "spawn" [ "nautilus" ]
-	"mod n" = "spawn" [ "firefox" ]
-	"mod space" = "spawn" [ "fuzzel" ]
+	mod+t = "spawn" [ "kitty" ]
+	mod+e = "spawn" [ "nautilus" ]
+	mod+n = "spawn" [ "firefox" ]
+	mod+space = "spawn" [ "fuzzel" ]
 
-	"mod 1" = "workspace" [ 0 ]
-	"mod 2" = "workspace" [ 1 ]
-	"mod 3" = "workspace" [ 2 ]
-	"mod 4" = "workspace" [ 3 ]
-	"mod 5" = "workspace" [ 4 ]
-	"mod 6" = "workspace" [ 5 ]
+	mod+1 = "workspace" [ 0 ]
+	mod+2 = "workspace" [ 1 ]
+	mod+3 = "workspace" [ 2 ]
+	mod+4 = "workspace" [ 3 ]
+	mod+5 = "workspace" [ 4 ]
+	mod+6 = "workspace" [ 5 ]
 
-	"XF86AudioMute" = "spawn" [ "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle" ]
-	"XF86AudioRaiseVolume" = "spawn" [ "wpctl" "set-volume" "-l" "1" "@DEFAULT_AUDIO_SINK@" "5%+" ]
-	"XF86AudioLowerVolume" = "spawn" [ "wpctl" "set-volume" "-l" "1" "@DEFAULT_AUDIO_SINK@" "5%-" ]
+	XF86AudioMute = "spawn" [ "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle" ]
+	XF86AudioRaiseVolume = "spawn" [ "wpctl" "set-volume" "-l" "1" "@DEFAULT_AUDIO_SINK@" "5%+" ]
+	XF86AudioLowerVolume = "spawn" [ "wpctl" "set-volume" "-l" "1" "@DEFAULT_AUDIO_SINK@" "5%-" ]
 }
 
 windowrules {
