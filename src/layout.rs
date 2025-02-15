@@ -1,5 +1,6 @@
 use smithay::utils::{Logical, Point};
 
+pub mod floating;
 pub mod outputs;
 pub mod tiling;
 pub mod workspace;

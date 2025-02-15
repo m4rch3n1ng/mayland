@@ -1,4 +1,4 @@
-use super::{Relocate, outputs::OutputSpace, tiling::Tiling};
+use super::{Relocate, floating::Floating, outputs::OutputSpace, tiling::Tiling};
 use crate::{
 	backend::udev::UdevOutputState,
 	render::{FocusRing, MaylandRenderElements},
@@ -10,7 +10,7 @@ use smithay::{
 		element::{AsRenderElements, surface::WaylandSurfaceRenderElement},
 		glow::GlowRenderer,
 	},
-	desktop::{LayerMap, LayerSurface, Space, layer_map_for_output, space::SpaceElement},
+	desktop::{LayerMap, LayerSurface, layer_map_for_output, space::SpaceElement},
 	output::Output,
 	reexports::{drm::control::crtc, rustix::fs::Dev as dev_t},
 	utils::{Logical, Physical, Point, Rectangle, Scale, Size},
@@ -374,13 +374,13 @@ pub struct Workspace {
 	output: Option<Output>,
 
 	tiling: Tiling,
-	floating: Space<MappedWindow>,
+	floating: Floating,
 }
 
 impl Workspace {
 	fn new(idx: usize, layout: &mayland_config::Layout, decoration: &mayland_config::Decoration) -> Self {
 		let tiling = Tiling::new(&layout.tiling, decoration);
-		let floating = Space::default();
+		let floating = Floating::new();
 
 		Workspace {
 			idx,
@@ -399,16 +399,12 @@ impl Workspace {
 impl Workspace {
 	fn map_output(&mut self, output: &Output) {
 		self.output = Some(output.clone());
-
 		self.tiling.map_output(output);
-		self.floating.map_output(output, (0, 0));
 	}
 
 	fn remove_output(&mut self, output: &Output) {
 		debug_assert!(self.output.as_ref().is_some_and(|wo| wo == output));
-
 		self.output = None;
-		self.floating.unmap_output(output);
 	}
 
 	fn output_area_changed(&mut self, output: &Output) {
@@ -444,32 +440,32 @@ impl Workspace {
 		let center = self.relative_center(window.geometry().size);
 
 		if window.is_non_resizable() || window.windowrules.floating().unwrap_or(false) {
-			self.floating.map_element(window, center, true);
+			self.floating.map_window(window, center);
 		} else if let Some(window) = self.tiling.add_window(window, pointer) {
-			self.floating.map_element(window, center, true);
+			self.floating.map_window(window, center);
 		}
 	}
 
 	pub fn remove_window(&mut self, window: &MappedWindow) {
 		if !self.tiling.remove_window(window) {
-			self.floating.unmap_elem(window);
+			self.floating.remove_window(window);
 		}
 	}
 
 	/// is the [`MappedWindow`] in the floating space?
 	pub fn is_floating(&self, window: &MappedWindow) -> bool {
-		self.floating.elements().any(|w| w == window)
+		self.floating.windows().any(|w| w == window)
 	}
 
 	pub fn floating_move(&mut self, window: MappedWindow, location: Point<i32, Logical>) {
 		if self.is_floating(&window) {
-			self.floating.map_element(window, location, true);
+			self.floating.map_window(window, location);
 		}
 	}
 
 	pub fn activate_window(&mut self, window: &MappedWindow) {
 		if self.is_floating(window) {
-			self.floating.raise_element(window, true);
+			self.floating.raise_window(window);
 		} else if self.tiling.has_window(window) {
 			self.tiling.activate_window(window);
 		}
@@ -480,15 +476,15 @@ impl Workspace {
 	}
 
 	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
-		self.floating.elements().chain(self.tiling.windows())
+		self.floating.windows().chain(self.tiling.windows())
 	}
 
 	pub fn windows_geometry(
 		&self,
 	) -> impl DoubleEndedIterator<Item = (&MappedWindow, Rectangle<i32, Logical>)> {
 		self.floating
-			.elements()
-			.map(|window| (window, self.floating.element_geometry(window).unwrap()))
+			.windows()
+			.map(|window| (window, self.floating.window_geometry(window).unwrap()))
 			.chain(self.tiling.windows_geometry())
 	}
 
@@ -503,11 +499,11 @@ impl Workspace {
 		location: Point<f64, Logical>,
 	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
 		self.floating
-			.element_under(location)
+			.window_under(location)
 			.or_else(|| self.tiling.window_under(location))
 			.or_else(|| {
-				self.floating.elements().next_back().map(|w| {
-					let location = self.floating.element_location(w).unwrap();
+				self.floating.windows().next_back().map(|w| {
+					let location = self.floating.window_location(w).unwrap();
 					(w, w.render_location(location))
 				})
 			})
@@ -528,11 +524,11 @@ impl Workspace {
 			window.resize(size);
 
 			let center = self.relative_center(size);
-			self.floating.map_element(window, center, true);
+			self.floating.map_window(window, center);
 		} else if !self.tiling.is_full() {
-			debug_assert!(self.floating.element_location(&window).is_some());
+			debug_assert!(self.floating.window_location(&window).is_some());
 
-			self.floating.unmap_elem(&window);
+			self.floating.remove_window(&window);
 			self.tiling.add_window(window, pointer);
 		}
 	}
@@ -567,8 +563,8 @@ impl Workspace {
 			.map(MaylandRenderElements::Surface)
 		}));
 
-		for window in self.floating.elements().rev() {
-			let geometry = self.floating.element_geometry(window).unwrap();
+		for window in self.floating.windows().rev() {
+			let geometry = self.floating.window_geometry(window).unwrap();
 
 			let render_location = window.render_location(geometry.loc);
 
