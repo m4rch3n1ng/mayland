@@ -4,7 +4,6 @@ use crate::{
 	state::{Mayland, State},
 	utils::logical_output,
 };
-use libc::dev_t;
 use mayland_config::outputs::OutputInfo;
 use smithay::{
 	backend::{
@@ -32,7 +31,7 @@ use smithay::{
 		drm::control::{self, ModeFlags, ModeTypeFlags, connector, crtc},
 		gbm::Modifier,
 		input::Libinput,
-		rustix::fs::OFlags,
+		rustix::fs::{Dev as dev_t, OFlags},
 		wayland_protocols::wp::presentation_time::server::wp_presentation_feedback,
 	},
 	utils::{DeviceFd, Monotonic},

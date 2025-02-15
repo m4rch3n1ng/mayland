@@ -5,7 +5,6 @@ use crate::{
 	shell::window::MappedWindow,
 	utils::{RectExt, SizeExt, output_size},
 };
-use libc::dev_t;
 use smithay::{
 	backend::renderer::{
 		element::{AsRenderElements, surface::WaylandSurfaceRenderElement},
@@ -13,7 +12,7 @@ use smithay::{
 	},
 	desktop::{LayerMap, LayerSurface, Space, layer_map_for_output, space::SpaceElement},
 	output::Output,
-	reexports::drm::control::crtc,
+	reexports::{drm::control::crtc, rustix::fs::Dev as dev_t},
 	utils::{Logical, Physical, Point, Rectangle, Scale, Size},
 	wayland::shell::wlr_layer::Layer,
 };
