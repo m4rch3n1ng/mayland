@@ -333,10 +333,8 @@ impl Tiling {
 		focus: Option<MappedWindow>,
 	) -> impl Iterator<Item = MaylandRenderElements> + use<'_, 'a, 'b> {
 		self.windows_geometry().flat_map(move |(window, geom)| {
-			let window_rect = window.render_rectangle(geom);
-
-			let render_location = window_rect.to_physical_precise_round(scale);
-			let mut elements = window.crop_render_elements(renderer, render_location, scale.into(), 1.);
+			let render_rect = window.render_rectangle(geom).to_physical_precise_round(1);
+			let mut elements = window.crop_render_elements(renderer, render_rect, scale.into(), 1.);
 
 			let color = if focus.as_ref() == Some(window) {
 				decoration.focus.active
