@@ -1,7 +1,7 @@
 use super::{Relocate, floating::Floating, outputs::OutputSpace, tiling::Tiling};
 use crate::{
 	backend::udev::UdevOutputState,
-	render::{FocusRing, MaylandRenderElements},
+	render::MaylandRenderElements,
 	shell::window::MappedWindow,
 	utils::{RectExt, SizeExt, output_size},
 };
@@ -483,8 +483,7 @@ impl Workspace {
 		&self,
 	) -> impl DoubleEndedIterator<Item = (&MappedWindow, Rectangle<i32, Logical>)> {
 		self.floating
-			.windows()
-			.map(|window| (window, self.floating.window_geometry(window).unwrap()))
+			.windows_geometry()
 			.chain(self.tiling.windows_geometry())
 	}
 
@@ -498,8 +497,7 @@ impl Workspace {
 		&self,
 		location: Point<f64, Logical>,
 	) -> Option<(&MappedWindow, Point<i32, Logical>)> {
-		self.floating
-			.window_under(location)
+		(self.floating.window_under(location))
 			.or_else(|| self.tiling.window_under(location))
 			.or_else(|| {
 				self.floating.windows().next_back().map(|w| {
@@ -563,26 +561,8 @@ impl Workspace {
 			.map(MaylandRenderElements::Surface)
 		}));
 
-		for window in self.floating.windows().rev() {
-			let geometry = self.floating.window_geometry(window).unwrap();
-
-			let render_location = window.render_location(geometry.loc);
-
-			let window_render_location = render_location.to_physical_precise_round(1.0);
-			let elements = window.render_elements(renderer, window_render_location, 1.0.into(), 1.0);
-			render_elements.extend(elements);
-
-			let color = if focus.as_ref() == Some(window) {
-				decoration.focus.active
-			} else {
-				decoration.focus.inactive
-			};
-
-			let focus_ring =
-				FocusRing::element(renderer, geometry, color.as_f32s(), decoration.focus.thickness);
-			render_elements.push(MaylandRenderElements::FocusElement(focus_ring));
-		}
-
+		let focus = focus.as_ref();
+		render_elements.extend(self.floating.render(renderer, output_scale, decoration, focus));
 		render_elements.extend(self.tiling.render(renderer, output_scale, decoration, focus));
 
 		render_elements.extend(lower.flat_map(|(surface, location)| {

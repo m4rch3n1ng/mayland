@@ -330,13 +330,13 @@ impl Tiling {
 		renderer: &'a mut GlowRenderer,
 		scale: f64,
 		decoration: &'b mayland_config::Decoration,
-		focus: Option<MappedWindow>,
+		focus: Option<&'b MappedWindow>,
 	) -> impl Iterator<Item = MaylandRenderElements> + use<'_, 'a, 'b> {
 		self.windows_geometry().flat_map(move |(window, geom)| {
 			let render_rect = window.render_rectangle(geom).to_physical_precise_round(1);
 			let mut elements = window.crop_render_elements(renderer, render_rect, scale.into(), 1.);
 
-			let color = if focus.as_ref() == Some(window) {
+			let color = if focus == Some(window) {
 				decoration.focus.active
 			} else {
 				decoration.focus.inactive

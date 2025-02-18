@@ -1,5 +1,9 @@
-use crate::shell::window::MappedWindow;
+use crate::{
+	render::{FocusRing, MaylandRenderElements},
+	shell::window::MappedWindow,
+};
 use smithay::{
+	backend::renderer::{element::AsRenderElements, glow::GlowRenderer},
 	desktop::space::SpaceElement,
 	utils::{Logical, Point, Rectangle},
 };
@@ -72,9 +76,10 @@ impl Floating {
 		self.windows.iter().map(|WindowLayout { window, .. }| window)
 	}
 
-	pub fn window_geometry(&self, window: &MappedWindow) -> Option<Rectangle<i32, Logical>> {
-		let window = self.windows.iter().find(|w| w.window == *window)?;
-		Some(window.geometry())
+	pub fn windows_geometry(
+		&self,
+	) -> impl DoubleEndedIterator<Item = (&MappedWindow, Rectangle<i32, Logical>)> {
+		self.windows.iter().map(|w| (&w.window, w.geometry()))
 	}
 
 	pub fn window_location(&self, window: &MappedWindow) -> Option<Point<i32, Logical>> {
@@ -103,5 +108,31 @@ impl Floating {
 		for WindowLayout { window, .. } in &self.windows {
 			window.refresh();
 		}
+	}
+}
+
+impl Floating {
+	pub fn render<'a, 'b>(
+		&self,
+		renderer: &'a mut GlowRenderer,
+		scale: f64,
+		decoration: &'b mayland_config::Decoration,
+		focus: Option<&'b MappedWindow>,
+	) -> impl Iterator<Item = MaylandRenderElements> + use<'_, 'a, 'b> {
+		self.windows_geometry().rev().flat_map(move |(window, geom)| {
+			let render_location = window.render_location(geom.loc).to_physical_precise_round(1);
+			let mut elements = window.render_elements(renderer, render_location, scale.into(), 1.0);
+
+			let color = if focus == Some(window) {
+				decoration.focus.active
+			} else {
+				decoration.focus.inactive
+			};
+
+			let focus_ring = FocusRing::element(renderer, geom, color.as_f32s(), decoration.focus.thickness);
+			elements.push(MaylandRenderElements::FocusElement(focus_ring));
+
+			elements
+		})
 	}
 }
