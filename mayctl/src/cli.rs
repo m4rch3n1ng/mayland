@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use mayland_comm::{Action, Request};
 
 #[derive(Debug, Parser)]
@@ -50,6 +50,11 @@ pub enum Dispatch {
 	CloseWindow,
 	/// toggle floating status of active window
 	ToggleFloating,
+	/// cycle through windows
+	Cycle {
+		#[arg(value_enum)]
+		direction: CycleDirection,
+	},
 
 	/// switch to another workspace
 	Workspace { workspace: usize },
@@ -59,6 +64,12 @@ pub enum Dispatch {
 		#[arg(required = true, trailing_var_arg = true)]
 		spawn: Vec<String>,
 	},
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum CycleDirection {
+	Next,
+	Prev,
 }
 
 impl From<Cmd> for Request {
@@ -81,6 +92,9 @@ impl From<Dispatch> for Action {
 
 			Dispatch::CloseWindow => Action::CloseWindow,
 			Dispatch::ToggleFloating => Action::ToggleFloating,
+			Dispatch::Cycle { direction } => {
+				Action::Cycle(mayland_comm::action::CycleDirection::from(direction))
+			}
 
 			Dispatch::Workspace { workspace } => Action::Workspace(workspace),
 
@@ -99,10 +113,31 @@ impl From<Action> for Dispatch {
 
 			Action::CloseWindow => Dispatch::CloseWindow,
 			Action::ToggleFloating => Dispatch::ToggleFloating,
+			Action::Cycle(direction) => Dispatch::Cycle {
+				direction: CycleDirection::from(direction),
+			},
 
 			Action::Workspace(workspace) => Dispatch::Workspace { workspace },
 
 			Action::Spawn(spawn) => Dispatch::Spawn { spawn },
+		}
+	}
+}
+
+impl From<CycleDirection> for mayland_comm::action::CycleDirection {
+	fn from(value: CycleDirection) -> Self {
+		match value {
+			CycleDirection::Next => mayland_comm::action::CycleDirection::Next,
+			CycleDirection::Prev => mayland_comm::action::CycleDirection::Prev,
+		}
+	}
+}
+
+impl From<mayland_comm::action::CycleDirection> for CycleDirection {
+	fn from(value: mayland_comm::action::CycleDirection) -> Self {
+		match value {
+			mayland_comm::action::CycleDirection::Next => CycleDirection::Next,
+			mayland_comm::action::CycleDirection::Prev => CycleDirection::Prev,
 		}
 	}
 }

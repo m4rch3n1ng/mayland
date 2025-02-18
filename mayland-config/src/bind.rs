@@ -18,6 +18,7 @@ pub enum Action {
 	#[serde(alias = "close")]
 	CloseWindow,
 	ToggleFloating,
+	Cycle(CycleDirection),
 
 	Workspace(usize),
 
@@ -33,6 +34,13 @@ fn deserialize_spawn<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<S
 	}
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CycleDirection {
+	Next,
+	Prev,
+}
+
 impl From<Action> for mayland_comm::Action {
 	/// this implementation is not strictly necessary and should
 	/// probably not be used, but it exists so that the compiler warns
@@ -43,6 +51,7 @@ impl From<Action> for mayland_comm::Action {
 
 			Action::CloseWindow => mayland_comm::Action::CloseWindow,
 			Action::ToggleFloating => mayland_comm::Action::ToggleFloating,
+			Action::Cycle(direction) => mayland_comm::Action::Cycle(direction.into()),
 
 			Action::Workspace(workspace) => mayland_comm::Action::Workspace(workspace),
 
@@ -58,10 +67,29 @@ impl From<mayland_comm::Action> for Action {
 
 			mayland_comm::Action::CloseWindow => Action::CloseWindow,
 			mayland_comm::Action::ToggleFloating => Action::ToggleFloating,
+			mayland_comm::Action::Cycle(direction) => Action::Cycle(direction.into()),
 
 			mayland_comm::Action::Workspace(workspace) => Action::Workspace(workspace),
 
 			mayland_comm::Action::Spawn(spawn) => Action::Spawn(spawn),
+		}
+	}
+}
+
+impl From<CycleDirection> for mayland_comm::action::CycleDirection {
+	fn from(value: CycleDirection) -> Self {
+		match value {
+			CycleDirection::Next => mayland_comm::action::CycleDirection::Next,
+			CycleDirection::Prev => mayland_comm::action::CycleDirection::Prev,
+		}
+	}
+}
+
+impl From<mayland_comm::action::CycleDirection> for CycleDirection {
+	fn from(value: mayland_comm::action::CycleDirection) -> Self {
+		match value {
+			mayland_comm::action::CycleDirection::Next => CycleDirection::Next,
+			mayland_comm::action::CycleDirection::Prev => CycleDirection::Prev,
 		}
 	}
 }

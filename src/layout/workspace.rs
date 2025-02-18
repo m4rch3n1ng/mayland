@@ -2,10 +2,10 @@ use super::{Relocate, floating::Floating, outputs::OutputSpace, tiling::Tiling};
 use crate::{
 	backend::udev::UdevOutputState,
 	render::MaylandRenderElements,
-	shell::window::MappedWindow,
+	shell::{focus::PointerFocusTarget, window::MappedWindow},
 	utils::{RectExt, SizeExt, output_size},
 };
-use mayland_config::outputs::OutputInfo;
+use mayland_config::{bind::CycleDirection, outputs::OutputInfo};
 use smithay::{
 	backend::renderer::{element::AsRenderElements, glow::GlowRenderer},
 	desktop::{LayerMap, LayerSurface, layer_map_for_output, space::SpaceElement},
@@ -357,6 +357,30 @@ impl WorkspaceManager {
 	}
 }
 
+#[derive(Debug)]
+pub struct NextWindow {
+	pub window: MappedWindow,
+	pub surface_location: Point<i32, Logical>,
+	pub pointer_location: Point<i32, Logical>,
+}
+
+impl NextWindow {
+	fn with_offset(self, offset: Point<i32, Logical>) -> Self {
+		NextWindow {
+			window: self.window,
+			surface_location: self.surface_location + offset,
+			pointer_location: self.pointer_location + offset,
+		}
+	}
+
+	pub fn surface_under(&self) -> (PointerFocusTarget, Point<f64, Logical>) {
+		(
+			PointerFocusTarget::Window(self.window.clone()),
+			self.surface_location.to_f64(),
+		)
+	}
+}
+
 impl WorkspaceManager {
 	#[instrument(skip_all)]
 	pub fn toggle_floating(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
@@ -373,6 +397,26 @@ impl WorkspaceManager {
 			let pointer = pointer - output_geometry.loc.to_f64();
 
 			workspace.toggle_floating(window, pointer);
+		}
+	}
+
+	#[instrument(skip_all)]
+	pub fn cycle_window(&self, window: &MappedWindow, direction: CycleDirection) -> Option<NextWindow> {
+		if let Some(active) = &self.outputs.active {
+			let workspace = &self.output_map[active];
+			let workspace = &self.workspaces[workspace];
+
+			if !workspace.has_window(window) {
+				tracing::warn!("window was not on the active workspace?");
+				return None;
+			}
+
+			let next = workspace.cycle_window(window, direction)?;
+
+			let output_position = self.outputs.output_position(active).unwrap();
+			Some(next.with_offset(output_position))
+		} else {
+			None
 		}
 	}
 }
@@ -546,6 +590,29 @@ impl Workspace {
 			self.floating.remove_window(&window);
 			self.tiling.add_window(window, pointer);
 		}
+	}
+
+	fn cycle_window(&self, prev: &MappedWindow, direction: CycleDirection) -> Option<NextWindow> {
+		assert!(self.has_window(prev));
+
+		let windows = self.tiling.windows().chain(self.floating.insertion_order());
+		let window = match direction {
+			CycleDirection::Next => windows.cycle().skip_while(|w| *w != prev).nth(1).unwrap(),
+			CycleDirection::Prev => windows.rev().cycle().skip_while(|w| *w != prev).nth(1).unwrap(),
+		};
+
+		if window == prev {
+			return None;
+		}
+
+		let geometry = self.window_geometry(window).unwrap();
+		let next = NextWindow {
+			window: window.clone(),
+			surface_location: window.render_location(geometry.loc),
+			pointer_location: geometry.center(),
+		};
+
+		Some(next)
 	}
 }
 

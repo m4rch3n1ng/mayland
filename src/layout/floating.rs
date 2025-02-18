@@ -31,11 +31,15 @@ impl WindowLayout {
 #[derive(Debug)]
 pub struct Floating {
 	windows: Vec<WindowLayout>,
+	insertion: Vec<MappedWindow>,
 }
 
 impl Floating {
 	pub fn new() -> Self {
-		Floating { windows: Vec::new() }
+		Floating {
+			windows: Vec::new(),
+			insertion: Vec::new(),
+		}
 	}
 
 	pub fn map_window(&mut self, window: MappedWindow, location: Point<i32, Logical>) {
@@ -43,6 +47,9 @@ impl Floating {
 			window.location = location;
 		} else {
 			window.set_activate(true);
+
+			self.insertion.push(window.clone());
+
 			let window = WindowLayout { window, location };
 			self.windows.push(window);
 		}
@@ -51,6 +58,9 @@ impl Floating {
 	pub fn remove_window(&mut self, window: &MappedWindow) {
 		if let Some(idx) = self.windows.iter().position(|w| w.window == *window) {
 			self.windows.remove(idx);
+
+			let idx = self.insertion.iter().position(|w| w == window).unwrap();
+			self.insertion.remove(idx);
 		}
 	}
 
@@ -75,6 +85,10 @@ impl Floating {
 			.iter()
 			.find(|w| w.window == *window)
 			.map(|w| w.location)
+	}
+
+	pub fn insertion_order(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> + Clone {
+		self.insertion.iter()
 	}
 
 	pub fn window_under(&self, point: Point<f64, Logical>) -> Option<(&MappedWindow, Point<i32, Logical>)> {

@@ -1,3 +1,5 @@
+//! actions for mayland
+
 use serde::{Deserialize, Serialize};
 
 /// an action to send to the compositor
@@ -26,6 +28,12 @@ pub enum Action {
 	/// { "tag": "toggle_floating" }
 	/// ```
 	ToggleFloating,
+	/// cycle the active window
+	///
+	/// ```json
+	/// { "tag": "cycle", "val": "next" }
+	/// ```
+	Cycle(CycleDirection),
 
 	/// switch to a workspace
 	///
@@ -40,4 +48,14 @@ pub enum Action {
 	/// { "tag": "spawn", "val": [ "kitty" ]}
 	/// ```
 	Spawn(Vec<String>),
+}
+
+/// the direction to cycle windows in
+#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CycleDirection {
+	/// focus the next window
+	Next,
+	/// focus the previous window
+	Prev,
 }

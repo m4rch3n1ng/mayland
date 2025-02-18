@@ -260,7 +260,7 @@ impl Tiling {
 }
 
 impl Tiling {
-	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
+	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> + Clone {
 		self.windows.iter().flatten().map(|w| &w.0)
 	}
 

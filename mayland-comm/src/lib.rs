@@ -21,7 +21,7 @@
 
 use serde::{Deserialize, Serialize};
 
-mod action;
+pub mod action;
 mod error;
 
 pub use self::action::Action;

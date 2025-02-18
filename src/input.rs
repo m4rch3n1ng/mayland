@@ -450,6 +450,33 @@ impl State {
 				self.mayland.workspaces.toggle_floating(window, pointer);
 				self.mayland.queue_redraw_all();
 			}
+			Action::Cycle(direction) => {
+				let Some(KeyboardFocusTarget::Window(window)) = self.mayland.keyboard.current_focus() else {
+					return Ok(());
+				};
+
+				if let Some(next) = self.mayland.workspaces.cycle_window(&window, direction) {
+					let serial = SERIAL_COUNTER.next_serial();
+
+					let pointer = self.mayland.pointer.clone();
+					pointer.motion(
+						self,
+						Some(next.surface_under()),
+						&MotionEvent {
+							location: next.pointer_location.to_f64(),
+							serial,
+							time: self.mayland.clock.now().as_millis(),
+						},
+					);
+					pointer.frame(self);
+
+					let keyboard = self.mayland.keyboard.clone();
+					let target = KeyboardFocusTarget::Window(next.window);
+					self.set_focus(target, keyboard, serial);
+
+					self.mayland.queue_redraw_all();
+				}
+			}
 			Action::Workspace(idx) => {
 				let location = self.mayland.workspaces.switch_to_workspace(idx);
 
