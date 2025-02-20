@@ -2,7 +2,7 @@ use super::shaders::Shaders;
 use smithay::{
 	backend::renderer::{
 		element::Kind,
-		gles::{element::PixelShaderElement, Uniform},
+		gles::{Uniform, element::PixelShaderElement},
 		glow::GlowRenderer,
 	},
 	utils::{Logical, Point, Rectangle, Size},

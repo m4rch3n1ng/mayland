@@ -1,5 +1,5 @@
 use regex::{Regex, RegexBuilder};
-use serde::{de::Visitor, Deserialize};
+use serde::{Deserialize, de::Visitor};
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct WindowRules(Vec<(Matcher, WindowRule)>);

@@ -1,17 +1,17 @@
-use super::{outputs::OutputSpace, tiling::Tiling, Relocate};
+use super::{Relocate, outputs::OutputSpace, tiling::Tiling};
 use crate::{
 	backend::udev::UdevOutputState,
 	render::{FocusRing, MaylandRenderElements},
 	shell::window::MappedWindow,
-	utils::{output_size, RectExt, SizeExt},
+	utils::{RectExt, SizeExt, output_size},
 };
 use libc::dev_t;
 use smithay::{
 	backend::renderer::{
-		element::{surface::WaylandSurfaceRenderElement, AsRenderElements},
+		element::{AsRenderElements, surface::WaylandSurfaceRenderElement},
 		glow::GlowRenderer,
 	},
-	desktop::{layer_map_for_output, space::SpaceElement, LayerMap, LayerSurface, Space},
+	desktop::{LayerMap, LayerSurface, Space, layer_map_for_output, space::SpaceElement},
 	output::Output,
 	reexports::drm::control::crtc,
 	utils::{Logical, Physical, Point, Rectangle, Scale, Size},

@@ -3,11 +3,10 @@ use std::fs::{self, File};
 use tracing::Subscriber;
 use tracing_journald as journald;
 use tracing_subscriber::{
-	fmt,
+	EnvFilter, Layer, fmt,
 	layer::{Filter, SubscriberExt},
 	registry::LookupSpan,
 	util::SubscriberInitExt,
-	EnvFilter, Layer,
 };
 
 fn iso8601() -> String {

@@ -1,6 +1,6 @@
 use crate::{
 	input::{apply_libinput_settings, device::InputDevice},
-	render::{shaders, MaylandRenderElements},
+	render::{MaylandRenderElements, shaders},
 	state::{Mayland, State},
 	utils::logical_output,
 };
@@ -9,27 +9,27 @@ use mayland_config::outputs::OutputInfo;
 use smithay::{
 	backend::{
 		allocator::{
+			Fourcc,
 			dmabuf::Dmabuf,
 			format::FormatSet,
 			gbm::{GbmAllocator, GbmBufferFlags, GbmDevice},
-			Fourcc,
 		},
 		drm::{
-			compositor::{DrmCompositor, FrameFlags},
 			DrmDevice, DrmDeviceFd, DrmEvent, DrmEventMetadata, DrmEventTime,
+			compositor::{DrmCompositor, FrameFlags},
 		},
 		egl::{EGLContext, EGLDevice, EGLDisplay},
 		input::InputEvent,
 		libinput::{LibinputInputBackend, LibinputSessionInterface},
-		renderer::{glow::GlowRenderer, ImportDma, ImportEgl},
-		session::{libseat::LibSeatSession, Event as SessionEvent, Session},
+		renderer::{ImportDma, ImportEgl, glow::GlowRenderer},
+		session::{Event as SessionEvent, Session, libseat::LibSeatSession},
 		udev::{self, UdevBackend, UdevEvent},
 	},
 	desktop::utils::OutputPresentationFeedback,
 	output::{Mode, Output, OutputModeSource, PhysicalProperties, Subpixel},
 	reexports::{
 		calloop::{Dispatcher, RegistrationToken},
-		drm::control::{self, connector, crtc, ModeFlags, ModeTypeFlags},
+		drm::control::{self, ModeFlags, ModeTypeFlags, connector, crtc},
 		gbm::Modifier,
 		input::Libinput,
 		rustix::fs::OFlags,

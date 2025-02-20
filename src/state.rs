@@ -1,5 +1,5 @@
 use crate::{
-	backend::{udev::Udev, winit::Winit, Backend},
+	backend::{Backend, udev::Udev, winit::Winit},
 	comm::MaySocket,
 	cursor::{Cursor, RenderCursor},
 	input::{apply_libinput_settings, device::InputDevice},
@@ -11,35 +11,34 @@ use crate::{
 use calloop::futures::Scheduler;
 use indexmap::IndexSet;
 use mayland_comm::MAYLAND_SOCKET_VAR;
-use mayland_config::{bind::CompMod, Config};
+use mayland_config::{Config, bind::CompMod};
 use smithay::{
 	backend::{
 		input::Keycode,
 		renderer::{
 			element::{
+				Kind, RenderElementStates,
 				memory::MemoryRenderBufferRenderElement,
 				solid::{SolidColorBuffer, SolidColorRenderElement},
 				surface::render_elements_from_surface_tree,
-				Kind, RenderElementStates,
 			},
 			glow::GlowRenderer,
 		},
 	},
 	desktop::{
-		layer_map_for_output,
+		LayerSurface, PopupManager, layer_map_for_output,
 		utils::{
-			surface_presentation_feedback_flags_from_states, surface_primary_scanout_output,
-			OutputPresentationFeedback,
+			OutputPresentationFeedback, surface_presentation_feedback_flags_from_states,
+			surface_primary_scanout_output,
 		},
-		LayerSurface, PopupManager,
 	},
-	input::{keyboard::KeyboardHandle, pointer::PointerHandle, Seat, SeatState},
+	input::{Seat, SeatState, keyboard::KeyboardHandle, pointer::PointerHandle},
 	output::Output,
 	reexports::{
-		calloop::{generic::Generic, EventLoop, Interest, LoopHandle, LoopSignal, Mode, PostAction},
+		calloop::{EventLoop, Interest, LoopHandle, LoopSignal, Mode, PostAction, generic::Generic},
 		wayland_server::{
-			backend::{ClientData, GlobalId},
 			Display, DisplayHandle,
+			backend::{ClientData, GlobalId},
 		},
 	},
 	utils::{Clock, IsAlive, Monotonic},
@@ -56,7 +55,7 @@ use smithay::{
 		},
 		shell::{
 			wlr_layer::WlrLayerShellState,
-			xdg::{decoration::XdgDecorationState, XdgShellState},
+			xdg::{XdgShellState, decoration::XdgDecorationState},
 		},
 		shm::ShmState,
 		socket::ListeningSocketSource,

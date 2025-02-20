@@ -13,17 +13,17 @@ use smithay::{
 		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState, KeyboardKeyEvent,
 		Keycode, PointerAxisEvent, PointerButtonEvent, PointerMotionEvent,
 	},
-	desktop::{layer_map_for_output, LayerSurface, WindowSurfaceType},
+	desktop::{LayerSurface, WindowSurfaceType, layer_map_for_output},
 	input::{
 		keyboard::{
-			keysyms::{KEY_XF86Switch_VT_1, KEY_XF86Switch_VT_12},
 			FilterResult, KeyboardHandle, KeysymHandle, ModifiersState,
+			keysyms::{KEY_XF86Switch_VT_1, KEY_XF86Switch_VT_12},
 		},
 		pointer::{AxisFrame, ButtonEvent, MotionEvent, RelativeMotionEvent},
 	},
 	output::Output,
 	reexports::wayland_server::protocol::{wl_pointer, wl_surface::WlSurface},
-	utils::{Logical, Point, Serial, SERIAL_COUNTER},
+	utils::{Logical, Point, SERIAL_COUNTER, Serial},
 	wayland::{
 		input_method::InputMethodSeat,
 		shell::wlr_layer::{KeyboardInteractivity, Layer as WlrLayer},

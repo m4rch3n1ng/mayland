@@ -1,4 +1,4 @@
-use mayland_comm::{Response, MAYLAND_SOCKET_VAR};
+use mayland_comm::{MAYLAND_SOCKET_VAR, Response};
 use owo_colors::OwoColorize;
 use std::{fmt::Display, io::Write as _, process::Termination};
 

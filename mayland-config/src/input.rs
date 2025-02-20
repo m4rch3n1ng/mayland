@@ -1,6 +1,6 @@
 use serde::{
-	de::{VariantAccess, Visitor},
 	Deserialize,
+	de::{VariantAccess, Visitor},
 };
 use smithay::input::keyboard::XkbConfig;
 use smithay::reexports::input::{AccelProfile, ClickMethod, ScrollMethod, TapButtonMap};

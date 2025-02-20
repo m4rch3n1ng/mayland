@@ -1,6 +1,6 @@
 use bind::CompMod;
 use error::MayfigError;
-use serde::{de::Visitor, Deserialize};
+use serde::{Deserialize, de::Visitor};
 use smithay::reexports::calloop;
 use std::{
 	collections::{HashMap, HashSet},

@@ -3,18 +3,18 @@ use crate::{render::MaylandRenderElements, state::State};
 use mayland_config::windowrules::WindowRule;
 use smithay::{
 	backend::renderer::{
-		element::{surface::WaylandSurfaceRenderElement, utils::CropRenderElement, AsRenderElements},
-		glow::GlowRenderer,
 		ImportAll, ImportMem, Renderer, Texture,
+		element::{AsRenderElements, surface::WaylandSurfaceRenderElement, utils::CropRenderElement},
+		glow::GlowRenderer,
 	},
-	desktop::{space::SpaceElement, Window, WindowSurface},
+	desktop::{Window, WindowSurface, space::SpaceElement},
 	input::{
+		Seat,
 		pointer::{
 			AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent, GesturePinchBeginEvent,
 			GesturePinchEndEvent, GesturePinchUpdateEvent, GestureSwipeBeginEvent, GestureSwipeEndEvent,
 			GestureSwipeUpdateEvent, MotionEvent, PointerTarget, RelativeMotionEvent,
 		},
-		Seat,
 	},
 	output::Output,
 	reexports::{

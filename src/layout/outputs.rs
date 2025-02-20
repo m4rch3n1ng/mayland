@@ -1,5 +1,5 @@
 use super::Relocate;
-use crate::utils::{output_size, RectExt};
+use crate::utils::{RectExt, output_size};
 use mayland_config::outputs::OutputInfo;
 use smithay::{
 	output::Output,

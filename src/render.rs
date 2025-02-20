@@ -1,14 +1,13 @@
 use smithay::{
 	backend::renderer::{
+		ImportAll, ImportMem, Renderer,
 		element::{
-			memory::MemoryRenderBufferRenderElement, solid::SolidColorRenderElement,
-			surface::WaylandSurfaceRenderElement, utils::CropRenderElement, Element, Id, RenderElement,
-			UnderlyingStorage,
+			Element, Id, RenderElement, UnderlyingStorage, memory::MemoryRenderBufferRenderElement,
+			solid::SolidColorRenderElement, surface::WaylandSurfaceRenderElement, utils::CropRenderElement,
 		},
 		gles::element::PixelShaderElement,
 		glow::GlowRenderer,
 		utils::{CommitCounter, DamageSet, OpaqueRegions},
-		ImportAll, ImportMem, Renderer,
 	},
 	utils::{Physical, Point, Rectangle, Scale, Transform},
 };

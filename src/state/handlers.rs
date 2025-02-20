@@ -4,25 +4,25 @@ use smithay::{
 	backend::{allocator::dmabuf::Dmabuf, input::TabletToolDescriptor},
 	delegate_cursor_shape, delegate_data_control, delegate_data_device, delegate_dmabuf, delegate_output,
 	delegate_primary_selection, delegate_seat, delegate_viewporter, delegate_xdg_decoration,
-	input::{pointer::CursorImageStatus, Seat, SeatHandler, SeatState},
+	input::{Seat, SeatHandler, SeatState, pointer::CursorImageStatus},
 	reexports::{
 		wayland_protocols::xdg::decoration::zv1::server::zxdg_toplevel_decoration_v1::Mode as DecorationMode,
-		wayland_server::{protocol::wl_surface::WlSurface, Resource},
+		wayland_server::{Resource, protocol::wl_surface::WlSurface},
 	},
 	wayland::{
 		dmabuf::{DmabufGlobal, DmabufHandler, DmabufState, ImportNotifier},
 		output::OutputHandler,
 		seat::WaylandFocus,
 		selection::{
-			data_device::{
-				set_data_device_focus, ClientDndGrabHandler, DataDeviceHandler, DataDeviceState,
-				ServerDndGrabHandler,
-			},
-			primary_selection::{set_primary_focus, PrimarySelectionHandler, PrimarySelectionState},
-			wlr_data_control::{DataControlHandler, DataControlState},
 			SelectionHandler,
+			data_device::{
+				ClientDndGrabHandler, DataDeviceHandler, DataDeviceState, ServerDndGrabHandler,
+				set_data_device_focus,
+			},
+			primary_selection::{PrimarySelectionHandler, PrimarySelectionState, set_primary_focus},
+			wlr_data_control::{DataControlHandler, DataControlState},
 		},
-		shell::xdg::{decoration::XdgDecorationHandler, ToplevelSurface},
+		shell::xdg::{ToplevelSurface, decoration::XdgDecorationHandler},
 		tablet_manager::TabletSeatHandler,
 	},
 };

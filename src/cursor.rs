@@ -6,7 +6,7 @@ use smithay::{
 	wayland::compositor::with_states,
 };
 use std::{collections::HashMap, fmt::Debug, io::Read, time::Duration};
-use xcursor::{parser::Image, CursorTheme};
+use xcursor::{CursorTheme, parser::Image};
 
 const FALLBACK_CURSOR_DATA: &[u8] = include_bytes!("../resources/cursor.rgba");
 

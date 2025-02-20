@@ -1,9 +1,9 @@
 use bitflags::bitflags;
-use serde::{de::Visitor, Deserialize};
+use serde::{Deserialize, de::Visitor};
 use smithay::input::keyboard::{
-	keysyms::KEY_NoSymbol,
-	xkb::{keysym_from_name, KEYSYM_CASE_INSENSITIVE},
 	Keysym, ModifiersState,
+	keysyms::KEY_NoSymbol,
+	xkb::{KEYSYM_CASE_INSENSITIVE, keysym_from_name},
 };
 use std::{collections::HashMap, fmt::Debug};
 

@@ -3,13 +3,13 @@ use crate::{shell::window::MappedWindow, state::State};
 use smithay::{
 	desktop::WindowSurface,
 	input::{
+		SeatHandler,
 		pointer::{
 			AxisFrame, ButtonEvent, CursorIcon, Focus, GestureHoldBeginEvent, GestureHoldEndEvent,
 			GesturePinchBeginEvent, GesturePinchEndEvent, GesturePinchUpdateEvent, GestureSwipeBeginEvent,
 			GestureSwipeEndEvent, GestureSwipeUpdateEvent, GrabStartData, MotionEvent, PointerGrab,
 			PointerInnerHandle, RelativeMotionEvent,
 		},
-		SeatHandler,
 	},
 	reexports::{wayland_protocols::xdg::shell::server::xdg_toplevel, wayland_server::Resource},
 	utils::{IsAlive, Logical, Point, Serial, Size},

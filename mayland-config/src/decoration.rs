@@ -1,4 +1,4 @@
-use serde::{de::Visitor, Deserialize};
+use serde::{Deserialize, de::Visitor};
 use smithay::backend::renderer::Color32F;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]

@@ -1,4 +1,4 @@
-use serde::{de::Visitor, Deserialize};
+use serde::{Deserialize, de::Visitor};
 use std::{cmp::Ordering, collections::HashMap};
 
 #[derive(Debug, Default, PartialEq, Eq, Deserialize)]

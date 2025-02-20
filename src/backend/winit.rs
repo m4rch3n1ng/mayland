@@ -1,5 +1,5 @@
 use crate::{
-	render::{shaders, MaylandRenderElements},
+	render::{MaylandRenderElements, shaders},
 	state::{Mayland, State},
 	utils::logical_output,
 };
@@ -8,7 +8,7 @@ use smithay::{
 	backend::{
 		allocator::dmabuf::Dmabuf,
 		egl::EGLDevice,
-		renderer::{damage::OutputDamageTracker, glow::GlowRenderer, ImportDma, ImportEgl},
+		renderer::{ImportDma, ImportEgl, damage::OutputDamageTracker, glow::GlowRenderer},
 		winit::{self, WinitEvent, WinitGraphicsBackend},
 	},
 	output::{Mode, Output, PhysicalProperties, Subpixel},

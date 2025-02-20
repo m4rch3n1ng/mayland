@@ -1,9 +1,9 @@
 use crate::State;
-use calloop::{io::Async, LoopHandle};
+use calloop::{LoopHandle, io::Async};
 use futures_util::{AsyncBufReadExt, AsyncWriteExt};
 use mayland_comm::{Request, Response};
-use mayland_config::{bind::CompMod, Action};
-use smithay::reexports::calloop::{generic::Generic, Interest, Mode, PostAction};
+use mayland_config::{Action, bind::CompMod};
+use smithay::reexports::calloop::{Interest, Mode, PostAction, generic::Generic};
 use std::{
 	os::unix::net::{UnixListener, UnixStream},
 	path::PathBuf,

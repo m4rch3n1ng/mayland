@@ -1,9 +1,9 @@
 use self::{
 	cli::Cli,
-	term::{ensure_matches, unexpected, Term},
+	term::{Term, ensure_matches, unexpected},
 };
 use clap::Parser;
-use mayland_comm::{Request, Response, MAYLAND_SOCKET_VAR};
+use mayland_comm::{MAYLAND_SOCKET_VAR, Request, Response};
 use serde::Serialize;
 use std::{
 	fmt::Display,

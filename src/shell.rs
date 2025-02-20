@@ -2,16 +2,16 @@ use crate::state::{ClientState, State};
 use smithay::{
 	backend::renderer::utils::on_commit_buffer_handler,
 	delegate_compositor, delegate_layer_shell, delegate_shm,
-	desktop::{layer_map_for_output, LayerSurface},
+	desktop::{LayerSurface, layer_map_for_output},
 	output::Output,
 	reexports::wayland_server::{
-		protocol::{wl_buffer, wl_output::WlOutput, wl_surface::WlSurface},
 		Client,
+		protocol::{wl_buffer, wl_output::WlOutput, wl_surface::WlSurface},
 	},
 	wayland::{
 		buffer::BufferHandler,
 		compositor::{
-			get_parent, is_sync_subsurface, CompositorClientState, CompositorHandler, CompositorState,
+			CompositorClientState, CompositorHandler, CompositorState, get_parent, is_sync_subsurface,
 		},
 		shell::wlr_layer::{
 			Layer, LayerSurface as WlrLayerSurface, WlrLayerShellHandler, WlrLayerShellState,

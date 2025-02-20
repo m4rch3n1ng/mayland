@@ -1,6 +1,6 @@
-use crate::{state::Mayland, State};
+use crate::{State, state::Mayland};
 use smithay::{
-	desktop::{layer_map_for_output, LayerSurface, WindowSurfaceType},
+	desktop::{LayerSurface, WindowSurfaceType, layer_map_for_output},
 	reexports::wayland_server::protocol::wl_surface::WlSurface,
 	wayland::{
 		compositor::with_states,
