@@ -14,8 +14,8 @@ license = "GPL-3.0-or-later"
 dirs = "6.0.0"
 mayland-config = { path = "mayland-config" }
 mayland-comm = { path = "mayland-comm" }
-serde = "1.0.217"
-serde_json = "1.0.138"
+serde = "1.0.218"
+serde_json = "1.0.139"
 
 [workspace.dependencies.smithay]
 git = "https://github.com/Smithay/smithay"
