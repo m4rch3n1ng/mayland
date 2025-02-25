@@ -541,21 +541,21 @@ impl Workspace {
 	) -> impl Iterator<Item = MaylandRenderElements> + use<> {
 		let mut render_elements = Vec::new();
 
+		let scale = output.current_scale().fractional_scale();
 		let layer_map = layer_map_for_output(output);
-		let output_scale = output.current_scale().fractional_scale();
 
-		let (lower, upper) = Workspace::layer_elements(&layer_map, output_scale);
+		let (lower, upper) = Workspace::layer_elements(&layer_map, scale);
 
 		render_elements.extend(upper.flat_map(|(surface, location)| {
-			surface.render_elements(renderer, location, Scale::from(output_scale), 1.)
+			surface.render_elements(renderer, location, Scale::from(scale), 1.)
 		}));
 
 		let focus = focus.as_ref();
-		render_elements.extend(self.floating.render(renderer, output_scale, decoration, focus));
-		render_elements.extend(self.tiling.render(renderer, output_scale, decoration, focus));
+		render_elements.extend(self.floating.render(renderer, scale, decoration, focus));
+		render_elements.extend(self.tiling.render(renderer, scale, decoration, focus));
 
 		render_elements.extend(lower.flat_map(|(surface, location)| {
-			surface.render_elements(renderer, location, Scale::from(output_scale), 1.)
+			surface.render_elements(renderer, location, Scale::from(scale), 1.)
 		}));
 
 		render_elements.into_iter()
@@ -563,7 +563,7 @@ impl Workspace {
 
 	fn layer_elements(
 		layer_map: &LayerMap,
-		output_scale: f64,
+		scale: f64,
 	) -> (
 		impl Iterator<Item = LayerSurfacePoint<'_>>,
 		impl Iterator<Item = LayerSurfacePoint<'_>>,
@@ -572,18 +572,16 @@ impl Workspace {
 			.layers()
 			.filter(|surface| matches!(surface.layer(), Layer::Top | Layer::Overlay))
 			.filter_map(move |surface| {
-				layer_map
-					.layer_geometry(surface)
-					.map(|geo| (surface, geo.loc.to_physical_precise_round(output_scale)))
+				let geometry = layer_map.layer_geometry(surface)?;
+				Some((surface, geometry.loc.to_physical_precise_round(scale)))
 			});
 
 		let lower = layer_map
 			.layers()
 			.filter(|surface| matches!(surface.layer(), Layer::Background | Layer::Bottom))
 			.filter_map(move |surface| {
-				layer_map
-					.layer_geometry(surface)
-					.map(|geo| (surface, geo.loc.to_physical_precise_round(output_scale)))
+				let geometry = layer_map.layer_geometry(surface)?;
+				Some((surface, geometry.loc.to_physical_precise_round(scale)))
 			});
 
 		(lower, upper)
