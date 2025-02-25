@@ -1,4 +1,5 @@
 use super::shaders::Shaders;
+use mayland_config::decoration::Color;
 use smithay::{
 	backend::renderer::{
 		element::Kind,
@@ -15,7 +16,7 @@ impl FocusRing {
 	pub fn element(
 		renderer: &mut GlowRenderer,
 		mut area: Rectangle<i32, Logical>,
-		color: [f32; 3],
+		color: Color,
 		thickness: u8,
 	) -> PixelShaderElement {
 		let t = i32::from(thickness);
@@ -29,7 +30,7 @@ impl FocusRing {
 			None,
 			1.0,
 			vec![
-				Uniform::new("color", color),
+				Uniform::new("color", color.as_f32s()),
 				Uniform::new("thickness", f32::from(thickness)),
 			],
 			Kind::Unspecified,

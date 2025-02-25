@@ -129,7 +129,7 @@ impl Floating {
 				decoration.focus.inactive
 			};
 
-			let focus_ring = FocusRing::element(renderer, geom, color.as_f32s(), decoration.focus.thickness);
+			let focus_ring = FocusRing::element(renderer, geom, color, decoration.focus.thickness);
 			elements.push(MaylandRenderElements::FocusElement(focus_ring));
 
 			elements
