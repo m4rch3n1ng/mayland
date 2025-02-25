@@ -6,10 +6,7 @@ use crate::{
 	utils::{RectExt, SizeExt, output_size},
 };
 use smithay::{
-	backend::renderer::{
-		element::{AsRenderElements, surface::WaylandSurfaceRenderElement},
-		glow::GlowRenderer,
-	},
+	backend::renderer::{element::AsRenderElements, glow::GlowRenderer},
 	desktop::{LayerMap, LayerSurface, layer_map_for_output, space::SpaceElement},
 	output::Output,
 	reexports::{drm::control::crtc, rustix::fs::Dev as dev_t},
@@ -550,15 +547,7 @@ impl Workspace {
 		let (lower, upper) = Workspace::layer_elements(&layer_map, output_scale);
 
 		render_elements.extend(upper.flat_map(|(surface, location)| {
-			AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(
-				surface,
-				renderer,
-				location,
-				Scale::from(output_scale),
-				1.,
-			)
-			.into_iter()
-			.map(MaylandRenderElements::Surface)
+			surface.render_elements(renderer, location, Scale::from(output_scale), 1.)
 		}));
 
 		let focus = focus.as_ref();
@@ -566,15 +555,7 @@ impl Workspace {
 		render_elements.extend(self.tiling.render(renderer, output_scale, decoration, focus));
 
 		render_elements.extend(lower.flat_map(|(surface, location)| {
-			AsRenderElements::<_>::render_elements::<WaylandSurfaceRenderElement<_>>(
-				surface,
-				renderer,
-				location,
-				Scale::from(output_scale),
-				1.,
-			)
-			.into_iter()
-			.map(MaylandRenderElements::Surface)
+			surface.render_elements(renderer, location, Scale::from(output_scale), 1.)
 		}));
 
 		render_elements.into_iter()
