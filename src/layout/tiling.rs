@@ -151,10 +151,6 @@ impl Tiling {
 
 impl Tiling {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) -> Option<MappedWindow> {
-		for w in self.windows() {
-			w.set_activate(false);
-		}
-
 		match &mut self.windows {
 			[Some(_), Some(_)] => Some(window),
 			[None, Some(_)] => unreachable!(),
@@ -226,16 +222,6 @@ impl Tiling {
 		}
 	}
 
-	pub fn activate_window(&self, window: &MappedWindow) {
-		for w in self.windows() {
-			if w == window {
-				w.set_activate(true);
-			} else {
-				w.set_activate(false);
-			}
-		}
-	}
-
 	pub fn map_output(&mut self, output: &Output) {
 		let layout_size = layer_map_for_output(output).non_exclusive_zone();
 		self.resize(layout_size);
@@ -274,10 +260,6 @@ impl Tiling {
 }
 
 impl Tiling {
-	pub fn has_window(&self, window: &MappedWindow) -> bool {
-		self.windows().any(|w| w == window)
-	}
-
 	pub fn windows(&self) -> impl DoubleEndedIterator<Item = &MappedWindow> {
 		self.windows.iter().flatten().map(|w| &w.0)
 	}

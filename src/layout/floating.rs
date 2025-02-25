@@ -39,7 +39,6 @@ impl Floating {
 	}
 
 	pub fn map_window(&mut self, window: MappedWindow, location: Point<i32, Logical>) {
-		self.activate(&window);
 		if let Some(window) = self.windows.iter_mut().find(|w| w.window == window) {
 			window.location = location;
 		} else {
@@ -56,19 +55,8 @@ impl Floating {
 	}
 
 	pub fn raise_window(&mut self, window: &MappedWindow) {
-		self.activate(window);
 		if let Some(idx) = self.windows.iter().position(|w| w.window == *window) {
 			self.windows[idx..].rotate_left(1);
-		}
-	}
-
-	fn activate(&self, window: &MappedWindow) {
-		for WindowLayout { window: w, .. } in &self.windows {
-			if w == window {
-				w.set_activate(true);
-			} else {
-				w.set_activate(false);
-			}
 		}
 	}
 

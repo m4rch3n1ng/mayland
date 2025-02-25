@@ -434,8 +434,9 @@ impl Workspace {
 
 impl Workspace {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
-		let center = self.relative_center(window.geometry().size);
+		self.deactivate();
 
+		let center = self.relative_center(window.geometry().size);
 		if window.is_non_resizable() || window.windowrules.floating().unwrap_or(false) {
 			self.floating.map_window(window, center);
 		} else if let Some(window) = self.tiling.add_window(window, pointer) {
@@ -463,8 +464,26 @@ impl Workspace {
 	pub fn activate_window(&mut self, window: &MappedWindow) {
 		if self.is_floating(window) {
 			self.floating.raise_window(window);
-		} else if self.tiling.has_window(window) {
-			self.tiling.activate_window(window);
+		}
+
+		self.activate(window);
+	}
+
+	/// deactivate all windows
+	fn deactivate(&self) {
+		for window in self.windows() {
+			window.set_activate(false);
+		}
+	}
+
+	/// activate the given [`MappedWindow`] and deactivate all other windows
+	fn activate(&self, window: &MappedWindow) {
+		for w in self.windows() {
+			if w == window {
+				w.set_activate(true);
+			} else {
+				w.set_activate(false);
+			}
 		}
 	}
 
