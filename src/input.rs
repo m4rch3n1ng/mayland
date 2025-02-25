@@ -320,45 +320,55 @@ impl State {
 			return;
 		};
 
-		if let Some((layer, _, _)) = self.layer_surface_under(
+		let target = if let Some((layer, _, _)) = self.layer_surface_under(
 			output,
 			location,
 			&[WlrLayer::Overlay, WlrLayer::Top],
 			SurfaceFocus::Keyboard,
 		) {
-			let target = KeyboardFocusTarget::LayerSurface(layer);
-			keyboard.set_focus(self, Some(target), serial);
+			KeyboardFocusTarget::LayerSurface(layer)
 		} else if let Some((window, _)) = self
 			.mayland
 			.workspaces
 			.window_under(location)
 			.map(|(w, p)| (w.clone(), p))
 		{
-			self.set_window_focus(window, &keyboard, serial);
+			KeyboardFocusTarget::Window(window)
 		} else if let Some((layer, _, _)) = self.layer_surface_under(
 			output,
 			location,
 			&[WlrLayer::Bottom, WlrLayer::Background],
 			SurfaceFocus::Keyboard,
 		) {
-			let target = KeyboardFocusTarget::LayerSurface(layer);
-			keyboard.set_focus(self, Some(target), serial);
+			KeyboardFocusTarget::LayerSurface(layer)
 		} else {
 			return;
 		};
 
+		let previous = keyboard.current_focus();
+		if previous.as_ref() == Some(&target) {
+			return;
+		};
+
+		self.set_focus(target, keyboard, serial);
 		self.mayland.queue_redraw_all();
 	}
 
-	fn set_window_focus(&mut self, window: MappedWindow, keyboard: &KeyboardHandle<State>, serial: Serial) {
-		self.mayland.workspaces.activate_window(&window);
-		keyboard.set_focus(self, Some(KeyboardFocusTarget::Window(window)), serial);
+	fn set_focus(&mut self, target: KeyboardFocusTarget, keyboard: KeyboardHandle<State>, serial: Serial) {
+		if let KeyboardFocusTarget::Window(window) = &target {
+			self.mayland.workspaces.activate_window(window);
+		}
+
+		keyboard.set_focus(self, Some(target), serial);
 	}
 
 	pub fn focus_window(&mut self, window: MappedWindow) {
 		let serial = SERIAL_COUNTER.next_serial();
 		let keyboard = self.mayland.keyboard.clone();
-		self.set_window_focus(window, &keyboard, serial);
+
+		let target = KeyboardFocusTarget::Window(window);
+		self.set_focus(target, keyboard, serial);
+
 		self.refresh_pointer_focus();
 	}
 
