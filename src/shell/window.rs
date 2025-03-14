@@ -3,7 +3,7 @@ use crate::{render::MaylandRenderElements, state::State};
 use mayland_config::windowrules::WindowRule;
 use smithay::{
 	backend::renderer::{
-		ImportAll, ImportMem, Renderer, Texture,
+		ImportAll, ImportMem, Renderer,
 		element::{AsRenderElements, surface::WaylandSurfaceRenderElement, utils::CropRenderElement},
 		glow::GlowRenderer,
 	},
@@ -230,8 +230,8 @@ impl SpaceElement for MappedWindow {
 
 impl<R> AsRenderElements<R> for MappedWindow
 where
+	R::TextureId: Clone + 'static,
 	R: Renderer + ImportAll + ImportMem,
-	<R as Renderer>::TextureId: Clone + Texture + 'static,
 {
 	type RenderElement = WaylandSurfaceRenderElement<R>;
 

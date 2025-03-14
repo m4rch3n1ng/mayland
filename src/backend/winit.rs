@@ -13,7 +13,7 @@ use smithay::{
 	},
 	output::{Mode, Output, PhysicalProperties, Subpixel},
 	reexports::winit::window::Window,
-	utils::{Point, Rectangle, Transform},
+	utils::Transform,
 	wayland::dmabuf::DmabufFeedbackBuilder,
 };
 use std::borrow::BorrowMut;
@@ -106,21 +106,21 @@ impl Winit {
 
 impl Winit {
 	pub fn render(&mut self, mayland: &mut Mayland, output: &Output, elements: &[MaylandRenderElements]) {
-		let size = self.backend.window_size();
-		let damage = Rectangle::new(Point::from((0, 0)), size);
+		let result = {
+			let (renderer, mut fb) = self.backend.bind().unwrap();
+			self.damage_tracker
+				.render_output(renderer, &mut fb, 0, elements, [0.; 4])
+				.unwrap()
+		};
 
-		self.backend.bind().unwrap();
-		let renderer = self.backend.renderer();
-		self.damage_tracker
-			.render_output(renderer, 0, elements, [0.; 4])
-			.unwrap();
+		if let Some(damage) = result.damage {
+			self.backend.submit(Some(damage)).unwrap();
 
-		self.backend.submit(Some(&[damage])).unwrap();
+			mayland.send_frame_callbacks(output);
 
-		mayland.send_frame_callbacks(output);
-
-		// ask for redraw to schedule new frame.
-		self.backend.window().request_redraw();
+			// ask for redraw to schedule new frame.
+			self.backend.window().request_redraw();
+		}
 	}
 
 	pub fn renderer(&mut self) -> &mut GlowRenderer {

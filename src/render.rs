@@ -5,8 +5,8 @@ use smithay::{
 			Element, Id, RenderElement, UnderlyingStorage, memory::MemoryRenderBufferRenderElement,
 			solid::SolidColorRenderElement, surface::WaylandSurfaceRenderElement, utils::CropRenderElement,
 		},
-		gles::element::PixelShaderElement,
-		glow::GlowRenderer,
+		gles::{GlesError, element::PixelShaderElement},
+		glow::{GlowFrame, GlowRenderer},
 		utils::{CommitCounter, DamageSet, OpaqueRegions},
 	},
 	utils::{Physical, Point, Rectangle, Scale, Transform},
@@ -31,7 +31,7 @@ pub enum OutputRenderElements<R: Renderer> {
 impl<R> Element for OutputRenderElements<R>
 where
 	R: Renderer,
-	<R as Renderer>::TextureId: 'static,
+	R::TextureId: 'static,
 	R: ImportAll + ImportMem,
 {
 	fn id(&self) -> &Id {
@@ -138,12 +138,12 @@ where
 impl RenderElement<GlowRenderer> for OutputRenderElements<GlowRenderer> {
 	fn draw(
 		&self,
-		frame: &mut <GlowRenderer as Renderer>::Frame<'_>,
+		frame: &mut GlowFrame<'_, '_>,
 		src: Rectangle<f64, smithay::utils::Buffer>,
 		dst: Rectangle<i32, Physical>,
 		damage: &[Rectangle<i32, Physical>],
 		opaque_regions: &[Rectangle<i32, Physical>],
-	) -> Result<(), <GlowRenderer as Renderer>::Error> {
+	) -> Result<(), GlesError> {
 		match self {
 			Self::DefaultPointer(x) => x.draw(frame, src, dst, damage, opaque_regions),
 			Self::CropSurface(x) => x.draw(frame, src, dst, damage, opaque_regions),
