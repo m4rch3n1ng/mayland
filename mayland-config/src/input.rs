@@ -268,14 +268,14 @@ pub struct Touchpad {
 	#[serde(with = "click_method")]
 	pub click_method: Option<ClickMethod>,
 
+	pub accel_speed: f64,
+	#[serde(with = "accel_profile")]
+	pub accel_profile: Option<AccelProfile>,
+
 	pub middle_emulation: bool,
 	#[serde(with = "tap_button_map")]
 	pub tap_button_map: Option<TapButtonMap>,
 	pub left_handed: bool,
-
-	pub accel_speed: f64,
-	#[serde(with = "accel_profile")]
-	pub accel_profile: Option<AccelProfile>,
 }
 
 /// all values are parsed with [`mayfig`],
@@ -297,12 +297,12 @@ impl Default for Touchpad {
 
 			click_method: None,
 
+			accel_speed: 0.0,
+			accel_profile: None,
+
 			middle_emulation: true,
 			tap_button_map: None,
 			left_handed: false,
-
-			accel_speed: 0.0,
-			accel_profile: None,
 		}
 	}
 }
@@ -312,12 +312,12 @@ impl Default for Touchpad {
 pub struct Mouse {
 	pub natural_scroll: bool,
 
-	pub middle_emulation: bool,
-	pub left_handed: bool,
-
 	pub accel_speed: f64,
 	#[serde(with = "accel_profile")]
 	pub accel_profile: Option<AccelProfile>,
+
+	pub middle_emulation: bool,
+	pub left_handed: bool,
 }
 
 /// all values are parsed with [`mayfig`],
@@ -329,11 +329,11 @@ impl Default for Mouse {
 		Mouse {
 			natural_scroll: false,
 
-			middle_emulation: false,
-			left_handed: false,
-
 			accel_speed: 0.0,
 			accel_profile: None,
+
+			middle_emulation: false,
+			left_handed: false,
 		}
 	}
 }
@@ -367,12 +367,12 @@ mod per_device {
 	pub struct Mouse {
 		pub natural_scroll: Option<bool>,
 
-		pub middle_emulation: Option<bool>,
-		pub left_handed: Option<bool>,
-
 		pub accel_speed: Option<f64>,
 		#[serde(with = "super::accel_profile")]
 		pub accel_profile: Option<AccelProfile>,
+
+		pub middle_emulation: Option<bool>,
+		pub left_handed: Option<bool>,
 	}
 
 	impl Mouse {
@@ -406,14 +406,14 @@ mod per_device {
 		#[serde(with = "super::click_method")]
 		pub click_method: Option<ClickMethod>,
 
+		pub accel_speed: Option<f64>,
+		#[serde(with = "super::accel_profile")]
+		pub accel_profile: Option<AccelProfile>,
+
 		pub middle_emulation: Option<bool>,
 		#[serde(with = "super::tap_button_map")]
 		pub tap_button_map: Option<TapButtonMap>,
 		pub left_handed: Option<bool>,
-
-		pub accel_speed: Option<f64>,
-		#[serde(with = "super::accel_profile")]
-		pub accel_profile: Option<AccelProfile>,
 	}
 
 	impl Touchpad {
