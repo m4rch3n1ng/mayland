@@ -434,8 +434,6 @@ impl Workspace {
 
 impl Workspace {
 	pub fn add_window(&mut self, window: MappedWindow, pointer: Point<f64, Logical>) {
-		self.deactivate();
-
 		let center = self.relative_center(window.geometry().size);
 		if window.is_non_resizable() || window.windowrules.floating().unwrap_or(false) {
 			self.floating.map_window(window, center);
@@ -467,13 +465,6 @@ impl Workspace {
 		}
 
 		self.activate(window);
-	}
-
-	/// deactivate all windows
-	fn deactivate(&self) {
-		for window in self.windows() {
-			window.set_activate(false);
-		}
 	}
 
 	/// activate the given [`MappedWindow`] and deactivate all other windows
