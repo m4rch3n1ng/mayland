@@ -1,4 +1,4 @@
-use chrono::Utc;
+use jiff::{Timestamp, Zoned, tz::TimeZone};
 use std::fs::{self, File};
 use tracing::Subscriber;
 use tracing_journald as journald;
@@ -10,8 +10,9 @@ use tracing_subscriber::{
 };
 
 fn iso8601() -> String {
-	let time = Utc::now();
-	time.format("%Y-%m-%dT%H-%M-%S mayland").to_string()
+	let stamp = Timestamp::now();
+	let zoned = Zoned::new(stamp, TimeZone::UTC);
+	zoned.strftime("%Y-%m-%dT%H-%M-%S mayland").to_string()
 }
 
 #[cfg(not(feature = "debug"))]

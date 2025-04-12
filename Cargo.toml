@@ -38,7 +38,6 @@ edition = { workspace = true }
 anstream = "0.6.18"
 async-channel = "2.3.1"
 calloop = { version = "0.14.2", features = ["executor", "futures-io"] }
-chrono = { version = "0.4.40", features = ["clock", "std"] }
 dirs = { workspace = true }
 futures-util = { version = "0.3.31", default-features = false, features = ["std", "io"] }
 indexmap = "2.8.0"
@@ -52,6 +51,7 @@ tracing = "0.1.41"
 tracing-journald = "0.3.1"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 xcursor = "0.3.8"
+jiff = "0.2.6"
 
 [dependencies.smithay]
 workspace = true
