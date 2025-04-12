@@ -310,7 +310,7 @@ impl WorkspaceManager {
 	pub fn activate_window(&mut self, window: &MappedWindow) {
 		for workspace in self.workspaces.values_mut() {
 			if workspace.has_window(window) {
-				workspace.activate_window(window);
+				workspace.activate(window);
 				return;
 			}
 		}
@@ -459,16 +459,14 @@ impl Workspace {
 		}
 	}
 
-	pub fn activate_window(&mut self, window: &MappedWindow) {
+	/// activate the given [`MappedWindow`] and deactivate all other windows
+	///
+	/// if the window is floating, raise it to the top
+	pub fn activate(&mut self, window: &MappedWindow) {
 		if self.is_floating(window) {
 			self.floating.raise_window(window);
 		}
 
-		self.activate(window);
-	}
-
-	/// activate the given [`MappedWindow`] and deactivate all other windows
-	fn activate(&self, window: &MappedWindow) {
 		for w in self.windows() {
 			if w == window {
 				w.set_activate(true);
