@@ -333,12 +333,11 @@ impl State {
 		}
 
 		let start_data = pointer.grab_start_data().unwrap();
-		if start_data
-			.focus
-			.as_ref()
-			.zip(window.wl_surface())
-			.is_none_or(|(focus, wl)| !focus.0.same_client_as(&wl.id()))
-		{
+		let Some(((grab_focus, _), wl_surface)) = start_data.focus.as_ref().zip(window.wl_surface()) else {
+			return;
+		};
+
+		if !grab_focus.same_client_as(&wl_surface.id()) {
 			return;
 		}
 
@@ -367,12 +366,11 @@ impl State {
 		}
 
 		let start_data = pointer.grab_start_data().unwrap();
-		if start_data
-			.focus
-			.as_ref()
-			.zip(window.wl_surface())
-			.is_none_or(|(focus, wl)| !focus.0.same_client_as(&wl.id()))
-		{
+		let Some(((grab_focus, _), wl_surface)) = start_data.focus.as_ref().zip(window.wl_surface()) else {
+			return;
+		};
+
+		if !grab_focus.same_client_as(&wl_surface.id()) {
 			return;
 		}
 
