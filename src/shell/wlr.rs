@@ -9,7 +9,7 @@ use smithay::{
 };
 
 fn initial_configure_sent(surface: &LayerSurface) -> bool {
-	let initial_configure_sent = with_states(surface.wl_surface(), |states| {
+	with_states(surface.wl_surface(), |states| {
 		states
 			.data_map
 			.get::<LayerSurfaceData>()
@@ -17,9 +17,7 @@ fn initial_configure_sent(surface: &LayerSurface) -> bool {
 			.lock()
 			.unwrap()
 			.initial_configure_sent
-	});
-
-	initial_configure_sent
+	})
 }
 
 impl State {

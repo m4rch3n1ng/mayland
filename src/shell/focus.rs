@@ -19,6 +19,7 @@ use smithay::{
 use std::borrow::Cow;
 
 #[derive(Debug, Clone, PartialEq)]
+#[expect(clippy::large_enum_variant)]
 pub enum KeyboardFocusTarget {
 	Window(MappedWindow),
 	LayerSurface(LayerSurface),
