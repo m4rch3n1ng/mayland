@@ -162,19 +162,19 @@ impl Tiling {
 
 				match position {
 					Position::Left => {
-						prev.0.resize(two.size);
+						prev.0.resize(two);
 						prev.1 = two;
 
-						window.resize(one.size);
+						window.resize(one);
 						*empty = Some((window, one));
 
 						self.windows.swap(0, 1);
 					}
 					Position::Right => {
-						prev.0.resize(one.size);
+						prev.0.resize(one);
 						prev.1 = one;
 
-						window.resize(two.size);
+						window.resize(two);
 						*empty = Some((window, two));
 					}
 				}
@@ -185,7 +185,7 @@ impl Tiling {
 				let one = self.layout.single();
 
 				window.set_activate(true);
-				window.resize(one.size);
+				window.resize(one);
 				*empty = Some((window, one));
 
 				None
@@ -197,7 +197,7 @@ impl Tiling {
 		match &mut self.windows {
 			[Some(w1), Some(w2)] if &w1.0 == window => {
 				let one = self.layout.single();
-				w2.0.resize(one.size);
+				w2.0.resize(one);
 				w2.1 = one;
 
 				self.windows.swap(0, 1);
@@ -207,7 +207,7 @@ impl Tiling {
 			}
 			[Some(w1), Some(w2)] if &w2.0 == window => {
 				let one = self.layout.single();
-				w1.0.resize(one.size);
+				w1.0.resize(one);
 				w1.1 = one;
 
 				self.windows[1] = None;
@@ -242,15 +242,15 @@ impl Tiling {
 			[Some(w1), Some(w2)] => {
 				let [one, two] = self.layout.double();
 
-				w1.0.resize(one.size);
+				w1.0.resize(one);
 				w1.1 = one;
 
-				w2.0.resize(two.size);
+				w2.0.resize(two);
 				w2.1 = two;
 			}
 			[Some(window), None] => {
 				let one = self.layout.single();
-				window.0.resize(one.size);
+				window.0.resize(one);
 				window.1 = one;
 			}
 			[None, Some(_)] => unreachable!(),

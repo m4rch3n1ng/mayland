@@ -49,11 +49,11 @@ impl PartialEq for MappedWindow {
 impl Eq for MappedWindow {}
 
 impl MappedWindow {
-	pub fn resize(&self, size: Size<i32, Logical>) {
+	pub fn resize(&self, rect: Rectangle<i32, Logical>) {
 		match self.underlying_surface() {
 			WindowSurface::Wayland(xdg) => {
 				xdg.with_pending_state(|state| {
-					state.size = Some(size);
+					state.size = Some(rect.size);
 				});
 				xdg.send_pending_configure();
 			}

@@ -524,9 +524,9 @@ impl Workspace {
 				(output_size.h * 3 / 4).clamp(min.h, max.h),
 			));
 
-			window.resize(size);
-
 			let center = self.relative_center(size);
+			window.resize(Rectangle::new(center, size));
+
 			self.floating.map_window(window, center);
 		} else if !self.tiling.is_full() {
 			debug_assert!(self.floating.window_location(&window).is_some());
