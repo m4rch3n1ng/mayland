@@ -54,7 +54,9 @@ fn handle_stream(state: &mut State, stream: UnixStream) {
 	};
 
 	let future = async move {
-		handle_client(stream, socket_state).await;
+		if let Err(err) = handle_client(stream, socket_state).await {
+			tracing::warn!("error handling socket client: {}", err);
+		}
 	};
 
 	state.mayland.scheduler.schedule(future).unwrap();
@@ -65,10 +67,10 @@ struct SocketState {
 	comp_mod: CompMod,
 }
 
-async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) {
+async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) -> Result<(), std::io::Error> {
 	let mut read = futures_util::io::BufReader::new(&mut stream);
 	let mut buf = String::new();
-	read.read_line(&mut buf).await.unwrap();
+	read.read_line(&mut buf).await?;
 
 	let request = serde_json::from_str::<Request>(&buf);
 	let response = match request {
@@ -147,8 +149,10 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) {
 	};
 
 	let response = serde_json::to_vec(&response).unwrap();
-	stream.write_all(&response).await.unwrap();
-	stream.write_all(b"\n").await.unwrap();
+	stream.write_all(&response).await?;
+	stream.write_all(b"\n").await?;
+
+	Ok(())
 }
 
 impl Drop for MaySocket {
