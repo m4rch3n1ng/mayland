@@ -76,12 +76,15 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) {
 			let action = Action::from(action);
 			let (tx, rx) = async_channel::bounded(1);
 			state.event_loop.insert_idle(move |state| {
-				state.handle_action(action);
-				let _ = tx.send_blocking(());
+				let ret = state.handle_action(action);
+				let _ = tx.send_blocking(ret);
 			});
 
-			let () = rx.recv().await.unwrap();
-			Response::Dispatch
+			let ret = rx.recv().await.unwrap();
+			match ret {
+				Ok(()) => Response::Dispatch,
+				Err(err) => Response::Err(err),
+			}
 		}
 		Ok(Request::Reload) => 'reload: {
 			let Ok(config) = mayland_config::Config::read(state.comp_mod) else {

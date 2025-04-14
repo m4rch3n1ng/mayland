@@ -81,9 +81,9 @@ pub fn logical_output(output: &Output) -> mayland_comm::output::Logical {
 	}
 }
 
-pub fn spawn(spawn: Vec<String>, mayland: &Mayland) {
+pub fn spawn(spawn: Vec<String>, mayland: &Mayland) -> Result<(), mayland_comm::Error> {
 	let [command, args @ ..] = &*spawn else {
-		panic!("spawn commands cannot be empty");
+		return Err(mayland_comm::Error::InvalidRequest);
 	};
 
 	let mut cmd = Command::new(command);
@@ -123,4 +123,6 @@ pub fn spawn(spawn: Vec<String>, mayland: &Mayland) {
 		}
 		Err(err) => tracing::error!("error spawning child: {:?}", err),
 	});
+
+	Ok(())
 }

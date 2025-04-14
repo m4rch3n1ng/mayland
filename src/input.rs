@@ -88,7 +88,7 @@ impl State {
 			return;
 		};
 
-		self.handle_action(action);
+		self.handle_action(action).expect("config should have validated");
 	}
 
 	fn on_pointer_move<I: InputBackend>(&mut self, event: I::PointerMotionEvent) {
@@ -270,7 +270,7 @@ impl State {
 		}
 	}
 
-	pub fn handle_action(&mut self, action: Action) {
+	pub fn handle_action(&mut self, action: Action) -> Result<(), mayland_comm::Error> {
 		match action {
 			Action::Quit => {
 				self.mayland.loop_signal.stop();
@@ -278,14 +278,14 @@ impl State {
 			}
 			Action::CloseWindow => {
 				let Some(KeyboardFocusTarget::Window(window)) = self.mayland.keyboard.current_focus() else {
-					return;
+					return Ok(());
 				};
 
 				window.close();
 			}
 			Action::ToggleFloating => {
 				let Some(KeyboardFocusTarget::Window(window)) = self.mayland.keyboard.current_focus() else {
-					return;
+					return Ok(());
 				};
 
 				let pointer = self.mayland.pointer.current_location();
@@ -303,9 +303,11 @@ impl State {
 				self.reset_focus();
 			}
 			Action::Spawn(command) => {
-				spawn(command, &self.mayland);
+				return spawn(command, &self.mayland);
 			}
 		}
+
+		Ok(())
 	}
 
 	pub fn update_keyboard_focus(&mut self, location: Point<f64, Logical>, serial: Serial) {
