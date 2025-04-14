@@ -1,5 +1,5 @@
 use bitflags::bitflags;
-use serde::{Deserialize, de::Visitor};
+use serde::{Deserialize, Deserializer, de::Error as _, de::Visitor};
 use smithay::input::keyboard::{
 	Keysym, ModifiersState,
 	keysyms::KEY_NoSymbol,
@@ -21,7 +21,16 @@ pub enum Action {
 
 	Workspace(usize),
 
-	Spawn(Vec<String>),
+	Spawn(#[serde(deserialize_with = "deserialize_spawn")] Vec<String>),
+}
+
+fn deserialize_spawn<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<String>, D::Error> {
+	let args = Vec::<String>::deserialize(deserializer)?;
+	if args.is_empty() {
+		Err(D::Error::invalid_length(0, &"at least one"))
+	} else {
+		Ok(args)
+	}
 }
 
 impl From<Action> for mayland_comm::Action {
