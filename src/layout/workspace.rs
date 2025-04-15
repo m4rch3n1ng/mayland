@@ -3,7 +3,7 @@ use crate::{
 	backend::udev::UdevOutputState,
 	render::MaylandRenderElements,
 	shell::{focus::PointerFocusTarget, window::MappedWindow},
-	utils::{RectExt, SizeExt, output_size},
+	utils::{IterExt, RectExt, SizeExt, output_size},
 };
 use mayland_config::{bind::CycleDirection, outputs::OutputInfo};
 use smithay::{
@@ -593,12 +593,10 @@ impl Workspace {
 	}
 
 	fn cycle_window(&self, prev: &MappedWindow, direction: CycleDirection) -> Option<NextWindow> {
-		assert!(self.has_window(prev));
-
 		let windows = self.tiling.windows().chain(self.floating.insertion_order());
 		let window = match direction {
-			CycleDirection::Next => windows.cycle().skip_while(|w| *w != prev).nth(1).unwrap(),
-			CycleDirection::Prev => windows.rev().cycle().skip_while(|w| *w != prev).nth(1).unwrap(),
+			CycleDirection::Next => windows.twice().next_after(|w| *w == prev).unwrap(),
+			CycleDirection::Prev => windows.rev().twice().next_after(|w| *w == prev).unwrap(),
 		};
 
 		if window == prev {

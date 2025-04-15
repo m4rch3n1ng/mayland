@@ -8,6 +8,37 @@ use std::{
 	process::{Command, Stdio},
 };
 
+pub trait IterExt: Iterator {
+	/// Searches for element that satisifes a predicate and returns the element after.
+	///
+	/// ```ignore
+	/// let a = [1, 2, 3];
+	/// assert_eq!(a.iter().next_after(|&&x| x == 2), Some(&3));
+	/// ```
+	fn next_after<F>(self, mut f: F) -> Option<Self::Item>
+	where
+		F: FnMut(&Self::Item) -> bool,
+		Self: Sized,
+	{
+		self.skip_while(|i| !f(i)).nth(1)
+	}
+
+	/// Runs an iterator twice
+	///
+	/// ```ignore
+	/// let a = [1, 2, 3];
+	/// assert_eq!(a.iter().twice().count(), 6);
+	/// ```
+	fn twice(self) -> impl Iterator<Item = Self::Item>
+	where
+		Self: Sized + Clone,
+	{
+		self.clone().chain(self)
+	}
+}
+
+impl<I: Iterator> IterExt for I {}
+
 pub trait RectExt<N, Kind> {
 	fn borderless(&self, border: N) -> Rectangle<N, Kind>;
 
