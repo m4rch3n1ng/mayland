@@ -16,6 +16,7 @@ use smithay::{
 		drm::{
 			DrmDevice, DrmDeviceFd, DrmEvent, DrmEventMetadata, DrmEventTime,
 			compositor::{DrmCompositor, FrameFlags},
+			exporter::gbm::GbmFramebufferExporter,
 		},
 		egl::{EGLContext, EGLDevice, EGLDisplay},
 		input::InputEvent,
@@ -51,8 +52,12 @@ use std::{
 	time::Duration,
 };
 
-type GbmDrmCompositor =
-	DrmCompositor<GbmAllocator<DrmDeviceFd>, GbmDevice<DrmDeviceFd>, OutputPresentationFeedback, DrmDeviceFd>;
+type GbmDrmCompositor = DrmCompositor<
+	GbmAllocator<DrmDeviceFd>,
+	GbmFramebufferExporter<DrmDeviceFd>,
+	OutputPresentationFeedback,
+	DrmDeviceFd,
+>;
 
 const SUPPORTED_COLOR_FORMATS: &[Fourcc] = &[Fourcc::Argb8888, Fourcc::Abgr8888];
 
@@ -544,7 +549,7 @@ impl Udev {
 			surface,
 			Some(planes),
 			allocator,
-			device.gbm.clone(),
+			GbmFramebufferExporter::new(device.gbm.clone()),
 			SUPPORTED_COLOR_FORMATS.iter().copied(),
 			device.formats.clone(),
 			device.drm.cursor_size(),
