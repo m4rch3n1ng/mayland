@@ -122,7 +122,7 @@ impl OutputSpace {
 		// then put the outputs with an explicit position first,
 		// sorting those by position as well.
 		outputs.sort_by(|(_, pos1), (_, pos2)| match (pos1, pos2) {
-			(Some(one), Some(two)) => one[0].cmp(&two[0]).then_with(|| one[1].cmp(&two[1])),
+			(Some(one), Some(two)) => one.cmp(two),
 			(None, Some(_)) => Ordering::Greater,
 			(Some(_), None) => Ordering::Less,
 			(None, None) => Ordering::Equal,
