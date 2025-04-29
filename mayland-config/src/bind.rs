@@ -308,11 +308,10 @@ impl Visitor<'_> for MappingVisitor {
 				let keysym = keysym_from_name(split, KEYSYM_CASE_INSENSITIVE);
 
 				if keysym.raw() == KEY_NoSymbol {
-					return Err(serde::de::Error::custom(format_args!("invalid key {:?}", split)));
+					return Err(serde::de::Error::custom(format_args!("invalid key {split:?}")));
 				} else if key.is_some() {
 					return Err(serde::de::Error::custom(format_args!(
-						"duplicate key definition at {:?}",
-						split
+						"duplicate key definition at {split:?}"
 					)));
 				}
 

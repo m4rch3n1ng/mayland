@@ -31,7 +31,7 @@ impl Termination for Term {
 			std::process::ExitCode::SUCCESS
 		} else {
 			let mut stderr = anstream::stderr();
-			let _ = write!(stderr, "{}", self);
+			let _ = write!(stderr, "{self}");
 
 			std::process::ExitCode::FAILURE
 		}
@@ -89,7 +89,7 @@ impl Display for Term {
 				writeln!(f, "  {} {}", "::".bright_blue().bold(), err)
 			}
 			Term::Mayfig(mayfig) => {
-				writeln!(f, "{}", mayfig)?;
+				writeln!(f, "{mayfig}")?;
 				writeln!(
 					f,
 					"{}: {}",

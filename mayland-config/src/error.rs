@@ -18,9 +18,9 @@ pub enum Error {
 impl Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Error::IoError(io_err) => write!(f, "error reading config: {}", io_err),
+			Error::IoError(io_err) => write!(f, "error reading config: {io_err}"),
 			Error::NotFound => f.write_str("config not found"),
-			Error::Mayfig(mayfig) => write!(f, "{}", mayfig),
+			Error::Mayfig(mayfig) => write!(f, "{mayfig}"),
 		}
 	}
 }

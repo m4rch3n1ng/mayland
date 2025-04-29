@@ -112,7 +112,7 @@ fn prettify<T: Display>(t: &[T]) {
 			println!();
 		}
 
-		print!("{}", t);
+		print!("{t}");
 	}
 }
 

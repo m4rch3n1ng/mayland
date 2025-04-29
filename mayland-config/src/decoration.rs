@@ -90,8 +90,8 @@ impl Visitor<'_> for ColorVis {
 	}
 
 	fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
-		let hex = hex_color(v)
-			.ok_or_else(|| serde::de::Error::custom(format_args!("invalid hex color {:?}", v)))?;
+		let hex =
+			hex_color(v).ok_or_else(|| serde::de::Error::custom(format_args!("invalid hex color {v:?}")))?;
 		Ok(Color(hex))
 	}
 }

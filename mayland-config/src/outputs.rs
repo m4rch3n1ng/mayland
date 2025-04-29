@@ -88,19 +88,19 @@ impl Visitor<'_> for ModeVis {
 		let (size, refresh) = v.split_once('@').map(|(s, r)| (s, Some(r))).unwrap_or((v, None));
 
 		let Some((width, height)) = size.split_once('x') else {
-			return Err(serde::de::Error::custom(format_args!("invalid size {:?}", size)));
+			return Err(serde::de::Error::custom(format_args!("invalid size {size:?}")));
 		};
 
 		let width = width
 			.parse::<u16>()
-			.map_err(|err| serde::de::Error::custom(format_args!("invalid width {:?} ({})", width, err)))?;
+			.map_err(|err| serde::de::Error::custom(format_args!("invalid width {width:?} ({err})")))?;
 		let height = height
 			.parse::<u16>()
-			.map_err(|err| serde::de::Error::custom(format_args!("invalid height {:?} ({})", height, err)))?;
+			.map_err(|err| serde::de::Error::custom(format_args!("invalid height {height:?} ({err})")))?;
 
 		let refresh = if let Some(refresh) = refresh {
 			let refresh = refresh.parse::<f32>().map_err(|err| {
-				serde::de::Error::custom(format_args!("invalid refresh {:?} ({})", refresh, err))
+				serde::de::Error::custom(format_args!("invalid refresh {refresh:?} ({err})"))
 			})?;
 			let refresh = (refresh * 1000.).round() as i32;
 			Some(refresh)

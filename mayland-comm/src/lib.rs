@@ -189,7 +189,7 @@ pub mod output {
 		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 			writeln!(f, "output {:?}", self.name)?;
 			if let Some(mode) = &self.mode {
-				writeln!(f, "    mode: {}", mode)?;
+				writeln!(f, "    mode: {mode}")?;
 			}
 
 			if let Some(logical) = self.logical {
@@ -201,17 +201,17 @@ pub mod output {
 			writeln!(f, "    make: {}", self.make)?;
 			writeln!(f, "    model: {}", self.model)?;
 			if let Some(serial) = &self.serial {
-				writeln!(f, "    serial: {}", serial)?;
+				writeln!(f, "    serial: {serial}")?;
 			}
 
 			if let Some((width, height)) = self.size {
 				let inches = (width.pow(2) as f64 + height.pow(2) as f64).sqrt() / 25.4;
-				writeln!(f, "    physical size: {}x{} mm ({:.3}\")", width, height, inches)?;
+				writeln!(f, "    physical size: {width}x{height} mm ({inches:.3}\")")?;
 			}
 
 			writeln!(f, "    available modes:")?;
 			for mode in &self.modes {
-				writeln!(f, "        {}", mode)?;
+				writeln!(f, "        {mode}")?;
 			}
 
 			Ok(())
@@ -340,9 +340,9 @@ pub mod workspace {
 
 			for window in &self.windows {
 				match (&window.app_id, &window.title) {
-					(Some(app_id), Some(title)) => writeln!(f, "    window {:?} @ {:?}", app_id, title)?,
-					(Some(app_id), None) => writeln!(f, "    window {:?}", app_id)?,
-					(None, Some(title)) => writeln!(f, "    window @ {:?}", title)?,
+					(Some(app_id), Some(title)) => writeln!(f, "    window {app_id:?} @ {title:?}")?,
+					(Some(app_id), None) => writeln!(f, "    window {app_id:?}")?,
+					(None, Some(title)) => writeln!(f, "    window @ {title:?}")?,
 					(None, None) => writeln!(f, "    window")?,
 				}
 			}
