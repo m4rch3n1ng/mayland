@@ -11,7 +11,7 @@ use std::{collections::HashMap, fmt::Debug};
 pub struct Binds(HashMap<Mapping, Action>);
 
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "kebab-case")]
 pub enum Action {
 	Quit,
 

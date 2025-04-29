@@ -28,7 +28,7 @@ pub use self::{
 };
 
 #[derive(Debug, Default, PartialEq, Eq, Deserialize)]
-#[serde(default)]
+#[serde(default, rename_all = "kebab-case")]
 pub struct Config {
 	pub input: Input,
 	pub output: Outputs,
@@ -42,7 +42,7 @@ pub struct Config {
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Deserialize)]
-#[serde(default)]
+#[serde(default, rename_all = "kebab-case")]
 pub struct Cursor {
 	pub xcursor_theme: Option<String>,
 	pub xcursor_size: Option<u32>,

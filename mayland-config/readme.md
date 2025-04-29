@@ -22,46 +22,46 @@ you can configure your input in the `input` category in your `mayland.mf` file.
 ```ini
 input {
     keyboard {
-        # xkb_file = "~/.config/keymap/may.xkb"
+        # xkb-file = "~/.config/keymap/may.xkb"
 
-        # xkb_layout = "de,us"
-        # xkb_model = "thinkpad"
-        # xkb_variant = "nodeadkeys"
-        # xkb_options = "ctrl:nocaps"
+        # xkb-layout = "de,us"
+        # xkb-model = "thinkpad"
+        # xkb-variant = "nodeadkeys"
+        # xkb-options = "ctrl:nocaps"
 
-        repeat_delay = 600
-        repeat_rate = 25
+        repeat-delay = 600
+        repeat-rate = 25
     }
 
     touchpad {
         tap = true
-        tap_and_drag = false
-        tap_drag_lock = false
+        tap-and-drag = false
+        tap-drag-lock = false
 
         dwt = true
         dwtp = true
 
-        natural_scroll = true
-        # scroll_method = "two_finger"
+        natural-scroll = true
+        # scroll-method = "two-finger"
 
-        # click_method = "clickfinger"
+        # click-method = "clickfinger"
 
-        middle_emulation = true
-        tap_button_map = "left_right_middle"
-        left_handed = false
+        middle-emulation = true
+        tap-button-map = "left-right-middle"
+        left-handed = false
 
-        accel_speed = 0
-        # accel_profile = "adaptive"
+        accel-speed = 0
+        # accel-profile = "adaptive"
     }
 
     mouse {
-        natural_scroll = false
+        natural-scroll = false
 
-        middle_emulation = false
-        left_handed = false
+        middle-emulation = false
+        left-handed = false
 
-        accel_speed = 0
-        # accel_profile = "adaptive"
+        accel-speed = 0
+        # accel-profile = "adaptive"
     }
 }
 ```
@@ -73,7 +73,7 @@ input {
 > ```ini
 > input {
 >     mouse [ "<some gaming mouse>" ] {
->         accel_profile = "flat"
+>         accel-profile = "flat"
 >     }
 > }
 > ```
@@ -92,10 +92,10 @@ you can find out more on the xkeyboard-config(7) manpage.
 ```ini
 input {
     keyboard {
-        xkb_layout = "de,us"
-        xkb_model = "thinkpad"
-        xkb_variant = "nodeadkeys"
-        xkb_options = "ctrl:nocaps"
+        xkb-layout = "de,us"
+        xkb-model = "thinkpad"
+        xkb-variant = "nodeadkeys"
+        xkb-options = "ctrl:nocaps"
     }
 }
 ```
@@ -105,7 +105,7 @@ alternatively you can set a path directly to a .xkb file containing an xkb keyma
 ```ini
 input {
     keyboard {
-        xkb_file = "~/.config/keymap/may.xkb"
+        xkb-file = "~/.config/keymap/may.xkb"
     }
 }
 ```
@@ -114,14 +114,14 @@ input {
 
 you can change the key repeat config.
 
-`repeat_delay` changes the delay in ms before the key starts repeating
-`repeat_rate` changes the rate of repeated key preses per second
+`repeat-delay` changes the delay in ms before the key starts repeating
+`repeat-rate` changes the rate of repeated key preses per second
 
 ```ini
 input {
     keyboard {
-        repeat_delay = 600
-        repeat_rate = 25
+        repeat-delay = 600
+        repeat-rate = 25
     }
 }
 ```
@@ -132,17 +132,17 @@ the pointing devices `touchpad` and `mouse` share some of their config.
 
 these include:
 
-- `natural_scroll`, which inverts the scrolling direction if set to true. defaults to `true` for touchpads and `false` for mice.
-- `accel_speed` controls the linear acceleration speed. accepts values between `-1.0` and `1.0`, and defaults to `0.0`.
-- `accel_profile` controls the [pointer acceleration profile](https://wayland.freedesktop.org/libinput/doc/latest/pointer-acceleration.html#pointer-acceleration-profiles). can be set to `"adaptive"` (the default) and `"flat"` (disables pointer acceleration).
-- `middle_emulation`. emulate a middle mouse click by pressing left and right at the same time. defaults to `true` for touchpads and `false` for mice.
-- `left_handed` enables left-handed mode, which inverts left and right click. off by default.
+- `natural-scroll`, which inverts the scrolling direction if set to true. defaults to `true` for touchpads and `false` for mice.
+- `accel-speed` controls the linear acceleration speed. accepts values between `-1.0` and `1.0`, and defaults to `0.0`.
+- `accel-profile` controls the [pointer acceleration profile](https://wayland.freedesktop.org/libinput/doc/latest/pointer-acceleration.html#pointer-acceleration-profiles). can be set to `"adaptive"` (the default) and `"flat"` (disables pointer acceleration).
+- `middle-emulation`. emulate a middle mouse click by pressing left and right at the same time. defaults to `true` for touchpads and `false` for mice.
+- `left-handed` enables left-handed mode, which inverts left and right click. off by default.
 
 settings specific to touchpads are:
 
 - `tap` enables / disables tapping support. on by default.
-- `tap_and_drag` enables the libinput [tap-and-drag](https://wayland.freedesktop.org/libinput/doc/latest/tapping.html#tap-and-drag) setting.
-- `tap_drag_lock` controls the drag lock for `tap_and_drag`. both of these are off by default.
+- `tap-and-drag` enables the libinput [tap-and-drag](https://wayland.freedesktop.org/libinput/doc/latest/tapping.html#tap-and-drag) setting.
+- `tap-drag-lock` controls the drag lock for `tap-and-drag`. both of these are off by default.
 - `dwt` disables the touchpad while typing. defaults to `true`.
 - `dwtp` disables the touchpad while trackpointing. defaults to `true`.
 
@@ -180,12 +180,12 @@ mayland currently only accepts cursors in the xcursor format.
 
 ```ini
 cursor {
-    xcursor_theme = "Bibata-Modern-Classic"
-    xcursor_size = 24
+    xcursor-theme = "Bibata-Modern-Classic"
+    xcursor-size = 24
 }
 ```
 
-if `xcursor_theme` or `xcursor_size` is not set, mayland will attempt to read their values from the `XCURSOR_THEME` and `XCURSOR_SIZE`
+if `xcursor-theme` or `xcursor-size` is not set, mayland will attempt to read their values from the `XCURSOR_THEME` and `XCURSOR_SIZE`
 environment variables and will otherwise fallback to `"default"` and `24`.
 
 ### decoration
@@ -273,7 +273,7 @@ both the `<key>` and all `<modifier>` are case-insenstive. there is no support f
 currently supported actions are:
 - `"quit"`: quit the compositor.
 - `"close"`: close the active window.
-- `"toggle_floating"`:
+- `"toggle-floating"`:
 - `"workspace" [ <index> ]`: switch to workspace with the index `<index>`.
 - `"spawn" [ <... args> ]`
 
@@ -283,7 +283,7 @@ you can configure window rules in the `windowrules` category.
 
 ```ini
 windowrules {
-	app_id [ "org.gnome.Nautilus" ] {
+	app-id [ "org.gnome.Nautilus" ] {
 		floating = true
 		opacity = 0.8
 	}
@@ -301,9 +301,9 @@ the `<matcher>`s first.
 
 currently supported matchers are:
 
-- `app_id`, which maches on the first parameter, the `app id` (i.e. the `class` as x11 calls it).
+- `app-id`, which maches on the first parameter, the `app id` (i.e. the `class` as x11 calls it).
 - `title`, which matches on the window `title`.
-- `match`, which is a combination of the `app_id` and `title`, needing both to match.
+- `match`, which is a combination of the `app-id` and `title`, needing both to match.
 
 you can opt into regexes for all of the currently supported matchers, by using a `"/<regex>/"` syntax.  
 regexes by default are full string matches, i.e. they add an implicit `$(?:<regex>)^` around the regex.

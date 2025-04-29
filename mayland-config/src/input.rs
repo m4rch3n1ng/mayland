@@ -207,7 +207,7 @@ impl<'de> Deserialize<'de> for Input {
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(default)]
+#[serde(default, rename_all = "kebab-case")]
 pub struct Keyboard {
 	#[serde(deserialize_with = "deserialize_path")]
 	pub xkb_file: Option<String>,
@@ -252,7 +252,7 @@ impl Default for Keyboard {
 }
 
 #[derive(Debug, PartialEq, Deserialize)]
-#[serde(default)]
+#[serde(default, rename_all = "kebab-case")]
 pub struct Touchpad {
 	pub tap: bool,
 	pub tap_and_drag: bool,
@@ -308,7 +308,7 @@ impl Default for Touchpad {
 }
 
 #[derive(Debug, PartialEq, Deserialize)]
-#[serde(default)]
+#[serde(default, rename_all = "kebab-case")]
 pub struct Mouse {
 	pub natural_scroll: bool,
 
@@ -363,7 +363,7 @@ mod per_device {
 	use smithay::reexports::input::{AccelProfile, ClickMethod, ScrollMethod, TapButtonMap};
 
 	#[derive(Default, Deserialize)]
-	#[serde(default)]
+	#[serde(default, rename_all = "kebab-case")]
 	pub struct Mouse {
 		pub natural_scroll: Option<bool>,
 
@@ -390,7 +390,7 @@ mod per_device {
 	}
 
 	#[derive(Default, Deserialize)]
-	#[serde(default)]
+	#[serde(default, rename_all = "kebab-case")]
 	pub struct Touchpad {
 		pub tap: Option<bool>,
 		pub tap_and_drag: Option<bool>,
@@ -447,7 +447,7 @@ mod click_method {
 	use smithay::reexports::input as libinput;
 
 	#[derive(Debug, Deserialize)]
-	#[serde(rename_all = "snake_case")]
+	#[serde(rename_all = "kebab-case")]
 	enum ClickMethod {
 		ButtonAreas,
 		Clickfinger,
@@ -477,7 +477,7 @@ mod tap_button_map {
 	use smithay::reexports::input as libinput;
 
 	#[derive(Debug, Deserialize)]
-	#[serde(rename_all = "snake_case")]
+	#[serde(rename_all = "kebab-case")]
 	enum TapButtonMap {
 		LeftRightMiddle,
 		LeftMiddleRight,
@@ -507,7 +507,7 @@ mod scroll_method {
 	use smithay::reexports::input as libinput;
 
 	#[derive(Debug, Deserialize)]
-	#[serde(rename_all = "snake_case")]
+	#[serde(rename_all = "kebab-case")]
 	enum ScrollMethod {
 		NoScroll,
 		TwoFinger,
@@ -541,7 +541,7 @@ mod accel_profile {
 	use smithay::reexports::input as libinput;
 
 	#[derive(Debug, Deserialize)]
-	#[serde(rename_all = "snake_case")]
+	#[serde(rename_all = "kebab-case")]
 	enum AccelProfile {
 		Adaptive,
 		Flat,

@@ -57,7 +57,7 @@ pub struct WindowRule {
 impl Eq for WindowRule {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "kebab-case")]
 pub enum Matcher {
 	AppId(Match),
 	Title(Match),
