@@ -258,7 +258,7 @@ impl State {
 			} else {
 				return FilterResult::Forward;
 			}
-		};
+		}
 
 		let action = self.mayland.config.bind.find_action(mods, raw_sym);
 
@@ -350,7 +350,7 @@ impl State {
 		let previous = keyboard.current_focus();
 		if previous.as_ref() == Some(&target) {
 			return;
-		};
+		}
 
 		self.set_focus(target, keyboard, serial);
 		self.mayland.queue_redraw_all();

@@ -111,7 +111,7 @@ pub fn spawn(spawn: Vec<String>, mayland: &Mayland) -> Result<(), mayland_comm::
 				// fork is inside the intermediate parent process
 				// so kill the intermediate parent
 				_ => libc::_exit(0),
-			};
+			}
 
 			Ok(())
 		})

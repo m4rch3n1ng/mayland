@@ -179,7 +179,7 @@ impl Udev {
 				drm_compositor.reset_buffers();
 				tracing::error!("error rendering frame {:?}", err);
 			}
-		};
+		}
 	}
 
 	pub fn renderer(&mut self) -> &mut GlowRenderer {

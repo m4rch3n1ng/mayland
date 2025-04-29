@@ -84,7 +84,7 @@ impl Winit {
 			.is_ok()
 		{
 			tracing::info!("EGL hardware-acceleration enabled");
-		};
+		}
 
 		let damage_tracker = OutputDamageTracker::from_output(&output);
 		let winit = Winit {
