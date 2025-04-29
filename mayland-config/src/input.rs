@@ -139,15 +139,24 @@ impl<'de> Deserialize<'de> for Input {
 				while let Some(key) = map.next_key::<Field>()? {
 					match key {
 						Field::Keyboard => {
-							assert!(keyboard.is_none());
+							if keyboard.is_some() {
+								return Err(serde::de::Error::duplicate_field("keyboard"));
+							}
+
 							keyboard = Some(map.next_value::<Keyboard>()?);
 						}
 						Field::Touchpad => {
-							assert!(touchpad.is_none());
+							if touchpad.is_some() {
+								return Err(serde::de::Error::duplicate_field("touchpad"));
+							}
+
 							touchpad = Some(map.next_value::<Touchpad>()?);
 						}
 						Field::Mouse => {
-							assert!(mouse.is_none());
+							if mouse.is_some() {
+								return Err(serde::de::Error::duplicate_field("mouse"));
+							}
+
 							mouse = Some(map.next_value::<Mouse>()?);
 						}
 
