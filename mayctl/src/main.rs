@@ -22,7 +22,7 @@ fn main() -> Term {
 	};
 
 	let request = Request::from(cli.cmd);
-	if let Request::Reload = request {
+	if matches!(request, Request::Reload) {
 		if let Err(err) = mayland_config::Config::read(mayland_config::bind::CompMod::Meta) {
 			let term = match err {
 				mayland_config::Error::IoError(err) => Term::IoError(err),

@@ -27,7 +27,7 @@ pub enum Term {
 
 impl Termination for Term {
 	fn report(self) -> std::process::ExitCode {
-		if let Term::Ok = self {
+		if matches!(self, Term::Ok) {
 			std::process::ExitCode::SUCCESS
 		} else {
 			let mut stderr = anstream::stderr();

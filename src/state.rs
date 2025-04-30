@@ -299,7 +299,7 @@ impl QueueState {
 	}
 
 	pub fn idle(&mut self) {
-		if let QueueState::Queued = *self {
+		if matches!(*self, QueueState::Queued) {
 			*self = QueueState::Idle;
 		} else {
 			unreachable!();
@@ -307,7 +307,7 @@ impl QueueState {
 	}
 
 	pub fn waiting_for_vblank(&mut self) {
-		if let QueueState::Queued = *self {
+		if matches!(*self, QueueState::Queued) {
 			unreachable!();
 		} else {
 			*self = QueueState::WaitingForVBlank { queued: false };

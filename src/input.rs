@@ -174,7 +174,7 @@ impl State {
 		let button = event.button_code();
 		let state = wl_pointer::ButtonState::from(event.state());
 
-		if let wl_pointer::ButtonState::Pressed = state {
+		if state == wl_pointer::ButtonState::Pressed {
 			self.update_keyboard_focus(self.mayland.pointer.current_location(), serial);
 		}
 

@@ -25,6 +25,7 @@ default-features = false
 elided_lifetimes_in_paths = "warn"
 
 [workspace.lints.clippy]
+equatable_if_let = "warn"
 new_without_default = "allow"
 semicolon_if_nothing_returned = "warn"
 undocumented_unsafe_blocks = "warn"
