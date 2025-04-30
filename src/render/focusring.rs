@@ -8,13 +8,13 @@ use smithay::{
 	},
 	utils::{Logical, Point, Rectangle, Size},
 };
-use std::borrow::BorrowMut;
+use std::borrow::Borrow;
 
 pub struct FocusRing;
 
 impl FocusRing {
 	pub fn element(
-		renderer: &mut GlowRenderer,
+		renderer: &GlowRenderer,
 		mut area: Rectangle<i32, Logical>,
 		color: Color,
 		thickness: u8,
@@ -23,7 +23,7 @@ impl FocusRing {
 		area.loc -= Point::from((t, t));
 		area.size += Size::from((t * 2, t * 2));
 
-		let shaders = Shaders::get(renderer.borrow_mut());
+		let shaders = Shaders::get(renderer.borrow());
 		PixelShaderElement::new(
 			shaders.border,
 			area,

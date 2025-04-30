@@ -29,7 +29,7 @@ impl Shaders {
 		Shaders { border }
 	}
 
-	pub fn get(renderer: &mut GlesRenderer) -> Self {
+	pub fn get(renderer: &GlesRenderer) -> Self {
 		let user_data = renderer.egl_context().user_data();
 		user_data.get::<Shaders>().cloned().unwrap()
 	}

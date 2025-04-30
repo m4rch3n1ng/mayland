@@ -192,10 +192,10 @@ impl WorkspaceManager {
 		}
 	}
 
-	pub fn refresh(&mut self) {
+	pub fn refresh(&self) {
 		self.outputs.refresh();
 
-		for workspace in self.workspaces.values_mut() {
+		for workspace in self.workspaces.values() {
 			workspace.refresh();
 		}
 	}
@@ -408,7 +408,7 @@ impl Workspace {
 		self.tiling.output_area_changed(output);
 	}
 
-	fn refresh(&mut self) {
+	fn refresh(&self) {
 		self.floating.refresh();
 	}
 
