@@ -32,7 +32,7 @@ impl State {
 
 		pointer.motion(
 			self,
-			under.clone(),
+			under,
 			&MotionEvent {
 				location,
 				serial,
