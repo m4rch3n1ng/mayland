@@ -30,9 +30,8 @@ pub enum OutputRenderElements<R: Renderer> {
 
 impl<R> Element for OutputRenderElements<R>
 where
-	R: Renderer,
+	R: Renderer + ImportAll + ImportMem,
 	R::TextureId: 'static,
-	R: ImportAll + ImportMem,
 {
 	fn id(&self) -> &Id {
 		match self {
