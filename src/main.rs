@@ -18,14 +18,7 @@ fn main() {
 	let mut event_loop = EventLoop::<State>::try_new().unwrap();
 	let display = Display::<State>::new().unwrap();
 
-	let has_display = std::env::var("WAYLAND_DISPLAY").is_ok() || std::env::var("DISPLAY").is_ok();
-	let state = if has_display {
-		State::new_winit(&mut event_loop, display)
-	} else {
-		State::new_udev(&mut event_loop, display)
-	};
-
-	let mut state = match state {
+	let mut state = match State::new(&mut event_loop, display) {
 		Ok(state) => state,
 		Err(err) => {
 			anstream::println!("{}", err);

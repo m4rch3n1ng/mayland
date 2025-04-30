@@ -78,36 +78,25 @@ pub struct State {
 }
 
 impl State {
-	pub fn new_winit(
+	pub fn new(
 		event_loop: &mut EventLoop<'static, State>,
 		display: Display<State>,
 	) -> Result<Self, mayland_config::Error> {
-		let mut mayland = Mayland::new(event_loop, display, CompMod::Alt)?;
+		let has_display = std::env::var("WAYLAND_DISPLAY").is_ok() || std::env::var("DISPLAY").is_ok();
+		let mut state = if has_display {
+			let mut mayland = Mayland::new(event_loop, display, CompMod::Alt)?;
 
-		let winit = Winit::init(&mut mayland);
-		let winit = Backend::Winit(winit);
+			let winit = Winit::init(&mut mayland);
+			let backend = Backend::Winit(winit);
 
-		let mut state = State {
-			backend: winit,
-			mayland,
-		};
-		state.load_xkb_file();
+			State { mayland, backend }
+		} else {
+			let mut mayland = Mayland::new(event_loop, display, CompMod::Meta)?;
 
-		Ok(state)
-	}
+			let udev = Udev::init(&mut mayland);
+			let backend = Backend::Udev(udev);
 
-	pub fn new_udev(
-		event_loop: &mut EventLoop<'static, State>,
-		display: Display<State>,
-	) -> Result<Self, mayland_config::Error> {
-		let mut mayland = Mayland::new(event_loop, display, CompMod::Meta)?;
-
-		let udev = Udev::init(&mut mayland);
-		let udev = Backend::Udev(udev);
-
-		let mut state = State {
-			backend: udev,
-			mayland,
+			State { mayland, backend }
 		};
 		state.load_xkb_file();
 
