@@ -18,7 +18,7 @@ fn main() {
 	let mut event_loop = EventLoop::<State>::try_new().unwrap();
 	let display = Display::<State>::new().unwrap();
 
-	let mut state = match State::new(&mut event_loop, display) {
+	let mut state = match State::new(&event_loop, display) {
 		Ok(state) => state,
 		Err(err) => {
 			anstream::println!("{}", err);

@@ -79,7 +79,7 @@ pub struct State {
 
 impl State {
 	pub fn new(
-		event_loop: &mut EventLoop<'static, State>,
+		event_loop: &EventLoop<'static, State>,
 		display: Display<State>,
 	) -> Result<Self, mayland_config::Error> {
 		let has_display = std::env::var("WAYLAND_DISPLAY").is_ok() || std::env::var("DISPLAY").is_ok();
@@ -329,7 +329,7 @@ impl QueueState {
 
 impl Mayland {
 	fn new(
-		event_loop: &mut EventLoop<'static, State>,
+		event_loop: &EventLoop<'static, State>,
 		display: Display<State>,
 		comp_mod: CompMod,
 	) -> Result<Self, mayland_config::Error> {
@@ -346,7 +346,7 @@ impl Mayland {
 		let mut environment = HashMap::new();
 
 		let display_handle = display.handle();
-		let socket_name = init_wayland_display(display, event_loop);
+		let socket_name = init_wayland_display(display, &loop_handle);
 
 		let mut seat_state = SeatState::new();
 		let mut seat = seat_state.new_wl_seat(&display_handle, "winit");
@@ -663,13 +663,12 @@ impl Mayland {
 	}
 }
 
-fn init_wayland_display(display: Display<State>, event_loop: &mut EventLoop<'_, State>) -> String {
+fn init_wayland_display(display: Display<State>, event_loop: &LoopHandle<'_, State>) -> String {
 	// create socket for clients to connect to
 	let source = ListeningSocketSource::new_auto().unwrap();
 	let socket_name = source.socket_name().to_os_string().into_string().unwrap();
 
 	event_loop
-		.handle()
 		.insert_source(source, move |client_stream, (), state| {
 			// insert client into display
 			state
@@ -682,7 +681,6 @@ fn init_wayland_display(display: Display<State>, event_loop: &mut EventLoop<'_, 
 
 	// add display to event loop
 	event_loop
-		.handle()
 		.insert_source(
 			Generic::new(display, Interest::READ, Mode::Level),
 			|_, display, state| {
