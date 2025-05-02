@@ -130,17 +130,7 @@ impl State {
 		let under = self.surface_under(location);
 		let serial = SERIAL_COUNTER.next_serial();
 
-		if self.mayland.workspaces.update_active_output(location) {
-			let workspace = self.mayland.workspaces.workspace();
-			if workspace.is_none_or(|ws| ws.is_empty()) {
-				let keyboard = self.mayland.keyboard.clone();
-				keyboard.set_focus(self, None, serial);
-			} else {
-				self.update_keyboard_focus(location, serial);
-			}
-		} else {
-			self.update_keyboard_focus(location, serial);
-		}
+		self.update_active_output(location, serial);
 
 		pointer.motion(
 			self,
@@ -286,7 +276,7 @@ impl State {
 		let under = self.wl_surface_under(location);
 		let serial = SERIAL_COUNTER.next_serial();
 		tool.motion(location, under, &tablet, serial, event.time_msec());
-		self.update_keyboard_focus(location, serial);
+		self.update_active_output(location, serial);
 
 		self.mayland.tablet_cursor_location = Some(location);
 		self.mayland.queue_redraw_all();
@@ -309,7 +299,7 @@ impl State {
 				if let Some(under) = self.wl_surface_under(location) {
 					let serial = SERIAL_COUNTER.next_serial();
 					tool.proximity_in(location, under, &tablet, serial, event.time_msec());
-					self.update_keyboard_focus(location, serial);
+					self.update_active_output(location, serial);
 				}
 
 				self.mayland.tablet_cursor_location = Some(location);
@@ -424,6 +414,20 @@ impl State {
 		}
 
 		Ok(())
+	}
+
+	fn update_active_output(&mut self, location: Point<f64, Logical>, serial: Serial) {
+		if self.mayland.workspaces.update_active_output(location) {
+			let workspace = self.mayland.workspaces.workspace();
+			if workspace.is_none_or(|ws| ws.is_empty()) {
+				let keyboard = self.mayland.keyboard.clone();
+				keyboard.set_focus(self, None, serial);
+			} else {
+				self.update_keyboard_focus(location, serial);
+			}
+		} else {
+			self.update_keyboard_focus(location, serial);
+		}
 	}
 
 	pub fn update_keyboard_focus(&mut self, location: Point<f64, Logical>, serial: Serial) {
