@@ -41,7 +41,7 @@ use smithay::{
 			backend::{ClientData, GlobalId},
 		},
 	},
-	utils::{Clock, IsAlive, Monotonic},
+	utils::{Clock, IsAlive, Logical, Monotonic, Point},
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
 		cursor_shape::CursorShapeManagerState,
@@ -59,6 +59,7 @@ use smithay::{
 		},
 		shm::ShmState,
 		socket::ListeningSocketSource,
+		tablet_manager::TabletManagerState,
 		viewporter::ViewporterState,
 	},
 };
@@ -243,6 +244,7 @@ pub struct Mayland {
 	pub primary_selection_state: PrimarySelectionState,
 	pub data_control_state: DataControlState,
 	pub seat_state: SeatState<State>,
+	pub tablet_state: TabletManagerState,
 	pub xdg_decoration_state: XdgDecorationState,
 	pub xdg_shell_state: XdgShellState,
 	pub presentation_state: PresentationState,
@@ -256,6 +258,7 @@ pub struct Mayland {
 	pub pointer: PointerHandle<State>,
 	pub keyboard: KeyboardHandle<State>,
 	pub cursor: Cursor,
+	pub tablet_cursor_location: Option<Point<f64, Logical>>,
 
 	pub may_socket: MaySocket,
 
@@ -350,6 +353,7 @@ impl Mayland {
 
 		let mut seat_state = SeatState::new();
 		let mut seat = seat_state.new_wl_seat(&display_handle, "winit");
+		let tablet_state = TabletManagerState::new::<State>(&display_handle);
 		let clock = Clock::new();
 
 		let popups = PopupManager::default();
@@ -425,6 +429,7 @@ impl Mayland {
 			primary_selection_state,
 			data_control_state,
 			seat_state,
+			tablet_state,
 			xdg_decoration_state,
 			xdg_shell_state,
 			presentation_state,
@@ -437,6 +442,7 @@ impl Mayland {
 			pointer,
 			keyboard,
 			cursor,
+			tablet_cursor_location: None,
 
 			may_socket,
 

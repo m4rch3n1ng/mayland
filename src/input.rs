@@ -10,8 +10,10 @@ use crate::{
 use mayland_config::Action;
 use smithay::{
 	backend::input::{
-		AbsolutePositionEvent, Axis, AxisSource, Event, InputBackend, InputEvent, KeyState, KeyboardKeyEvent,
-		Keycode, PointerAxisEvent, PointerButtonEvent, PointerMotionEvent,
+		AbsolutePositionEvent, Axis, AxisSource, Device, DeviceCapability, Event, InputBackend, InputEvent,
+		KeyState, KeyboardKeyEvent, Keycode, PointerAxisEvent, PointerButtonEvent, PointerMotionEvent,
+		ProximityState, TabletToolButtonEvent, TabletToolEvent, TabletToolProximityEvent, TabletToolTipEvent,
+		TabletToolTipState,
 	},
 	desktop::{LayerSurface, WindowSurfaceType, layer_map_for_output},
 	input::{
@@ -26,7 +28,9 @@ use smithay::{
 	utils::{Logical, Point, SERIAL_COUNTER, Serial},
 	wayland::{
 		input_method::InputMethodSeat,
+		seat::WaylandFocus,
 		shell::wlr_layer::{KeyboardInteractivity, Layer as WlrLayer},
+		tablet_manager::{TabletDescriptor, TabletSeatTrait},
 	},
 };
 
@@ -35,7 +39,8 @@ pub mod device;
 impl State {
 	pub fn handle_input_event<I: InputBackend>(&mut self, event: InputEvent<I>) {
 		match event {
-			InputEvent::DeviceAdded { .. } | InputEvent::DeviceRemoved { .. } => (),
+			InputEvent::DeviceAdded { device } => self.on_device_added(device),
+			InputEvent::DeviceRemoved { device } => self.on_device_removed(device),
 
 			InputEvent::Keyboard { event, .. } => self.on_keyboard::<I>(event),
 			InputEvent::PointerMotion { event } => self.on_pointer_move::<I>(event),
@@ -62,13 +67,35 @@ impl State {
 			InputEvent::TouchCancel { .. } => tracing::info!("touch cancel"),
 			InputEvent::TouchFrame { .. } => tracing::info!("touch frame"),
 
-			InputEvent::TabletToolAxis { .. } => tracing::info!("tablet tool axis"),
-			InputEvent::TabletToolProximity { .. } => tracing::info!("tablet tool proximity"),
-			InputEvent::TabletToolTip { .. } => tracing::info!("tablet tool tip"),
-			InputEvent::TabletToolButton { .. } => tracing::info!("tablet tool button"),
+			InputEvent::TabletToolAxis { event } => self.on_tablet_tool_axis::<I>(event),
+			InputEvent::TabletToolProximity { event } => self.on_tablet_tool_proximity::<I>(event),
+			InputEvent::TabletToolTip { event } => self.on_tablet_tool_tip::<I>(event),
+			InputEvent::TabletToolButton { event } => self.on_tablet_tool_button::<I>(event),
 
 			InputEvent::SwitchToggle { .. } => tracing::info!("switch toggle"),
 			InputEvent::Special(_) => tracing::info!("special"),
+		}
+	}
+
+	fn on_device_added(&self, device: impl Device) {
+		if device.has_capability(DeviceCapability::TabletTool) {
+			let tablet_seat = self.mayland.seat.tablet_seat();
+
+			let desc = TabletDescriptor::from(&device);
+			tablet_seat.add_tablet::<State>(&self.mayland.display_handle, &desc);
+		}
+	}
+
+	fn on_device_removed(&self, device: impl Device) {
+		if device.has_capability(DeviceCapability::TabletTool) {
+			let tablet_seat = self.mayland.seat.tablet_seat();
+
+			let desc = TabletDescriptor::from(&device);
+			tablet_seat.remove_tablet(&desc);
+
+			if tablet_seat.count_tablets() == 0 {
+				tablet_seat.clear_tools();
+			}
 		}
 	}
 
@@ -225,6 +252,118 @@ impl State {
 		let pointer = self.mayland.pointer.clone();
 		pointer.axis(self, frame);
 		pointer.frame(self);
+	}
+
+	fn on_tablet_tool_axis<I: InputBackend>(&mut self, event: I::TabletToolAxisEvent) {
+		let Some(bbox) = self.mayland.workspaces.bbox() else { return };
+		let location = event.position_transformed(bbox.size) + bbox.loc.to_f64();
+
+		let tablet_seat = self.mayland.seat.tablet_seat();
+		let Some(tablet) = tablet_seat.get_tablet(&TabletDescriptor::from(&event.device())) else {
+			return;
+		};
+		let Some(tool) = tablet_seat.get_tool(&event.tool()) else { return };
+
+		if event.pressure_has_changed() {
+			tool.pressure(event.pressure());
+		}
+		if event.distance_has_changed() {
+			tool.distance(event.distance());
+		}
+		if event.tilt_has_changed() {
+			tool.tilt(event.tilt());
+		}
+		if event.slider_has_changed() {
+			tool.slider_position(event.slider_position());
+		}
+		if event.rotation_has_changed() {
+			tool.rotation(event.rotation());
+		}
+		if event.wheel_has_changed() {
+			tool.wheel(event.wheel_delta(), event.wheel_delta_discrete());
+		}
+
+		if let Some(under) = self.surface_under(location) {
+			if let Some(surface) = under.0.wl_surface() {
+				let serial = SERIAL_COUNTER.next_serial();
+				tool.motion(
+					location,
+					Some((surface.into_owned(), under.1)),
+					&tablet,
+					serial,
+					event.time_msec(),
+				);
+				self.update_keyboard_focus(location, serial);
+
+				self.mayland.tablet_cursor_location = Some(location);
+			}
+		}
+
+		self.mayland.queue_redraw_all();
+	}
+
+	fn on_tablet_tool_proximity<I: InputBackend>(&mut self, event: I::TabletToolProximityEvent) {
+		let Some(bbox) = self.mayland.workspaces.bbox() else { return };
+		let location = event.position_transformed(bbox.size) + bbox.loc.to_f64();
+
+		let display_handle = self.mayland.display_handle.clone();
+		let tablet_seat = self.mayland.seat.tablet_seat();
+
+		let Some(tablet) = tablet_seat.get_tablet(&TabletDescriptor::from(&event.device())) else {
+			return;
+		};
+		let tool = tablet_seat.add_tool(self, &display_handle, &event.tool());
+
+		match event.state() {
+			ProximityState::In => {
+				if let Some(under) = self.surface_under(location) {
+					if let Some(surface) = under.0.wl_surface() {
+						let serial = SERIAL_COUNTER.next_serial();
+						tool.proximity_in(
+							location,
+							(surface.into_owned(), under.1),
+							&tablet,
+							serial,
+							event.time_msec(),
+						);
+						self.update_keyboard_focus(location, serial);
+					}
+				}
+
+				self.mayland.tablet_cursor_location = Some(location);
+			}
+			ProximityState::Out => {
+				tool.proximity_out(event.time_msec());
+
+				if let Some(location) = self.mayland.tablet_cursor_location.take() {
+					self.move_pointer(location);
+				}
+			}
+		}
+
+		self.mayland.queue_redraw_all();
+	}
+
+	fn on_tablet_tool_tip<I: InputBackend>(&mut self, event: I::TabletToolTipEvent) {
+		let tablet_seat = self.mayland.seat.tablet_seat();
+		let Some(tool) = tablet_seat.get_tool(&event.tool()) else { return };
+
+		match event.tip_state() {
+			TabletToolTipState::Down => tool.tip_down(SERIAL_COUNTER.next_serial(), event.time_msec()),
+			TabletToolTipState::Up => tool.tip_up(event.time_msec()),
+		}
+	}
+
+	fn on_tablet_tool_button<I: InputBackend>(&mut self, event: I::TabletToolButtonEvent) {
+		let tablet_seat = self.mayland.seat.tablet_seat();
+		let Some(tool) = tablet_seat.get_tool(&event.tool()) else { return };
+
+		tool.button(
+			event.button(),
+			event.button_state(),
+			SERIAL_COUNTER.next_serial(),
+			event.time_msec(),
+		);
 	}
 
 	fn handle_key(
