@@ -12,6 +12,8 @@ pub trait RectExt<N, Kind> {
 	fn borderless(&self, border: N) -> Rectangle<N, Kind>;
 
 	fn center(&self) -> Point<N, Kind>;
+
+	fn clamp(&self, point: Point<f64, Kind>) -> Point<f64, Kind>;
 }
 
 impl<Kind> RectExt<i32, Kind> for Rectangle<i32, Kind> {
@@ -28,6 +30,15 @@ impl<Kind> RectExt<i32, Kind> for Rectangle<i32, Kind> {
 		location += self.size.center();
 
 		location
+	}
+
+	fn clamp(&self, mut point: Point<f64, Kind>) -> Point<f64, Kind> {
+		let min = self.loc.to_f64();
+		let max = min + self.size.to_f64();
+
+		point.x = point.x.clamp(min.x, max.x);
+		point.y = point.y.clamp(min.y, max.y);
+		point
 	}
 }
 

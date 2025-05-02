@@ -5,7 +5,7 @@ use crate::{
 		window::MappedWindow,
 	},
 	state::State,
-	utils::spawn,
+	utils::{RectExt, spawn},
 };
 use mayland_config::Action;
 use smithay::{
@@ -97,13 +97,8 @@ impl State {
 		let mut location = pointer.current_location();
 		location += event.delta();
 
-		let (min, max) = match self.mayland.workspaces.bbox() {
-			Some(bbox) => (bbox.loc.to_f64(), bbox.loc.to_f64() + bbox.size.to_f64()),
-			None => return,
-		};
-
-		location.x = location.x.clamp(min.x, max.x);
-		location.y = location.y.clamp(min.y, max.y);
+		let Some(bbox) = self.mayland.workspaces.bbox() else { return };
+		let location = bbox.clamp(location);
 
 		let under = self.surface_under(location);
 		let serial = SERIAL_COUNTER.next_serial();
