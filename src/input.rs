@@ -7,7 +7,7 @@ use crate::{
 	state::State,
 	utils::{RectExt, spawn},
 };
-use mayland_config::Action;
+use mayland_config::{Action, input::TabletMapping};
 use smithay::{
 	backend::input::{
 		AbsolutePositionEvent, Axis, AxisSource, Device, DeviceCapability, Event, InputBackend, InputEvent,
@@ -245,8 +245,9 @@ impl State {
 	}
 
 	fn on_tablet_tool_axis<I: InputBackend>(&mut self, event: I::TabletToolAxisEvent) {
-		let Some(bbox) = self.mayland.workspaces.bbox() else { return };
-		let location = event.position_transformed(bbox.size) + bbox.loc.to_f64();
+		let Some(location) = self.compute_tablet_location(&event) else {
+			return;
+		};
 
 		let tablet_seat = self.mayland.seat.tablet_seat();
 		let Some(tablet) = tablet_seat.get_tablet(&TabletDescriptor::from(&event.device())) else {
@@ -283,8 +284,9 @@ impl State {
 	}
 
 	fn on_tablet_tool_proximity<I: InputBackend>(&mut self, event: I::TabletToolProximityEvent) {
-		let Some(bbox) = self.mayland.workspaces.bbox() else { return };
-		let location = event.position_transformed(bbox.size) + bbox.loc.to_f64();
+		let Some(location) = self.compute_tablet_location(&event) else {
+			return;
+		};
 
 		let display_handle = self.mayland.display_handle.clone();
 		let tablet_seat = self.mayland.seat.tablet_seat();
@@ -336,6 +338,28 @@ impl State {
 			SERIAL_COUNTER.next_serial(),
 			event.time_msec(),
 		);
+	}
+
+	fn compute_tablet_location<I, T>(&self, event: &T) -> Option<Point<f64, Logical>>
+	where
+		I: InputBackend,
+		T: TabletToolEvent<I> + Event<I>,
+	{
+		let tablet = &self.mayland.config.input.tablet;
+		let bbox = match &tablet.map_to {
+			TabletMapping::All => self.mayland.workspaces.bbox()?,
+			TabletMapping::Active => {
+				let active = self.mayland.workspaces.active_output()?;
+				self.mayland.workspaces.output_geometry(active).unwrap()
+			}
+			TabletMapping::Output(output) => {
+				let output = self.mayland.workspaces.output_by_name(output)?;
+				self.mayland.workspaces.output_geometry(output).unwrap()
+			}
+		};
+
+		let location = event.position_transformed(bbox.size) + bbox.loc.to_f64();
+		Some(location)
 	}
 
 	fn handle_key(

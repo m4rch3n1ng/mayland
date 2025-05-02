@@ -10,6 +10,7 @@ pub struct Input {
 	pub keyboard: Keyboard,
 	touchpad: Touchpad,
 	mouse: Mouse,
+	pub tablet: Tablet,
 
 	devices: Vec<Device>,
 }
@@ -57,6 +58,7 @@ impl<'de> Deserialize<'de> for Input {
 			Keyboard,
 			Touchpad,
 			Mouse,
+			Tablet,
 
 			Device(DeviceField),
 
@@ -77,6 +79,7 @@ impl<'de> Deserialize<'de> for Input {
 					"keyboard" => Ok(Field::Keyboard),
 					"touchpad" => Ok(Field::Touchpad),
 					"mouse" => Ok(Field::Mouse),
+					"tablet" => Ok(Field::Tablet),
 					_ => Ok(Field::Ignore),
 				}
 			}
@@ -100,6 +103,12 @@ impl<'de> Deserialize<'de> for Input {
 						let name = val.newtype_variant::<String>()?;
 						let name = DeviceField::Mouse(name);
 						Ok(Field::Device(name))
+					}
+					"tablet" => {
+						let _ = val.newtype_variant::<String>()?;
+						Err(serde::de::Error::custom(
+							"per-device configuration is not yet implemented for tablets",
+						))
 					}
 					_ => {
 						let _ = val.newtype_variant::<serde::de::IgnoredAny>();
@@ -128,6 +137,7 @@ impl<'de> Deserialize<'de> for Input {
 				let mut keyboard = None;
 				let mut touchpad = None;
 				let mut mouse = None;
+				let mut tablet = None;
 
 				enum TmpDevice {
 					Touchpad(String, per_device::Touchpad),
@@ -159,6 +169,13 @@ impl<'de> Deserialize<'de> for Input {
 
 							mouse = Some(map.next_value::<Mouse>()?);
 						}
+						Field::Tablet => {
+							if tablet.is_some() {
+								return Err(serde::de::Error::duplicate_field("tablet"));
+							}
+
+							tablet = Some(map.next_value::<Tablet>()?);
+						}
 
 						Field::Device(device) => match device {
 							DeviceField::Touchpad(dev) => {
@@ -182,6 +199,7 @@ impl<'de> Deserialize<'de> for Input {
 				let keyboard = keyboard.unwrap_or_default();
 				let touchpad = touchpad.unwrap_or_default();
 				let mouse = mouse.unwrap_or_default();
+				let tablet = tablet.unwrap_or_default();
 
 				let devices = devices
 					.into_iter()
@@ -195,6 +213,7 @@ impl<'de> Deserialize<'de> for Input {
 					keyboard,
 					touchpad,
 					mouse,
+					tablet,
 
 					devices,
 				};
@@ -336,6 +355,21 @@ impl Default for Mouse {
 			left_handed: false,
 		}
 	}
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(default, rename_all = "kebab-case")]
+pub struct Tablet {
+	pub map_to: TabletMapping,
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum TabletMapping {
+	#[default]
+	All,
+	Active,
+	Output(String),
 }
 
 fn deserialize_path<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Option<String>, D::Error> {

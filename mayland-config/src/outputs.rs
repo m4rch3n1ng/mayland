@@ -20,6 +20,18 @@ impl PartialEq for OutputInfo {
 	}
 }
 
+impl PartialEq<str> for OutputInfo {
+	fn eq(&self, other: &str) -> bool {
+		self.connector == *other
+	}
+}
+
+impl PartialEq<OutputInfo> for str {
+	fn eq(&self, other: &OutputInfo) -> bool {
+		*other == *self
+	}
+}
+
 impl Ord for OutputInfo {
 	/// tries to provide a relatively consistent ordering for
 	/// outputs, so that i can always map them in that order

@@ -5,6 +5,7 @@ use crate::{
 	shell::window::MappedWindow,
 	utils::{RectExt, SizeExt, output_size},
 };
+use mayland_config::outputs::OutputInfo;
 use smithay::{
 	backend::renderer::{element::AsRenderElements, glow::GlowRenderer},
 	desktop::{LayerMap, LayerSurface, layer_map_for_output, space::SpaceElement},
@@ -242,8 +243,19 @@ impl WorkspaceManager {
 		self.outputs.output_position(output)
 	}
 
+	pub fn output_geometry(&self, output: &Output) -> Option<Rectangle<i32, Logical>> {
+		self.outputs.output_geometry(output)
+	}
+
 	pub fn active_output(&self) -> Option<&Output> {
 		self.outputs.active.as_ref()
+	}
+
+	pub fn output_by_name(&self, name: &str) -> Option<&Output> {
+		self.outputs().find(|output| {
+			let info = output.user_data().get::<OutputInfo>().unwrap();
+			info == name
+		})
 	}
 
 	/// get the [`Output`] associated with its [`UdevOutputState`].
