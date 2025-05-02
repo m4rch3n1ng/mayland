@@ -381,6 +381,7 @@ impl Default for Mouse {
 #[serde(default, rename_all = "kebab-case")]
 pub struct Tablet {
 	pub map_to: TabletMapping,
+	pub relative: bool,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
@@ -500,12 +501,14 @@ mod per_device {
 	#[serde(default, rename_all = "kebab-case")]
 	pub struct Tablet {
 		pub map_to: Option<TabletMapping>,
+		pub relative: Option<bool>,
 	}
 
 	impl Tablet {
 		pub fn merge(self, other: &super::Tablet) -> super::Tablet {
 			super::Tablet {
 				map_to: self.map_to.unwrap_or_else(|| other.map_to.clone()),
+				relative: self.relative.unwrap_or(other.relative),
 			}
 		}
 	}

@@ -364,19 +364,29 @@ impl State {
 			&self.mayland.config.input.tablet
 		};
 
-		let bbox = match &config.map_to {
-			TabletMapping::All => self.mayland.workspaces.bbox()?,
-			TabletMapping::Active => {
-				let active = self.mayland.workspaces.active_output()?;
-				self.mayland.workspaces.output_geometry(active).unwrap()
-			}
-			TabletMapping::Output(output) => {
-				let output = self.mayland.workspaces.output_by_name(output)?;
-				self.mayland.workspaces.output_geometry(output).unwrap()
-			}
+		let location = if config.relative {
+			let mut location = (self.mayland.tablet_cursor_location)
+				.unwrap_or_else(|| self.mayland.pointer.current_location());
+			location += event.delta();
+
+			let bbox = self.mayland.workspaces.bbox()?;
+			bbox.clamp(location)
+		} else {
+			let bbox = match &config.map_to {
+				TabletMapping::All => self.mayland.workspaces.bbox()?,
+				TabletMapping::Active => {
+					let active = self.mayland.workspaces.active_output()?;
+					self.mayland.workspaces.output_geometry(active).unwrap()
+				}
+				TabletMapping::Output(output) => {
+					let output = self.mayland.workspaces.output_by_name(output)?;
+					self.mayland.workspaces.output_geometry(output).unwrap()
+				}
+			};
+
+			event.position_transformed(bbox.size) + bbox.loc.to_f64()
 		};
 
-		let location = event.position_transformed(bbox.size) + bbox.loc.to_f64();
 		Some(location)
 	}
 
