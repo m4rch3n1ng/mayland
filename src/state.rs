@@ -589,7 +589,10 @@ impl Mayland {
 	) -> Vec<MaylandRenderElements> {
 		let output_position = self.workspaces.output_position(output).unwrap();
 
-		let pointer_pos = self.pointer.current_location() - output_position.to_f64();
+		let pointer_pos = self
+			.tablet_cursor_location
+			.unwrap_or_else(|| self.pointer.current_location());
+		let pointer_pos = pointer_pos - output_position.to_f64();
 		let pointer_pos = pointer_pos.to_physical(1.);
 
 		let render_cursor = self.cursor.get_render_cursor(1);
