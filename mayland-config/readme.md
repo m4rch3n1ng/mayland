@@ -63,12 +63,17 @@ input {
         accel-speed = 0
         # accel-profile = "adaptive"
     }
+
+    tablet {
+        map-to = "all"
+        relative = false
+    }
 }
 ```
 
 > [!TIP]
 >
-> you can also set device-specific configurations for touchpads and mice
+> you can also set device-specific configurations for touchpads, mice and tablets
 >
 > ```ini
 > input {
@@ -145,6 +150,22 @@ settings specific to touchpads are:
 - `tap-drag-lock` controls the drag lock for `tap-and-drag`. both of these are off by default.
 - `dwt` disables the touchpad while typing. defaults to `true`.
 - `dwtp` disables the touchpad while trackpointing. defaults to `true`.
+
+#### tablets
+
+```ini
+input {
+    tablet {
+        map-to = "all"
+        relative = false
+    }
+}
+```
+
+the currently available tablet configs are:
+
+- `map-to`, which controls what the tablet maps to. currently available options are `"all"`, which maps the tablet across all outputs, `"active"` to map it to the current output and `"output" [ "<name>" ]`, which maps it to that output. defaults to `"all"`.
+- `relative` makes the tablet motions relative. defaults to `false`.
 
 ### output
 

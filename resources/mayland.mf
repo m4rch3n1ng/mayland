@@ -42,6 +42,11 @@ input {
 		left-handed = false
 	}
 
+	tablet {
+		map-to = "all"
+		relative = false
+	}
+
 	# you can specify config options for specific
 	# devices
 
