@@ -19,6 +19,7 @@ pub struct Input {
 enum Device {
 	Touchpad(String, Touchpad),
 	Mouse(String, Mouse),
+	Tablet(String, Tablet),
 }
 
 impl Input {
@@ -45,6 +46,18 @@ impl Input {
 			.map(|(_, mouse)| mouse)
 			.unwrap_or(&self.mouse)
 	}
+
+	pub fn tablet(&self, name: &str) -> &Tablet {
+		self.devices
+			.iter()
+			.filter_map(|device| match device {
+				Device::Tablet(name, tablet) => Some((name, tablet)),
+				_ => None,
+			})
+			.find(|(n, _)| n.eq_ignore_ascii_case(name))
+			.map(|(_, tablet)| tablet)
+			.unwrap_or(&self.tablet)
+	}
 }
 
 impl<'de> Deserialize<'de> for Input {
@@ -52,6 +65,7 @@ impl<'de> Deserialize<'de> for Input {
 		enum DeviceField {
 			Touchpad(String),
 			Mouse(String),
+			Tablet(String),
 		}
 
 		enum Field {
@@ -105,10 +119,9 @@ impl<'de> Deserialize<'de> for Input {
 						Ok(Field::Device(name))
 					}
 					"tablet" => {
-						let _ = val.newtype_variant::<String>()?;
-						Err(serde::de::Error::custom(
-							"per-device configuration is not yet implemented for tablets",
-						))
+						let name = val.newtype_variant::<String>()?;
+						let name = DeviceField::Tablet(name);
+						Ok(Field::Device(name))
 					}
 					_ => {
 						let _ = val.newtype_variant::<serde::de::IgnoredAny>();
@@ -142,6 +155,7 @@ impl<'de> Deserialize<'de> for Input {
 				enum TmpDevice {
 					Touchpad(String, per_device::Touchpad),
 					Mouse(String, per_device::Mouse),
+					Tablet(String, per_device::Tablet),
 				}
 
 				let mut devices = Vec::new();
@@ -188,6 +202,11 @@ impl<'de> Deserialize<'de> for Input {
 								let device = TmpDevice::Mouse(dev, mouse);
 								devices.push(device);
 							}
+							DeviceField::Tablet(dev) => {
+								let tablet = map.next_value::<per_device::Tablet>()?;
+								let device = TmpDevice::Tablet(dev, tablet);
+								devices.push(device);
+							}
 						},
 
 						Field::Ignore => {
@@ -206,6 +225,7 @@ impl<'de> Deserialize<'de> for Input {
 					.map(|device| match device {
 						TmpDevice::Touchpad(dev, value) => Device::Touchpad(dev, value.merge(&touchpad)),
 						TmpDevice::Mouse(dev, value) => Device::Mouse(dev, value.merge(&mouse)),
+						TmpDevice::Tablet(dev, value) => Device::Tablet(dev, value.merge(&tablet)),
 					})
 					.collect();
 
@@ -363,7 +383,7 @@ pub struct Tablet {
 	pub map_to: TabletMapping,
 }
 
-#[derive(Debug, Default, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum TabletMapping {
 	#[default]
@@ -393,6 +413,7 @@ fn deserialize_path<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result
 }
 
 mod per_device {
+	use super::TabletMapping;
 	use serde::Deserialize;
 	use smithay::reexports::input::{AccelProfile, ClickMethod, ScrollMethod, TapButtonMap};
 
@@ -471,6 +492,20 @@ mod per_device {
 
 				accel_speed: self.accel_speed.unwrap_or(other.accel_speed),
 				accel_profile: self.accel_profile.or(other.accel_profile),
+			}
+		}
+	}
+
+	#[derive(Debug, Default, PartialEq, Eq, Deserialize)]
+	#[serde(default, rename_all = "kebab-case")]
+	pub struct Tablet {
+		pub map_to: Option<TabletMapping>,
+	}
+
+	impl Tablet {
+		pub fn merge(self, other: &super::Tablet) -> super::Tablet {
+			super::Tablet {
+				map_to: self.map_to.unwrap_or_else(|| other.map_to.clone()),
 			}
 		}
 	}

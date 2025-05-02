@@ -7,6 +7,7 @@ use crate::{
 	state::State,
 	utils::{RectExt, spawn},
 };
+use input as libinput;
 use mayland_config::{Action, input::TabletMapping};
 use smithay::{
 	backend::input::{
@@ -33,11 +34,15 @@ use smithay::{
 		tablet_manager::{TabletDescriptor, TabletSeatTrait},
 	},
 };
+use std::any::Any;
 
 pub mod device;
 
 impl State {
-	pub fn handle_input_event<I: InputBackend>(&mut self, event: InputEvent<I>) {
+	pub fn handle_input_event<I: InputBackend>(&mut self, event: InputEvent<I>)
+	where
+		I::Device: 'static,
+	{
 		match event {
 			InputEvent::DeviceAdded { device } => self.on_device_added(device),
 			InputEvent::DeviceRemoved { device } => self.on_device_removed(device),
@@ -244,7 +249,10 @@ impl State {
 		pointer.frame(self);
 	}
 
-	fn on_tablet_tool_axis<I: InputBackend>(&mut self, event: I::TabletToolAxisEvent) {
+	fn on_tablet_tool_axis<I: InputBackend>(&mut self, event: I::TabletToolAxisEvent)
+	where
+		I::Device: 'static,
+	{
 		let Some(location) = self.compute_tablet_location(&event) else {
 			return;
 		};
@@ -283,7 +291,10 @@ impl State {
 		self.mayland.queue_redraw_all();
 	}
 
-	fn on_tablet_tool_proximity<I: InputBackend>(&mut self, event: I::TabletToolProximityEvent) {
+	fn on_tablet_tool_proximity<I: InputBackend>(&mut self, event: I::TabletToolProximityEvent)
+	where
+		I::Device: 'static,
+	{
 		let Some(location) = self.compute_tablet_location(&event) else {
 			return;
 		};
@@ -343,10 +354,17 @@ impl State {
 	fn compute_tablet_location<I, T>(&self, event: &T) -> Option<Point<f64, Logical>>
 	where
 		I: InputBackend,
+		I::Device: 'static,
 		T: TabletToolEvent<I> + Event<I>,
 	{
-		let tablet = &self.mayland.config.input.tablet;
-		let bbox = match &tablet.map_to {
+		let config = if let Some(device) = (&event.device() as &dyn Any).downcast_ref::<libinput::Device>() {
+			let name = device.name();
+			self.mayland.config.input.tablet(name)
+		} else {
+			&self.mayland.config.input.tablet
+		};
+
+		let bbox = match &config.map_to {
 			TabletMapping::All => self.mayland.workspaces.bbox()?,
 			TabletMapping::Active => {
 				let active = self.mayland.workspaces.active_output()?;
