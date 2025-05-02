@@ -283,22 +283,12 @@ impl State {
 			tool.wheel(event.wheel_delta(), event.wheel_delta_discrete());
 		}
 
-		if let Some(under) = self.surface_under(location) {
-			if let Some(surface) = under.0.wl_surface() {
-				let serial = SERIAL_COUNTER.next_serial();
-				tool.motion(
-					location,
-					Some((surface.into_owned(), under.1)),
-					&tablet,
-					serial,
-					event.time_msec(),
-				);
-				self.update_keyboard_focus(location, serial);
+		let under = self.wl_surface_under(location);
+		let serial = SERIAL_COUNTER.next_serial();
+		tool.motion(location, under, &tablet, serial, event.time_msec());
+		self.update_keyboard_focus(location, serial);
 
-				self.mayland.tablet_cursor_location = Some(location);
-			}
-		}
-
+		self.mayland.tablet_cursor_location = Some(location);
 		self.mayland.queue_redraw_all();
 	}
 
@@ -316,18 +306,10 @@ impl State {
 
 		match event.state() {
 			ProximityState::In => {
-				if let Some(under) = self.surface_under(location) {
-					if let Some(surface) = under.0.wl_surface() {
-						let serial = SERIAL_COUNTER.next_serial();
-						tool.proximity_in(
-							location,
-							(surface.into_owned(), under.1),
-							&tablet,
-							serial,
-							event.time_msec(),
-						);
-						self.update_keyboard_focus(location, serial);
-					}
+				if let Some(under) = self.wl_surface_under(location) {
+					let serial = SERIAL_COUNTER.next_serial();
+					tool.proximity_in(location, under, &tablet, serial, event.time_msec());
+					self.update_keyboard_focus(location, serial);
 				}
 
 				self.mayland.tablet_cursor_location = Some(location);
@@ -533,6 +515,15 @@ impl State {
 		} else {
 			None
 		}
+	}
+
+	pub fn wl_surface_under(
+		&self,
+		location: Point<f64, Logical>,
+	) -> Option<(WlSurface, Point<f64, Logical>)> {
+		let (surface, location) = self.surface_under(location)?;
+		let surface = surface.wl_surface()?;
+		Some((surface.into_owned(), location))
 	}
 
 	fn layer_surface_under(
