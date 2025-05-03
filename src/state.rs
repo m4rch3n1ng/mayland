@@ -92,14 +92,14 @@ impl State {
 			let winit = Winit::init(&mut mayland);
 			let backend = Backend::Winit(winit);
 
-			State { mayland, backend }
+			State { backend, mayland }
 		} else {
 			let mut mayland = Mayland::new(event_loop, display, args, CompMod::Meta)?;
 
 			let udev = Udev::init(&mut mayland);
 			let backend = Backend::Udev(udev);
 
-			State { mayland, backend }
+			State { backend, mayland }
 		};
 		state.set_xkb_file();
 
