@@ -330,6 +330,8 @@ pub struct Window {
 	pub app_id: Option<String>,
 	/// the window title
 	pub title: Option<String>,
+	/// the window process id
+	pub pid: Option<i32>,
 
 	/// the workspace this window is mapped on
 	pub workspace: usize,

@@ -18,7 +18,8 @@ use smithay::{
 	},
 	output::Output,
 	reexports::{
-		wayland_protocols::xdg::shell::server::xdg_toplevel, wayland_server::protocol::wl_surface::WlSurface,
+		wayland_protocols::xdg::shell::server::xdg_toplevel,
+		wayland_server::{DisplayHandle, Resource, protocol::wl_surface::WlSurface},
 	},
 	utils::{IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial, Size},
 	wayland::{
@@ -447,6 +448,7 @@ impl MappedWindow {
 		geometry: Rectangle<i32, Logical>,
 		workspace: &Workspace,
 		keyboard_focus: Option<&KeyboardFocusTarget>,
+		display_handle: &DisplayHandle,
 	) -> mayland_comm::Window {
 		let active = keyboard_focus.is_some_and(|focus| focus == self);
 
@@ -479,12 +481,17 @@ impl MappedWindow {
 					.lock()
 					.unwrap();
 
+				let pid = (display_handle.get_client(xdg.wl_surface().id()).ok())
+					.and_then(|client| client.get_credentials(display_handle).ok())
+					.map(|credentials| credentials.pid);
+
 				mayland_comm::Window {
 					relative,
 					absolute,
 
 					app_id: surface_data.app_id.clone(),
 					title: surface_data.title.clone(),
+					pid,
 
 					workspace: workspace.idx,
 					active,

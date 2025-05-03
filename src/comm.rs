@@ -145,7 +145,7 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) ->
 							.map(move |(window, geometry)| (window, geometry, workspace))
 					})
 					.map(|(window, geometry, workspace)| {
-						window.comm_info(geometry, workspace, keyboard_focus)
+						window.comm_info(geometry, workspace, keyboard_focus, &state.mayland.display_handle)
 					})
 					.collect();
 
