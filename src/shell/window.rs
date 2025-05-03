@@ -1,5 +1,5 @@
-use super::grab::ResizeState;
-use crate::{render::MaylandRenderElements, state::State};
+use super::{focus::KeyboardFocusTarget, grab::ResizeState};
+use crate::{layout::workspace::Workspace, render::MaylandRenderElements, state::State};
 use mayland_config::windowrules::WindowRule;
 use smithay::{
 	backend::renderer::{
@@ -442,7 +442,13 @@ impl PartialEq<WlSurface> for MappedWindow {
 
 impl MappedWindow {
 	/// get [`mayland_comm::Window`] info for [`mayland`]
-	pub fn comm_info(&self) -> mayland_comm::Window {
+	pub fn comm_info(
+		&self,
+		workspace: &Workspace,
+		keyboard_focus: Option<&KeyboardFocusTarget>,
+	) -> mayland_comm::Window {
+		let active = keyboard_focus.is_some_and(|focus| focus == self);
+
 		match self.underlying_surface() {
 			WindowSurface::Wayland(xdg) => with_states(xdg.wl_surface(), |states| {
 				let surface_data = states
@@ -455,6 +461,9 @@ impl MappedWindow {
 				mayland_comm::Window {
 					app_id: surface_data.app_id.clone(),
 					title: surface_data.title.clone(),
+
+					workspace: workspace.idx,
+					active,
 				}
 			}),
 		}

@@ -307,3 +307,13 @@ impl From<PopupKind> for KeyboardFocusTarget {
 		KeyboardFocusTarget::Popup(popup)
 	}
 }
+
+impl PartialEq<MappedWindow> for KeyboardFocusTarget {
+	fn eq(&self, other: &MappedWindow) -> bool {
+		if let KeyboardFocusTarget::Window(window) = self {
+			window == other
+		} else {
+			false
+		}
+	}
+}

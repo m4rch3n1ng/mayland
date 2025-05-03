@@ -131,11 +131,16 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) ->
 		Ok(Request::Windows) => {
 			let (tx, rx) = async_channel::bounded(1);
 			state.event_loop.insert_idle(move |state| {
+				let keyboard_focus = state.mayland.keyboard.current_focus();
+				let keyboard_focus = keyboard_focus.as_ref();
+
 				let windows = state
 					.mayland
 					.workspaces
-					.windows()
-					.map(|window| window.comm_info())
+					.workspaces
+					.values()
+					.flat_map(|workspace| workspace.windows().map(move |window| (window, workspace)))
+					.map(|(window, workspace)| window.comm_info(workspace, keyboard_focus))
 					.collect();
 
 				let _ = tx.send_blocking(windows);

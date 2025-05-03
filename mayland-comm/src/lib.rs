@@ -320,6 +320,11 @@ pub struct Window {
 	pub app_id: Option<String>,
 	/// the window title
 	pub title: Option<String>,
+
+	/// the workspace this window is mapped on
+	pub workspace: usize,
+	/// if the window is currently focussed
+	pub active: bool,
 }
 
 mod window {
@@ -340,6 +345,9 @@ mod window {
 			if let Some(title) = &self.title {
 				writeln!(f, "    title: {title:?}")?;
 			}
+
+			writeln!(f, "    workspace: {}", self.workspace)?;
+			writeln!(f, "    active: {}", self.active)?;
 
 			Ok(())
 		}
