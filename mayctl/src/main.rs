@@ -80,6 +80,17 @@ fn main() -> Term {
 				prettify(&outputs);
 			}
 		}
+		Request::Windows => {
+			let Response::Windows(windows) = response else {
+				unexpected!(response, "windows")
+			};
+
+			if cli.json {
+				stringify(&windows);
+			} else {
+				prettify(&windows);
+			}
+		}
 		Request::Workspaces => {
 			let Response::Workspaces(workspaces) = response else {
 				unexpected!(response, "workspaces")

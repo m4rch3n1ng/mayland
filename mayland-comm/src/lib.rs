@@ -61,6 +61,12 @@ pub enum Request {
 	/// { "tag": "outputs" }
 	/// ```
 	Outputs,
+	/// request window info from mayland
+	///
+	/// ```json
+	/// { "tag": "windows" }
+	/// ```
+	Windows,
 	/// request workspace info from mayland
 	///
 	/// ```json
@@ -84,6 +90,8 @@ pub enum Response {
 	Devices(Vec<Device>),
 	/// mayland output info
 	Outputs(Vec<Output>),
+	/// mayland window info
+	Windows(Vec<Window>),
 	/// mayland workspace info
 	Workspaces(Vec<Workspace>),
 }
@@ -299,6 +307,41 @@ pub mod output {
 				Transform::Flipped180 => f.write_str("flipped vertically, rotated 180°"),
 				Transform::Flipped270 => f.write_str("flipped vertically, rotated 270° counter-clockwise"),
 			}
+		}
+	}
+}
+
+/// a mayland window
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Window {
+	/// the window app id
+	///
+	/// x11 calls this "class"
+	pub app_id: Option<String>,
+	/// the window title
+	pub title: Option<String>,
+}
+
+mod window {
+	use super::Window;
+	use std::fmt::Display;
+
+	impl Display for Window {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+			if let Some(app_id) = &self.app_id {
+				writeln!(f, "window {app_id:?}")?;
+			} else {
+				writeln!(f, "window")?;
+			}
+
+			if let Some(app_id) = &self.app_id {
+				writeln!(f, "    app_id: {app_id:?}")?;
+			}
+			if let Some(title) = &self.title {
+				writeln!(f, "    title: {title:?}")?;
+			}
+
+			Ok(())
 		}
 	}
 }

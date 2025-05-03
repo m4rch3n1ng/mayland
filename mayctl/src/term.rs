@@ -204,6 +204,7 @@ pub(crate) fn get_response_name(response: &Response) -> &'static str {
 		Response::Reload => "reload",
 		Response::Devices(_) => "devices",
 		Response::Outputs(_) => "outputs",
+		Response::Windows(_) => "windows",
 		Response::Workspaces(_) => "workspaces",
 	}
 }

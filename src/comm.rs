@@ -128,6 +128,22 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) ->
 			let outputs = rx.recv().await.unwrap();
 			Response::Outputs(outputs)
 		}
+		Ok(Request::Windows) => {
+			let (tx, rx) = async_channel::bounded(1);
+			state.event_loop.insert_idle(move |state| {
+				let windows = state
+					.mayland
+					.workspaces
+					.windows()
+					.map(|window| window.comm_info())
+					.collect();
+
+				let _ = tx.send_blocking(windows);
+			});
+
+			let windows = rx.recv().await.unwrap();
+			Response::Windows(windows)
+		}
 		Ok(Request::Workspaces) => {
 			let (tx, rx) = async_channel::bounded(1);
 			state.event_loop.insert_idle(move |state| {

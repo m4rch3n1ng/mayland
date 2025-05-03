@@ -440,6 +440,27 @@ impl PartialEq<WlSurface> for MappedWindow {
 	}
 }
 
+impl MappedWindow {
+	/// get [`mayland_comm::Window`] info for [`mayland`]
+	pub fn comm_info(&self) -> mayland_comm::Window {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => with_states(xdg.wl_surface(), |states| {
+				let surface_data = states
+					.data_map
+					.get::<XdgToplevelSurfaceData>()
+					.unwrap()
+					.lock()
+					.unwrap();
+
+				mayland_comm::Window {
+					app_id: surface_data.app_id.clone(),
+					title: surface_data.title.clone(),
+				}
+			}),
+		}
+	}
+}
+
 impl From<&MappedWindow> for mayland_comm::workspace::Window {
 	fn from(window: &MappedWindow) -> Self {
 		match window.underlying_surface() {

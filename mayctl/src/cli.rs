@@ -34,6 +34,8 @@ pub enum Cmd {
 	Devices,
 	/// request output info from the compositor
 	Outputs,
+	/// request window info from the compositor
+	Windows,
 	/// request workspace info from the compositor
 	Workspaces,
 }
@@ -66,6 +68,7 @@ impl From<Cmd> for Request {
 			Cmd::Reload => Request::Reload,
 			Cmd::Devices => Request::Devices,
 			Cmd::Outputs => Request::Outputs,
+			Cmd::Windows => Request::Windows,
 			Cmd::Workspaces => Request::Workspaces,
 		}
 	}
