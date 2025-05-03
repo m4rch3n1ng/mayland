@@ -464,6 +464,8 @@ impl MappedWindow {
 
 					workspace: workspace.idx,
 					active,
+
+					xwayland: false,
 				}
 			}),
 		}

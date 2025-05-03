@@ -325,6 +325,9 @@ pub struct Window {
 	pub workspace: usize,
 	/// if the window is currently focussed
 	pub active: bool,
+
+	/// if the window is running under xwayland
+	pub xwayland: bool,
 }
 
 mod window {
@@ -348,6 +351,7 @@ mod window {
 
 			writeln!(f, "    workspace: {}", self.workspace)?;
 			writeln!(f, "    active: {}", self.active)?;
+			writeln!(f, "    xwayland: {}", self.xwayland)?;
 
 			Ok(())
 		}
