@@ -444,10 +444,31 @@ impl MappedWindow {
 	/// get [`mayland_comm::Window`] info for [`mayland`]
 	pub fn comm_info(
 		&self,
+		geometry: Rectangle<i32, Logical>,
 		workspace: &Workspace,
 		keyboard_focus: Option<&KeyboardFocusTarget>,
 	) -> mayland_comm::Window {
 		let active = keyboard_focus.is_some_and(|focus| focus == self);
+
+		let absolute = workspace.output.as_ref().map(|output| {
+			let output_location = output.current_location();
+			let mut absolute = geometry;
+			absolute.loc += output_location;
+
+			mayland_comm::window::Geometry {
+				x: absolute.loc.x,
+				y: absolute.loc.y,
+				w: absolute.size.w,
+				h: absolute.size.h,
+			}
+		});
+
+		let relative = mayland_comm::window::Geometry {
+			x: geometry.loc.x,
+			y: geometry.loc.y,
+			w: geometry.size.w,
+			h: geometry.size.h,
+		};
 
 		match self.underlying_surface() {
 			WindowSurface::Wayland(xdg) => with_states(xdg.wl_surface(), |states| {
@@ -459,6 +480,9 @@ impl MappedWindow {
 					.unwrap();
 
 				mayland_comm::Window {
+					relative,
+					absolute,
+
 					app_id: surface_data.app_id.clone(),
 					title: surface_data.title.clone(),
 

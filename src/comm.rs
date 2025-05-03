@@ -139,8 +139,14 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) ->
 					.workspaces
 					.workspaces
 					.values()
-					.flat_map(|workspace| workspace.windows().map(move |window| (window, workspace)))
-					.map(|(window, workspace)| window.comm_info(workspace, keyboard_focus))
+					.flat_map(|workspace| {
+						workspace
+							.windows_geometry()
+							.map(move |(window, geometry)| (window, geometry, workspace))
+					})
+					.map(|(window, geometry, workspace)| {
+						window.comm_info(geometry, workspace, keyboard_focus)
+					})
 					.collect();
 
 				let _ = tx.send_blocking(windows);

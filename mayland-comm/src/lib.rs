@@ -314,6 +314,16 @@ pub mod output {
 /// a mayland window
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Window {
+	/// relative window geometry
+	///
+	/// relative, as in relative to the workspace
+	pub relative: window::Geometry,
+	/// absolute window geometry
+	///
+	/// may be `None` if the window is on an orphaned
+	/// workspace or no output is connected.
+	pub absolute: Option<window::Geometry>,
+
 	/// the window app id
 	///
 	/// x11 calls this "class"
@@ -330,8 +340,11 @@ pub struct Window {
 	pub xwayland: bool,
 }
 
-mod window {
+pub mod window {
+	//! mayland window extra info
+
 	use super::Window;
+	use serde::{Deserialize, Serialize};
 	use std::fmt::Display;
 
 	impl Display for Window {
@@ -341,6 +354,10 @@ mod window {
 			} else {
 				writeln!(f, "window")?;
 			}
+
+			let geometry = self.absolute.as_ref().unwrap_or(&self.relative);
+			writeln!(f, "    at: {},{}", geometry.x, geometry.y)?;
+			writeln!(f, "    size: {}x{}", geometry.w, geometry.h)?;
 
 			if let Some(app_id) = &self.app_id {
 				writeln!(f, "    app_id: {app_id:?}")?;
@@ -355,6 +372,19 @@ mod window {
 
 			Ok(())
 		}
+	}
+
+	/// the window geometry
+	#[derive(Debug, Deserialize, Serialize)]
+	pub struct Geometry {
+		/// x
+		pub x: i32,
+		/// y
+		pub y: i32,
+		/// width
+		pub w: i32,
+		/// height
+		pub h: i32,
 	}
 }
 

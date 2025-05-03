@@ -380,7 +380,7 @@ impl WorkspaceManager {
 #[derive(Debug)]
 pub struct Workspace {
 	pub idx: usize,
-	output: Option<Output>,
+	pub output: Option<Output>,
 
 	tiling: Tiling,
 	floating: Floating,
