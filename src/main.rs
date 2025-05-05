@@ -1,5 +1,7 @@
 use self::state::State;
+use clap::{CommandFactory, Parser};
 use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
+use std::path::PathBuf;
 
 mod backend;
 mod comm;
@@ -12,13 +14,32 @@ mod state;
 mod trace;
 mod utils;
 
+#[derive(Debug, Parser)]
+#[clap(version, about)]
+#[clap(disable_help_flag = true, disable_version_flag = true)]
+#[clap(disable_help_subcommand = true)]
+pub struct Args {
+	/// a path to a config file
+	#[arg(short, long)]
+	config: Option<PathBuf>,
+
+	/// print help
+	#[arg(long, short, action = clap::ArgAction::Help, global = true)]
+	help: Option<bool>,
+	/// print version
+	#[arg(long, short = 'V', action = clap::ArgAction::Version, global = true)]
+	version: Option<bool>,
+}
+
 fn main() {
+	let args = Args::parse();
+	clap_complete::CompleteEnv::with_factory(Args::command).complete();
 	trace::setup();
 
 	let mut event_loop = EventLoop::<State>::try_new().unwrap();
 	let display = Display::<State>::new().unwrap();
 
-	let mut state = match State::new(&event_loop, display) {
+	let mut state = match State::new(&event_loop, display, &args) {
 		Ok(state) => state,
 		Err(err) => {
 			anstream::println!("{}", err);

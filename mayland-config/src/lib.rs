@@ -4,8 +4,9 @@ use serde::{Deserialize, de::Visitor};
 use smithay::reexports::calloop;
 use std::{
 	collections::{HashMap, HashSet},
+	ops::Deref,
 	path::{Path, PathBuf},
-	sync::LazyLock,
+	sync::OnceLock,
 	time::Duration,
 };
 
@@ -86,7 +87,32 @@ impl<'a> Visitor<'a> for EnvVis {
 	}
 }
 
-pub static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
+pub struct LazyOnceLock<T, F = fn() -> T> {
+	once: OnceLock<T>,
+	init: F,
+}
+
+impl<T, F: Fn() -> T> LazyOnceLock<T, F> {
+	const fn new(init: F) -> Self {
+		LazyOnceLock {
+			once: OnceLock::new(),
+			init,
+		}
+	}
+
+	fn set(&self, v: T) -> Result<(), T> {
+		self.once.set(v)
+	}
+}
+
+impl<T, F: Fn() -> T> Deref for LazyOnceLock<T, F> {
+	type Target = T;
+	fn deref(&self) -> &Self::Target {
+		self.once.get_or_init(|| (self.init)())
+	}
+}
+
+pub static CONFIG_PATH: LazyOnceLock<PathBuf> = LazyOnceLock::new(|| {
 	let mut config = dirs::config_dir().unwrap();
 	config.push("mayland.mf");
 
@@ -94,7 +120,14 @@ pub static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 });
 
 impl Config {
-	pub fn init(comp: CompMod) -> Result<(Self, calloop::channel::Channel<Self>), Error> {
+	pub fn init(
+		comp: CompMod,
+		config: Option<PathBuf>,
+	) -> Result<(Self, calloop::channel::Channel<Self>), Error> {
+		if let Some(config) = config {
+			let _ = CONFIG_PATH.set(config);
+		}
+
 		let config = match Config::read(&CONFIG_PATH, comp) {
 			Ok(config) => Ok(config),
 			Err(Error::NotFound) => {

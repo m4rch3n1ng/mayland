@@ -1,4 +1,5 @@
 use crate::{
+	Args,
 	backend::{Backend, udev::Udev, winit::Winit},
 	comm::MaySocket,
 	cursor::{Cursor, RenderCursor},
@@ -82,17 +83,18 @@ impl State {
 	pub fn new(
 		event_loop: &EventLoop<'static, State>,
 		display: Display<State>,
+		args: &Args,
 	) -> Result<Self, mayland_config::Error> {
 		let has_display = std::env::var("WAYLAND_DISPLAY").is_ok() || std::env::var("DISPLAY").is_ok();
 		let mut state = if has_display {
-			let mut mayland = Mayland::new(event_loop, display, CompMod::Alt)?;
+			let mut mayland = Mayland::new(event_loop, display, args, CompMod::Alt)?;
 
 			let winit = Winit::init(&mut mayland);
 			let backend = Backend::Winit(winit);
 
 			State { mayland, backend }
 		} else {
-			let mut mayland = Mayland::new(event_loop, display, CompMod::Meta)?;
+			let mut mayland = Mayland::new(event_loop, display, args, CompMod::Meta)?;
 
 			let udev = Udev::init(&mut mayland);
 			let backend = Backend::Udev(udev);
@@ -334,11 +336,12 @@ impl Mayland {
 	fn new(
 		event_loop: &EventLoop<'static, State>,
 		display: Display<State>,
+		args: &Args,
 		comp_mod: CompMod,
 	) -> Result<Self, mayland_config::Error> {
 		let loop_handle = event_loop.handle();
 
-		let (config, rx) = Config::init(comp_mod)?;
+		let (config, rx) = Config::init(comp_mod, args.config.clone())?;
 		loop_handle
 			.insert_source(rx, |event, (), state| match event {
 				calloop::channel::Event::Msg(config) => state.reload_config(config),

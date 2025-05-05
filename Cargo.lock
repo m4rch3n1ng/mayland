@@ -1094,6 +1094,8 @@ dependencies = [
  "anstream",
  "async-channel",
  "calloop 0.14.2",
+ "clap",
+ "clap_complete",
  "dirs",
  "futures-util",
  "indexmap",
