@@ -2,7 +2,7 @@ use self::{
 	cli::Cli,
 	term::{Term, ensure_matches, unexpected},
 };
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use mayland_comm::{MAYLAND_SOCKET_VAR, Request, Response};
 use serde::Serialize;
 use std::{
@@ -16,6 +16,7 @@ mod cli;
 mod term;
 
 fn main() -> Term {
+	clap_complete::CompleteEnv::with_factory(Cli::command).complete();
 	let cli = Cli::parse();
 	let Ok(socket_path) = std::env::var(MAYLAND_SOCKET_VAR) else {
 		return Term::MaylandNotRunning;
