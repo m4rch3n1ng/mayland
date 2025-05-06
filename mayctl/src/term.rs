@@ -138,6 +138,28 @@ impl Display for Term {
 	}
 }
 
+impl From<mayland_comm::Error> for Term {
+	fn from(value: mayland_comm::Error) -> Self {
+		if matches!(value, mayland_comm::Error::FailedToReadConfig) {
+			if let Err(err) = mayland_config::Config::read(mayland_config::bind::CompMod::Meta) {
+				return Term::from(err);
+			}
+		}
+
+		Term::MaylandError(value)
+	}
+}
+
+impl From<mayland_config::Error> for Term {
+	fn from(value: mayland_config::Error) -> Self {
+		match value {
+			mayland_config::Error::IoError(err) => Term::IoError(err),
+			mayland_config::Error::Mayfig(mayfig) => Term::Mayfig(mayfig),
+			mayland_config::Error::NotFound => Term::ConfigNotFound,
+		}
+	}
+}
+
 macro_rules! ensure_matches {
 	($left:expr, $( $pattern:pat_param )|+, $expected:literal) => {
 		match $left {
