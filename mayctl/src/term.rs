@@ -140,8 +140,8 @@ impl Display for Term {
 
 impl From<mayland_comm::Error> for Term {
 	fn from(value: mayland_comm::Error) -> Self {
-		if matches!(value, mayland_comm::Error::FailedToReadConfig) {
-			if let Err(err) = mayland_config::Config::read(mayland_config::bind::CompMod::Meta) {
+		if let mayland_comm::Error::FailedToReadConfig(path) = &value {
+			if let Err(err) = mayland_config::Config::read(path, mayland_config::bind::CompMod::Meta) {
 				return Term::from(err);
 			}
 		}

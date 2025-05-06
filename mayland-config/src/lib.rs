@@ -4,7 +4,7 @@ use serde::{Deserialize, de::Visitor};
 use smithay::reexports::calloop;
 use std::{
 	collections::{HashMap, HashSet},
-	path::PathBuf,
+	path::{Path, PathBuf},
 	sync::LazyLock,
 	time::Duration,
 };
@@ -86,7 +86,7 @@ impl<'a> Visitor<'a> for EnvVis {
 	}
 }
 
-static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
+pub static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 	let mut config = dirs::config_dir().unwrap();
 	config.push("mayland.mf");
 
@@ -95,7 +95,7 @@ static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 
 impl Config {
 	pub fn init(comp: CompMod) -> Result<(Self, calloop::channel::Channel<Self>), Error> {
-		let config = match Config::read(comp) {
+		let config = match Config::read(&CONFIG_PATH, comp) {
 			Ok(config) => Ok(config),
 			Err(Error::NotFound) => {
 				let mut config = Config::default();
@@ -110,8 +110,8 @@ impl Config {
 		Ok((config, rx))
 	}
 
-	pub fn read(comp: CompMod) -> Result<Self, Error> {
-		let file = match std::fs::read_to_string(&*CONFIG_PATH) {
+	pub fn read(path: &Path, comp: CompMod) -> Result<Self, Error> {
+		let file = match std::fs::read_to_string(path) {
 			Ok(file) => file,
 			Err(err) if matches!(err.kind(), std::io::ErrorKind::NotFound) => return Err(Error::NotFound),
 			Err(err) => return Err(Error::IoError(err)),
@@ -119,8 +119,12 @@ impl Config {
 
 		// workaround for https://github.com/rust-lang/annotate-snippets-rs/issues/25
 		let file = file.replace('\t', "    ");
+		let mut config = mayfig::from_str::<Config>(&file).map_err(|error| MayfigError {
+			error: Box::new(error),
+			path: path.to_owned(),
+			file,
+		})?;
 
-		let mut config = mayfig::from_str::<Config>(&file).map_err(|error| MayfigError { error, file })?;
 		config.bind = config.bind.flatten_mod(comp);
 		Ok(config)
 	}
@@ -147,7 +151,7 @@ fn watcher(comp: CompMod) -> calloop::channel::Channel<Config> {
 
 			mtime = Some(stat);
 
-			if let Ok(config) = Config::read(comp) {
+			if let Ok(config) = Config::read(&CONFIG_PATH, comp) {
 				if tx.send(config).is_err() {
 					tracing::warn!("file watch channel closed unexpectedly?");
 					break;

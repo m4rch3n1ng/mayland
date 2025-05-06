@@ -2,7 +2,7 @@ use crate::State;
 use calloop::{LoopHandle, io::Async};
 use futures_util::{AsyncBufReadExt, AsyncWriteExt};
 use mayland_comm::{Request, Response};
-use mayland_config::{Action, bind::CompMod};
+use mayland_config::{Action, CONFIG_PATH, bind::CompMod};
 use smithay::reexports::calloop::{Interest, Mode, PostAction, generic::Generic};
 use std::{
 	os::unix::net::{UnixListener, UnixStream},
@@ -89,8 +89,8 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) ->
 			}
 		}
 		Ok(Request::Reload) => 'reload: {
-			let Ok(config) = mayland_config::Config::read(state.comp_mod) else {
-				break 'reload Response::Err(mayland_comm::Error::FailedToReadConfig);
+			let Ok(config) = mayland_config::Config::read(&CONFIG_PATH, state.comp_mod) else {
+				break 'reload Response::Err(mayland_comm::Error::FailedToReadConfig(CONFIG_PATH.clone()));
 			};
 
 			let (tx, rx) = async_channel::bounded(1);

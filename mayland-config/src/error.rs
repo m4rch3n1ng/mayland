@@ -1,10 +1,10 @@
-use crate::CONFIG_PATH;
 use annotate_snippets::{Level, Renderer, Snippet};
-use std::fmt::Display;
+use std::{fmt::Display, path::PathBuf};
 
 #[derive(Debug)]
 pub struct MayfigError {
-	pub error: mayfig::Error,
+	pub error: Box<mayfig::Error>,
+	pub path: PathBuf,
 	pub file: String,
 }
 
@@ -30,12 +30,12 @@ impl std::error::Error for Error {}
 impl Display for MayfigError {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let code = self.error.code().to_string();
-		let path = &*CONFIG_PATH.to_string_lossy();
+		let path = self.path.to_string_lossy();
 
 		let message = if let Some(span) = self.error.span() {
 			Level::Error.title(&code).snippet(
 				Snippet::source(&self.file)
-					.origin(path)
+					.origin(&path)
 					.fold(true)
 					.annotation(Level::Error.span(span.range())),
 			)
