@@ -8,7 +8,7 @@ pub enum Term {
 	/// an io error occured
 	IoError(PathBuf, std::io::Error),
 	/// the mayland socket was not found
-	NotFound(String),
+	NotFound(PathBuf),
 	/// mayland returned a response that couldn't be deserialized
 	InvalidResponse(serde_json::Error),
 	/// mayland returned an error
@@ -62,7 +62,7 @@ impl Display for Term {
 					f,
 					"  {} file {} does not exist",
 					"::".bright_blue().bold(),
-					socket_path
+					socket_path.display()
 				)
 			}
 			Term::InvalidResponse(err) => {

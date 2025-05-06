@@ -19,7 +19,7 @@ mod term;
 fn main() -> Term {
 	clap_complete::CompleteEnv::with_factory(Cli::command).complete();
 	let cli = Cli::parse();
-	let Ok(socket_path) = std::env::var(MAYLAND_SOCKET_VAR) else {
+	let Some(socket_path) = std::env::var_os(MAYLAND_SOCKET_VAR).map(PathBuf::from) else {
 		return Term::MaylandNotRunning;
 	};
 
@@ -29,7 +29,7 @@ fn main() -> Term {
 	let mut stream = match UnixStream::connect(&socket_path) {
 		Ok(stream) => stream,
 		Err(err) if matches!(err.kind(), ErrorKind::NotFound) => return Term::NotFound(socket_path),
-		Err(err) => return Term::IoError(PathBuf::from(socket_path), err),
+		Err(err) => return Term::IoError(socket_path, err),
 	};
 	stream.write_all(&message).unwrap();
 	stream.write_all(b"\n").unwrap();
