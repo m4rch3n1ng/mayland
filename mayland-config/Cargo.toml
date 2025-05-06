@@ -10,6 +10,7 @@ annotate-snippets = "0.11.5"
 bitflags = "2.9.0"
 dirs = { workspace = true }
 mayland-comm = { workspace = true }
+owo-colors = "4.2.0"
 regex = "1.11.1"
 regex-syntax = "0.8.5"
 serde = { workspace = true, features = ["derive"] }

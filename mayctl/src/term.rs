@@ -1,12 +1,12 @@
 use mayland_comm::{MAYLAND_SOCKET_VAR, Response};
 use owo_colors::OwoColorize;
-use std::{fmt::Display, io::Write as _, process::Termination};
+use std::{fmt::Display, io::Write as _, path::PathBuf, process::Termination};
 
 pub enum Term {
 	/// mayctl exited successfully
 	Ok,
 	/// an io error occured
-	IoError(std::io::Error),
+	IoError(PathBuf, std::io::Error),
 	/// the mayland socket was not found
 	NotFound(String),
 	/// mayland returned a response that couldn't be deserialized
@@ -16,7 +16,7 @@ pub enum Term {
 	/// error parsing config file
 	Mayfig(mayland_config::error::MayfigError),
 	/// config was not found
-	ConfigNotFound,
+	ConfigNotFound(PathBuf),
 	/// mayctl wasn't started inside mayland
 	MaylandNotRunning,
 	UnexpectedResponse {
@@ -42,8 +42,13 @@ impl Display for Term {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Term::Ok => Ok(()),
-			Term::IoError(err) => {
-				writeln!(f, "{}: {}", "error".bright_red().bold(), "io error".bold())?;
+			Term::IoError(path, err) => {
+				writeln!(
+					f,
+					"{}: {}",
+					"error".bright_red().bold(),
+					format_args!("io error reading {}", path.display()).bold()
+				)?;
 				writeln!(f, "  {} {}", "::".bright_blue().bold(), err)
 			}
 			Term::NotFound(socket_path) => {
@@ -97,12 +102,12 @@ impl Display for Term {
 					"failed to deserialize config".bold()
 				)
 			}
-			Term::ConfigNotFound => {
+			Term::ConfigNotFound(path) => {
 				writeln!(
 					f,
 					"{}: {}",
 					"error".bright_red().bold(),
-					"config not found".bold()
+					format_args!("config {} not found", path.display()).bold()
 				)
 			}
 			Term::MaylandNotRunning => {
@@ -153,9 +158,9 @@ impl From<mayland_comm::Error> for Term {
 impl From<mayland_config::Error> for Term {
 	fn from(value: mayland_config::Error) -> Self {
 		match value {
-			mayland_config::Error::IoError(err) => Term::IoError(err),
+			mayland_config::Error::IoError(path, err) => Term::IoError(path, err),
 			mayland_config::Error::Mayfig(mayfig) => Term::Mayfig(mayfig),
-			mayland_config::Error::NotFound => Term::ConfigNotFound,
+			mayland_config::Error::NotFound(path) => Term::ConfigNotFound(path),
 		}
 	}
 }

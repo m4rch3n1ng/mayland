@@ -10,6 +10,7 @@ use std::{
 	io::{BufRead, BufReader, ErrorKind, Write},
 	net::Shutdown,
 	os::unix::net::UnixStream,
+	path::PathBuf,
 };
 
 mod cli;
@@ -28,7 +29,7 @@ fn main() -> Term {
 	let mut stream = match UnixStream::connect(&socket_path) {
 		Ok(stream) => stream,
 		Err(err) if matches!(err.kind(), ErrorKind::NotFound) => return Term::NotFound(socket_path),
-		Err(err) => return Term::IoError(err),
+		Err(err) => return Term::IoError(PathBuf::from(socket_path), err),
 	};
 	stream.write_all(&message).unwrap();
 	stream.write_all(b"\n").unwrap();

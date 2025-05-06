@@ -1130,6 +1130,7 @@ dependencies = [
  "dirs",
  "mayfig",
  "mayland-comm",
+ "owo-colors",
  "regex",
  "regex-syntax 0.8.5",
  "serde",

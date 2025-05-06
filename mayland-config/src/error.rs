@@ -1,4 +1,5 @@
 use annotate_snippets::{Level, Renderer, Snippet};
+use owo_colors::OwoColorize;
 use std::{fmt::Display, path::PathBuf};
 
 #[derive(Debug)]
@@ -10,16 +11,26 @@ pub struct MayfigError {
 
 #[derive(Debug)]
 pub enum Error {
-	IoError(std::io::Error),
-	NotFound,
+	IoError(PathBuf, std::io::Error),
+	NotFound(PathBuf),
 	Mayfig(MayfigError),
 }
 
 impl Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Error::IoError(io_err) => write!(f, "error reading config: {io_err}"),
-			Error::NotFound => f.write_str("config not found"),
+			Error::IoError(path, err) => write!(
+				f,
+				"{}: {} ({err})",
+				"error".bright_red().bold(),
+				format_args!("failed to read config {}", path.display()).bold()
+			),
+			Error::NotFound(path) => write!(
+				f,
+				"{}: {}",
+				"error".bright_red().bold(),
+				format_args!("config {} not found", path.display()).bold(),
+			),
 			Error::Mayfig(mayfig) => write!(f, "{mayfig}"),
 		}
 	}

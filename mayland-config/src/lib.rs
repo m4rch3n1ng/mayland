@@ -125,12 +125,16 @@ impl Config {
 		config: Option<PathBuf>,
 	) -> Result<(Self, calloop::channel::Channel<Self>), Error> {
 		if let Some(config) = config {
+			if !config.exists() {
+				return Err(Error::NotFound(config));
+			}
+
 			let _ = CONFIG_PATH.set(config);
 		}
 
 		let config = match Config::read(&CONFIG_PATH, comp) {
 			Ok(config) => Ok(config),
-			Err(Error::NotFound) => {
+			Err(Error::NotFound(_)) => {
 				let mut config = Config::default();
 				config.bind = config.bind.flatten_mod(comp);
 
@@ -146,8 +150,10 @@ impl Config {
 	pub fn read(path: &Path, comp: CompMod) -> Result<Self, Error> {
 		let file = match std::fs::read_to_string(path) {
 			Ok(file) => file,
-			Err(err) if matches!(err.kind(), std::io::ErrorKind::NotFound) => return Err(Error::NotFound),
-			Err(err) => return Err(Error::IoError(err)),
+			Err(err) if matches!(err.kind(), std::io::ErrorKind::NotFound) => {
+				return Err(Error::NotFound(path.to_owned()));
+			}
+			Err(err) => return Err(Error::IoError(path.to_owned(), err)),
 		};
 
 		// workaround for https://github.com/rust-lang/annotate-snippets-rs/issues/25
