@@ -2,10 +2,7 @@ use anstyle as style;
 use env_filter::Filter;
 use jiff::{Timestamp, Zoned, tz::TimeZone};
 use log::Log;
-use std::{
-	fs::{self, File},
-	io::Write,
-};
+use std::{fs::File, io::Write};
 use systemd_journal_logger::JournalLog;
 
 fn iso8601() -> String {
@@ -14,21 +11,21 @@ fn iso8601() -> String {
 	zoned.strftime("%Y-%m-%dT%H-%M-%S mayland.log").to_string()
 }
 
-fn log_file() -> File {
-	let local = dirs::data_dir().unwrap_or_else(std::env::temp_dir);
-
-	let dir = local.join("mayland");
-	fs::create_dir_all(&dir).unwrap();
+fn log_file() -> Result<File, std::io::Error> {
+	let dir = dirs::data_dir()
+		.ok_or_else(|| std::io::Error::other("$HOME not set"))?
+		.join("mayland");
+	std::fs::create_dir_all(&dir)?;
 
 	let date = iso8601();
 	let path = dir.join(date);
 
-	File::create(path).unwrap()
+	File::create(path)
 }
 
 struct Logger {
 	filter: Filter,
-	file: File,
+	file: Option<File>,
 	journald: Option<JournalLog>,
 }
 
@@ -44,7 +41,10 @@ impl Logger {
 		let filter = filter.as_deref().unwrap_or(directive);
 		let filter = env_filter::Builder::new().parse(filter).build();
 
-		let file = log_file();
+		let file = log_file()
+			.inspect_err(|err| eprintln!("failed to open log file ({err})"))
+			.ok();
+
 		let journald = JournalLog::new()
 			.map(|journal| journal.with_syslog_identifier("mayland".to_owned()))
 			.ok();
@@ -112,7 +112,9 @@ impl Log for Logger {
 		let stderr = std::io::stderr().lock();
 		let _ = self.write(stderr, true, record, timestamp);
 
-		let _ = self.write(&self.file, false, record, timestamp);
+		if let Some(file) = &self.file {
+			let _ = self.write(file, false, record, timestamp);
+		}
 
 		if let Some(journald) = &self.journald {
 			journald.log(record);
@@ -120,7 +122,9 @@ impl Log for Logger {
 	}
 
 	fn flush(&self) {
-		let _ = (&self.file).flush();
+		if let Some(mut file) = self.file.as_ref() {
+			let _ = file.flush();
+		}
 	}
 }
 
