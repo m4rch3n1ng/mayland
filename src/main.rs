@@ -22,6 +22,9 @@ pub struct Args {
 	/// a path to a config file
 	#[arg(short, long)]
 	config: Option<PathBuf>,
+	/// enable debug logs
+	#[arg(long)]
+	debug: bool,
 
 	/// print help
 	#[arg(long, short, action = clap::ArgAction::Help, global = true)]
@@ -34,7 +37,7 @@ pub struct Args {
 fn main() {
 	let args = Args::parse();
 	clap_complete::CompleteEnv::with_factory(Args::command).complete();
-	trace::setup();
+	trace::setup(args.debug);
 
 	let mut event_loop = EventLoop::<State>::try_new().unwrap();
 	let display = Display::<State>::new().unwrap();

@@ -33,8 +33,12 @@ struct Logger {
 }
 
 impl Logger {
-	fn new() -> Logger {
-		let directive = "warn,mayland=debug,tracing_panic";
+	fn new(debug: bool) -> Logger {
+		let directive = if debug {
+			"debug"
+		} else {
+			"warn,mayland=debug,tracing_panic"
+		};
 
 		let filter = std::env::var("RUST_LOG");
 		let filter = filter.as_deref().unwrap_or(directive);
@@ -120,8 +124,8 @@ impl Log for Logger {
 	}
 }
 
-pub fn setup() {
-	let logger = Logger::new();
+pub fn setup(debug: bool) {
+	let logger = Logger::new(debug);
 	let max_level = logger.filter.filter();
 
 	log::set_boxed_logger(Box::new(logger)).unwrap();
