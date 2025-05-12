@@ -257,13 +257,13 @@ impl Udev {
 		outputs
 	}
 
-	pub fn reload_output_config(&mut self, mayland: &mut Mayland, config: &mayland_config::Outputs) {
+	pub fn reload_output_config(&mut self, mayland: &mut Mayland) {
 		let Some(device) = &mut self.output_device else { return };
 
 		for (connector, crtc) in device.drm_scanner.crtcs() {
 			let surface = device.surfaces.get_mut(&crtc).unwrap();
 
-			let config = config.get_output(&surface.info);
+			let config = mayland.config.output.get_output(&surface.info);
 			let output = mayland.workspaces.udev_output(device.id, crtc).cloned().unwrap();
 
 			let mode = pick_mode(connector, config.and_then(|conf| conf.mode));
@@ -278,7 +278,7 @@ impl Udev {
 			}
 		}
 
-		mayland.reconfigure_outputs(Some(config));
+		mayland.reconfigure_outputs();
 		mayland.queue_redraw_all();
 	}
 }

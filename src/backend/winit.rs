@@ -160,8 +160,8 @@ impl Winit {
 		vec![output]
 	}
 
-	pub fn reload_output_config(&mut self, mayland: &mut Mayland, config: &mayland_config::Outputs) {
-		mayland.reconfigure_outputs(Some(config));
+	pub fn reload_output_config(&mut self, mayland: &mut Mayland) {
+		mayland.reconfigure_outputs();
 		mayland.queue_redraw(self.output.clone());
 	}
 }
@@ -185,7 +185,7 @@ impl State {
 				winit.output.set_preferred(mode);
 
 				self.mayland.output_size_changed(&winit.output);
-				self.mayland.reconfigure_outputs(None);
+				self.mayland.reconfigure_outputs();
 				self.mayland.queue_redraw(winit.output.clone());
 			}
 			WinitEvent::Redraw => {

@@ -101,18 +101,18 @@ impl State {
 
 			State { mayland, backend }
 		};
-		state.load_xkb_file();
+		state.set_xkb_file();
 
 		Ok(state)
 	}
 }
 
 impl State {
-	/// set the keyboard keymap from a file
+	/// set the keyboard keymap from the config
 	///
 	/// returns true if the keymap was successfully set
-	fn set_xkb_file(&mut self, xkb_file: Option<&str>) -> bool {
-		let Some(xkb_file) = xkb_file else {
+	fn set_xkb_file(&mut self) -> bool {
+		let Some(xkb_file) = &self.mayland.config.input.keyboard.xkb_file else {
 			return false;
 		};
 
@@ -130,70 +130,66 @@ impl State {
 			.is_ok()
 	}
 
-	/// i can't actually set this in the [`Mayland`] constructor,
-	/// so i have to do it here afterwards
-	fn load_xkb_file(&mut self) {
-		let xkb_file = self.mayland.config.input.keyboard.xkb_file.clone();
-		self.set_xkb_file(xkb_file.as_deref());
-	}
-
 	pub fn reload_config(&mut self, config: Config) {
 		if self.mayland.config == config {
 			return;
 		}
 
-		if self.mayland.config.input != config.input {
+		let prev = std::mem::replace(&mut self.mayland.config, config);
+
+		if prev.input != self.mayland.config.input {
 			for mut device in self.mayland.devices.iter().cloned() {
-				apply_libinput_settings(&config.input, &mut device);
+				apply_libinput_settings(&self.mayland.config.input, &mut device);
 			}
 
-			if self.mayland.config.input.keyboard != config.input.keyboard {
+			if prev.input.keyboard != self.mayland.config.input.keyboard {
 				let xkb = self.mayland.seat.get_keyboard().unwrap();
 
-				if !self.set_xkb_file(config.input.keyboard.xkb_file.as_deref()) {
-					let xkb_config = config.input.keyboard.xkb_config();
+				if !self.set_xkb_file() {
+					let xkb_config = self.mayland.config.input.keyboard.clone();
+					let xkb_config = xkb_config.xkb_config();
 					if let Err(err) = xkb.set_xkb_config(self, xkb_config) {
 						tracing::error!("failed to reload xkb config: {:?}", err);
 					}
 				}
 
 				xkb.change_repeat_info(
-					config.input.keyboard.repeat_rate,
-					config.input.keyboard.repeat_delay,
+					self.mayland.config.input.keyboard.repeat_rate,
+					self.mayland.config.input.keyboard.repeat_delay,
 				);
 			}
 		}
 
-		if self.mayland.config.output != config.output {
-			self.backend
-				.reload_output_config(&mut self.mayland, &config.output);
+		if prev.output != self.mayland.config.output {
+			self.backend.reload_output_config(&mut self.mayland);
 		}
 
-		if self.mayland.config.cursor != config.cursor {
+		if prev.cursor != self.mayland.config.cursor {
 			self.mayland
 				.cursor
-				.reconfigure(&config.cursor, &mut self.mayland.environment);
+				.reconfigure(&self.mayland.config.cursor, &mut self.mayland.environment);
 		}
 
-		if self.mayland.config.decoration.background != config.decoration.background {
+		if prev.decoration.background != self.mayland.config.decoration.background {
 			for output_state in self.mayland.output_state.values_mut() {
-				output_state.background.set_color(config.decoration.background);
+				output_state
+					.background
+					.set_color(self.mayland.config.decoration.background);
 			}
 		}
 
-		if self.mayland.config.decoration.focus != config.decoration.focus
-			|| self.mayland.config.layout != config.layout
+		if prev.decoration.focus != self.mayland.config.decoration.focus
+			|| prev.layout != self.mayland.config.layout
 		{
-			self.mayland.workspaces.reload_config(&config);
+			self.mayland.workspaces.reload_config(&self.mayland.config);
 		}
 
-		if self.mayland.config.windowrules != config.windowrules {
+		if prev.windowrules != self.mayland.config.windowrules {
 			for window in self.mayland.workspaces.windows() {
-				window.recompute_windowrules(&config.windowrules);
+				window.recompute_windowrules(&self.mayland.config.windowrules);
 			}
 		}
 
-		self.mayland.config = config;
 		self.mayland.queue_redraw_all();
 	}
 
@@ -515,9 +511,8 @@ impl Mayland {
 	///
 	/// you can give it an output config to use, otherwise it'll fall back to
 	/// the output config in [`Mayland::config`]
-	pub fn reconfigure_outputs(&mut self, config: Option<&mayland_config::Outputs>) {
-		let config = config.unwrap_or(&self.config.output);
-		if let Some(relocate) = self.workspaces.reconfigure_outputs(config) {
+	pub fn reconfigure_outputs(&mut self) {
+		if let Some(relocate) = self.workspaces.reconfigure_outputs(&self.config.output) {
 			self.loop_handle.insert_idle(move |state| {
 				state.relocate(relocate);
 			});

@@ -245,7 +245,7 @@ impl<'de> Deserialize<'de> for Input {
 	}
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct Keyboard {
 	#[serde(deserialize_with = "deserialize_path")]
