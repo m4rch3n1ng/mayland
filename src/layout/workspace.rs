@@ -465,7 +465,9 @@ impl Workspace {
 	}
 
 	fn refresh(&self) {
-		self.floating.refresh();
+		for window in self.windows() {
+			window.refresh();
+		}
 	}
 
 	/// get the [`Point`], that the window would have to be mapped to

@@ -105,12 +105,6 @@ impl Floating {
 				}
 			})
 	}
-
-	pub fn refresh(&self) {
-		for WindowLayout { window, .. } in &self.windows {
-			window.refresh();
-		}
-	}
 }
 
 impl Floating {
