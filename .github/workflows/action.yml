@@ -9,7 +9,7 @@ jobs:
         with:
           components: clippy
       - run: sudo apt-get install libudev-dev libseat-dev libdisplay-info-dev
-      - run: cargo clippy -- -D warnings
+      - run: cargo clippy --workspace -- -D warnings
   fmt:
     runs-on: ubuntu-latest
     steps:
