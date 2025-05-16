@@ -281,6 +281,9 @@ bind {
     mod+q = "close"
     mod+v = "toggle-floating"
 
+	mod+tab = "cycle" [ "next" ]
+	mod+shift+tab = "cycle" [ "prev" ]
+
     mod+t = "spawn" [ "kitty" ]
     mod+e = "spawn" [ "nautilus" ]
     mod+n = "spawn" [ "firefox" ]
@@ -309,6 +312,8 @@ currently supported actions are:
 - `"quit"`: quit the compositor.
 - `"close"`: close the active window.
 - `"toggle-floating"`: toggle the active window's floating state
+- `"cycle" [ <direction> ]`: cycles through the windows with the given `<direction>`.
+the direction can be either `"next"` or `"prev"`.
 - `"workspace" [ <index> ]`: switch to workspace with the index `<index>`.
 - `"spawn" [ <cmd> <... args> ]`: spawns the `<cmd>` as a command, with the other parameters as arguments.
 

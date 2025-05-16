@@ -125,6 +125,22 @@ impl Default for Binds {
 			Action::ToggleFloating,
 		);
 
+		// cycle windows
+		binds.insert(
+			Mapping {
+				mods: Modifiers::MOD,
+				key: Keysym::Tab,
+			},
+			Action::Cycle(CycleDirection::Next),
+		);
+		binds.insert(
+			Mapping {
+				mods: Modifiers::MOD | Modifiers::SHIFT,
+				key: Keysym::Tab,
+			},
+			Action::Cycle(CycleDirection::Prev),
+		);
+
 		// spawn kitty
 		binds.insert(
 			Mapping {

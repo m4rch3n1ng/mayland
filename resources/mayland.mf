@@ -103,6 +103,9 @@ bind {
 	mod+q = "close"
 	mod+v = "toggle-floating"
 
+	mod+tab = "cycle" [ "next" ]
+	mod+shift+tab = "cycle" [ "prev" ]
+
 	mod+t = "spawn" [ "kitty" ]
 	mod+e = "spawn" [ "nautilus" ]
 	mod+n = "spawn" [ "firefox" ]
