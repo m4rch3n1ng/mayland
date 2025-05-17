@@ -186,7 +186,7 @@ output {
 
 sets the output resolution and refresh rate.
 
-the format is `"<width>x<height>"` and allows you to optionally pass the refresh rate as "`<width>x<height>@<refresh-rate in hz>`".
+the format is `"<width>x<height>"` and allows you to optionally pass the refresh rate as `"<width>x<height>@<refresh-rate in hz>"`.
 if the refresh rate is omitted, mayland will pick the mode with the highest refresh rate,
 otherwise it will pick the refresh rate that matches the given one as closely as possible.
 
@@ -276,14 +276,28 @@ you can configure keybindings in the `bind` category.
 
 ```ini
 bind {
-    mod+shift+escape = "exit"
+    mod+shift+escape = "quit"
+
     mod+q = "close"
+    mod+v = "toggle-floating"
+
+    mod+t = "spawn" [ "kitty" ]
+    mod+e = "spawn" [ "nautilus" ]
+    mod+n = "spawn" [ "firefox" ]
+    mod+space = "spawn" [ "fuzzel" ]
+
+    mod+1 = "workspace" [ 0 ]
+    mod+2 = "workspace" [ 1 ]
+    mod+3 = "workspace" [ 2 ]
+    mod+4 = "workspace" [ 3 ]
+    mod+5 = "workspace" [ 4 ]
+    mod+6 = "workspace" [ 5 ]
 }
 ```
 
 keybinds are in the form of `<keymapping> = "<action>"`.
 
-actions may have additional parameters. these are passed through via brackets as tagged values. etc.
+actions may have additional parameters. these are passed through via brackets as [tagged enums](https://github.com/m4rch3n1ng/mayfig?tab=readme-ov-file#tagged-enums).
 
 keymappings are in the form `"{ <modifier>+ } <key>"`.
 supported modifiers are `"super"` (with an alias of `"meta"`), `"ctrl"` and `"alt"`.
@@ -294,9 +308,9 @@ both the `<key>` and all `<modifier>` are case-insenstive. there is no support f
 currently supported actions are:
 - `"quit"`: quit the compositor.
 - `"close"`: close the active window.
-- `"toggle-floating"`:
+- `"toggle-floating"`: toggle the active window's floating state
 - `"workspace" [ <index> ]`: switch to workspace with the index `<index>`.
-- `"spawn" [ <... args> ]`
+- `"spawn" [ <cmd> <... args> ]`: spawns the `<cmd>` as a command, with the other parameters as arguments.
 
 ### windowrules
 
