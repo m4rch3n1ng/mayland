@@ -5,7 +5,7 @@ use smithay::{
 	utils::{Logical, Physical, Point, Transform},
 	wayland::compositor::with_states,
 };
-use std::{collections::HashMap, fmt::Debug, io::Read, time::Duration};
+use std::{cell::OnceCell, collections::HashMap, fmt::Debug, io::Read, time::Duration};
 use xcursor::{CursorTheme, parser::Image};
 
 const FALLBACK_CURSOR_DATA: &[u8] = include_bytes!("../resources/cursor.rgba");
@@ -16,7 +16,7 @@ pub enum RenderCursor<'a> {
 		hotspot: Point<i32, Logical>,
 		surface: WlSurface,
 	},
-	Named(&'a mut XCursor),
+	Named(&'a XCursor),
 }
 
 #[derive(Debug)]
@@ -59,7 +59,7 @@ impl Cursor {
 		self.cache.clear();
 	}
 
-	fn get_named_cursor(&mut self, icon: CursorIcon) -> &mut XCursor {
+	fn get_named_cursor(&mut self, icon: CursorIcon) -> &XCursor {
 		self.cache.entry(icon).or_insert_with(|| {
 			// todo scale
 			let size = self.size;
@@ -122,20 +122,23 @@ fn load_cursor_theme(
 #[derive(Debug)]
 pub struct Frame {
 	image: Image,
-	buffer: Option<MemoryRenderBuffer>,
+	buffer: OnceCell<MemoryRenderBuffer>,
 }
 
 impl Frame {
 	pub fn new(image: Image) -> Self {
-		Frame { image, buffer: None }
+		Frame {
+			image,
+			buffer: OnceCell::new(),
+		}
 	}
 
 	pub fn hotspot(&self) -> Point<i32, Physical> {
 		Point::from((self.image.xhot as i32, self.image.yhot as i32))
 	}
 
-	pub fn buffer(&mut self) -> &MemoryRenderBuffer {
-		self.buffer.get_or_insert_with(|| {
+	pub fn buffer(&self) -> &MemoryRenderBuffer {
+		self.buffer.get_or_init(|| {
 			MemoryRenderBuffer::from_slice(
 				&self.image.pixels_rgba,
 				Fourcc::Argb8888,
@@ -199,15 +202,15 @@ impl XCursor {
 		}
 	}
 
-	pub fn frame(&mut self, duration: Duration) -> &mut Frame {
+	pub fn frame(&self, duration: Duration) -> &Frame {
 		if self.animation_duration == 0 {
-			return &mut self.frames[0];
+			return &self.frames[0];
 		}
 
 		let mut millis = duration.as_millis() as u32;
 		millis %= self.animation_duration;
 
-		for frame in &mut self.frames {
+		for frame in &self.frames {
 			if millis < frame.image.delay {
 				return frame;
 			}
