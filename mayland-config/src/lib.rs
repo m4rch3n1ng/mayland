@@ -119,6 +119,8 @@ pub static CONFIG_PATH: LazyOnceLock<PathBuf> = LazyOnceLock::new(|| {
 	config
 });
 
+const DEFAULT_CONFIG: &str = include_str!("../../resources/mayland.mf");
+
 impl Config {
 	pub fn init(
 		comp: CompMod,
@@ -137,6 +139,11 @@ impl Config {
 			Err(Error::NotFound(_)) => {
 				let mut config = Config::default();
 				config.bind = config.bind.flatten_mod(comp);
+
+				match std::fs::write(&*CONFIG_PATH, DEFAULT_CONFIG) {
+					Ok(()) => tracing::info!("created default config at {:?}", &*CONFIG_PATH),
+					Err(err) => tracing::warn!("failed to create config file at {:?} ({err})", &*CONFIG_PATH),
+				}
 
 				Ok(config)
 			}
@@ -204,13 +211,11 @@ fn watcher(comp: CompMod) -> calloop::channel::Channel<Config> {
 
 #[cfg(test)]
 mod test {
-	use super::Config;
-
-	const MAYLAND_MF: &str = include_str!("../../resources/mayland.mf");
+	use super::{Config, DEFAULT_CONFIG};
 
 	#[test]
 	fn default_config() {
-		let mayland_mf = mayfig::from_str::<Config>(MAYLAND_MF).unwrap();
+		let mayland_mf = mayfig::from_str::<Config>(DEFAULT_CONFIG).unwrap();
 		let default = Config::default();
 		pretty_assertions::assert_eq!(mayland_mf, default);
 	}
