@@ -1,12 +1,41 @@
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, de::Visitor};
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct WindowRules(Vec<(Matcher, WindowRule)>);
 
 impl<'de> Deserialize<'de> for WindowRules {
 	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
 		deserializer.deserialize_map(WindowRulesVis)
+	}
+}
+
+impl Default for WindowRules {
+	fn default() -> Self {
+		let nautilus = (
+			Matcher::AppId(Match::Plain("org.gnome.Nautilus".to_owned())),
+			WindowRule {
+				floating: Some(true),
+				opacity: Some(0.8),
+			},
+		);
+
+		let firefox = (
+			Matcher::Match(
+				Match::Plain("firefox".to_owned()),
+				Match::Regex {
+					regex: Regex::new(r"^(?:.*Mozilla Firefox.*)$").unwrap(),
+					inverted: true,
+					case_insensitive: false,
+				},
+			),
+			WindowRule {
+				floating: Some(true),
+				opacity: Some(0.8),
+			},
+		);
+
+		Self(vec![nautilus, firefox])
 	}
 }
 
@@ -123,7 +152,7 @@ impl Visitor<'_> for MatchVis {
 			// add an implicit `^(?:)$` around the regex, so you have a full-word match
 			// by default, which is, i think, what you usually want, and makes the matching more
 			// consistent with non-regex matching, which already is a full word match
-			let regex = format!("^(:?{})$", regex_opts.pattern);
+			let regex = format!("^(?:{})$", regex_opts.pattern);
 			let regex = RegexBuilder::new(&regex)
 				.case_insensitive(regex_opts.case_insensitive)
 				.build()

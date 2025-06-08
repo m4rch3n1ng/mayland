@@ -221,6 +221,48 @@ impl Default for Binds {
 			Action::Workspace(5),
 		);
 
+		// audio media keys
+		binds.insert(
+			Mapping {
+				mods: Modifiers::empty(),
+				key: Keysym::XF86_AudioMute,
+			},
+			Action::Spawn(vec![
+				"wpctl".to_owned(),
+				"set-mute".to_owned(),
+				"@DEFAULT_AUDIO_SINK@".to_owned(),
+				"toggle".to_owned(),
+			]),
+		);
+		binds.insert(
+			Mapping {
+				mods: Modifiers::empty(),
+				key: Keysym::XF86_AudioRaiseVolume,
+			},
+			Action::Spawn(vec![
+				"wpctl".to_owned(),
+				"set-volume".to_owned(),
+				"-l".to_owned(),
+				"1".to_owned(),
+				"@DEFAULT_AUDIO_SINK@".to_owned(),
+				"5%+".to_owned(),
+			]),
+		);
+		binds.insert(
+			Mapping {
+				mods: Modifiers::empty(),
+				key: Keysym::XF86_AudioLowerVolume,
+			},
+			Action::Spawn(vec![
+				"wpctl".to_owned(),
+				"set-volume".to_owned(),
+				"-l".to_owned(),
+				"1".to_owned(),
+				"@DEFAULT_AUDIO_SINK@".to_owned(),
+				"5%-".to_owned(),
+			]),
+		);
+
 		Binds(binds)
 	}
 }

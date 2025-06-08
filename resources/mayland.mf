@@ -28,7 +28,7 @@ input {
 		# accel-profile = "adaptive"
 
 		middle-emulation = true
-		tap-button-map = "left-right-middle"
+		# tap-button-map = "left-right-middle"
 		left-handed = false
 	}
 
@@ -56,11 +56,11 @@ input {
 }
 
 output {
-	eDP-1 {
-		# mode = "2256x1504@48"
-		active = true
-		position = [ 0 0 ]
-	}
+	# eDP-1 {
+	# 	# mode = "2256x1504@48"
+	# 	active = true
+	# 	position = [ 0 0 ]
+	# }
 }
 
 cursor {
