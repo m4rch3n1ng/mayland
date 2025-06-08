@@ -5,6 +5,8 @@ mayland uses the [mayfig](https://github.com/m4rch3n1ng/mayfig) language for con
 to find an explanation of the syntax.  
 an example config can be found at [mayland.mf](https://github.com/m4rch3n1ng/mayland/tree/main/resources/mayland.mf).
 
+the config is located at `~/.config/mayland.mf`. if no config is found, mayland will populate that path on startup.
+
 **table of content**
 - [`input {}`](#input)
 - [`output {}`](#output)
