@@ -19,5 +19,8 @@ smithay = { workspace = true, features = ["backend_libinput"] }
 thiserror = "2.0.12"
 tracing = "0.1.41"
 
+[dev-dependencies]
+pretty_assertions = "1.4.1"
+
 [lints]
 workspace = true

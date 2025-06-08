@@ -1,15 +1,21 @@
 name: action
 on: [push, pull_request]
 jobs:
-  clippy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - run: sudo apt-get install libudev-dev libseat-dev libdisplay-info-dev
-      - run: cargo clippy --workspace -- -D warnings
+      - name: install deps
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install libudev-dev libseat-dev libdisplay-info-dev libgbm-dev libinput-dev libxkbcommon-dev
+      - name: build
+        run: cargo clippy --workspace -- -D warnings
+      - name: test
+        run: cargo test --workspace
   fmt:
     runs-on: ubuntu-latest
     steps:

@@ -201,3 +201,17 @@ fn watcher(comp: CompMod) -> calloop::channel::Channel<Config> {
 
 	rx
 }
+
+#[cfg(test)]
+mod test {
+	use super::Config;
+
+	const MAYLAND_MF: &str = include_str!("../../resources/mayland.mf");
+
+	#[test]
+	fn default_config() {
+		let mayland_mf = mayfig::from_str::<Config>(MAYLAND_MF).unwrap();
+		let default = Config::default();
+		pretty_assertions::assert_eq!(mayland_mf, default);
+	}
+}
