@@ -7,7 +7,6 @@ use crate::{
 	state::State,
 	utils::{RectExt, spawn},
 };
-use input as libinput;
 use mayland_config::{Action, input::TabletMapping};
 use smithay::{
 	backend::input::{
@@ -25,7 +24,10 @@ use smithay::{
 		pointer::{AxisFrame, ButtonEvent, MotionEvent, RelativeMotionEvent},
 	},
 	output::Output,
-	reexports::wayland_server::protocol::{wl_pointer, wl_surface::WlSurface},
+	reexports::{
+		input as libinput,
+		wayland_server::protocol::{wl_pointer, wl_surface::WlSurface},
+	},
 	utils::{Logical, Point, SERIAL_COUNTER, Serial},
 	wayland::{
 		input_method::InputMethodSeat,

@@ -61,9 +61,7 @@ impl<'v> Visitor<'v> for WindowRulesVis {
 
 impl WindowRules {
 	pub fn compute(&self, app_id: Option<&str>, title: Option<&str>) -> WindowRule {
-		self.0
-			.iter()
-			.rev()
+		(self.0.iter().rev())
 			.filter_map(|(matcher, rule)| matcher.r#match(app_id, title).then_some(rule))
 			.fold(WindowRule::default(), |acc, cur| WindowRule {
 				floating: acc.floating.or(cur.floating),

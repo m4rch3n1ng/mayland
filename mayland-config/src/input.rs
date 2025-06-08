@@ -2,8 +2,10 @@ use serde::{
 	Deserialize,
 	de::{VariantAccess, Visitor},
 };
-use smithay::input::keyboard::XkbConfig;
-use smithay::reexports::input::{AccelProfile, ClickMethod, ScrollMethod, TapButtonMap};
+use smithay::{
+	input::keyboard::XkbConfig,
+	reexports::input::{AccelProfile, ClickMethod, ScrollMethod, TapButtonMap},
+};
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Input {

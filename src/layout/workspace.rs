@@ -456,7 +456,7 @@ impl Workspace {
 	}
 
 	fn remove_output(&mut self, output: &Output) {
-		debug_assert!(self.output.as_ref().is_some_and(|wo| wo == output));
+		debug_assert!(self.output.as_ref() == Some(output));
 		self.output = None;
 	}
 
