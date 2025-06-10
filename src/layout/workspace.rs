@@ -23,7 +23,7 @@ pub struct WorkspaceManager {
 	outputs: OutputSpace,
 
 	output_map: HashMap<Output, usize>,
-	pub workspaces: BTreeMap<usize, Workspace>,
+	workspaces: BTreeMap<usize, Workspace>,
 
 	/// layout config
 	layout: mayland_config::layout::Layout,
@@ -116,6 +116,10 @@ impl WorkspaceManager {
 
 			None
 		}
+	}
+
+	pub fn workspaces(&self) -> impl DoubleEndedIterator<Item = &Workspace> + ExactSizeIterator {
+		self.workspaces.values()
 	}
 
 	/// get the currently active workspace, if one exists

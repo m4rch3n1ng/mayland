@@ -137,8 +137,7 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) ->
 				let windows = state
 					.mayland
 					.workspaces
-					.workspaces
-					.values()
+					.workspaces()
 					.flat_map(|workspace| {
 						workspace
 							.windows_geometry()
@@ -161,8 +160,7 @@ async fn handle_client(mut stream: Async<'_, UnixStream>, state: SocketState) ->
 				let workspaces = state
 					.mayland
 					.workspaces
-					.workspaces
-					.values()
+					.workspaces()
 					.map(|workspace| workspace.comm_info(&state.mayland.workspaces))
 					.collect();
 
