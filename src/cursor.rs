@@ -134,7 +134,7 @@ impl Frame {
 	}
 
 	pub fn hotspot(&self) -> Point<i32, Physical> {
-		Point::from((self.image.xhot as i32, self.image.yhot as i32))
+		Point::new(self.image.xhot as i32, self.image.yhot as i32)
 	}
 
 	pub fn buffer(&self) -> &MemoryRenderBuffer {

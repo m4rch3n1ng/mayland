@@ -28,7 +28,7 @@ impl OutputSpace {
 		let active_position = self.active_output_position();
 
 		// todo make this a little cleaner
-		self.outputs.push((output.clone(), Point::from((0, 0))));
+		self.outputs.push((output.clone(), Point::new(0, 0)));
 		self.reposition(config);
 
 		let output_info = output.user_data().get::<OutputInfo>().unwrap();
@@ -130,7 +130,7 @@ impl OutputSpace {
 
 		for (output, position) in outputs {
 			if let Some(position) = position {
-				let point = Point::from((position[0], position[1]));
+				let point = Point::new(position[0], position[1]);
 				let size = output_size(&output);
 				let rect = Rectangle { loc: point, size };
 
@@ -157,7 +157,7 @@ impl OutputSpace {
 					.max()
 					.unwrap_or(0);
 
-				let point = Point::from((x, 0));
+				let point = Point::new(x, 0);
 				output.change_current_state(None, None, None, Some(point));
 				self.outputs.push((output, point));
 			}

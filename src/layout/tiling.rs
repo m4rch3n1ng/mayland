@@ -36,8 +36,8 @@ impl Layout {
 	fn new(tiling: &mayland_config::layout::Tiling, decoration: &mayland_config::Decoration) -> Self {
 		let working_area = Rectangle::zero();
 		let useable_area = Rectangle {
-			loc: Point::from((i32::from(tiling.border), i32::from(tiling.border))),
-			size: Size::from((0, 0)),
+			loc: Point::new(i32::from(tiling.border), i32::from(tiling.border)),
+			size: Size::new(0, 0),
 		};
 
 		Layout {
@@ -49,7 +49,7 @@ impl Layout {
 			ring: i32::from(decoration.focus.thickness),
 
 			ratio: 0.5,
-			split: Point::from((0, 0)),
+			split: Point::new(0, 0),
 		}
 	}
 
@@ -73,7 +73,7 @@ impl Layout {
 		let x = self.useable_area.size.w as f64 * self.ratio;
 		let x = x.round() as i32;
 
-		let rel = Point::from((x, 0));
+		let rel = Point::new(x, 0);
 		let split = self.useable_area.loc + rel;
 		self.split = split;
 	}
@@ -90,15 +90,15 @@ impl Layout {
 		let gap = self.gaps / 2;
 
 		let one = {
-			let size = Size::from((rel_split.x - gap, size.h));
+			let size = Size::new(rel_split.x - gap, size.h);
 			let loc = self.useable_area.loc;
 
 			Rectangle { loc, size }
 		};
 
 		let two = {
-			let size = Size::from((size.w - one.size.w - self.gaps, size.h));
-			let loc = Point::from((split.x + gap, split.y));
+			let size = Size::new(size.w - one.size.w - self.gaps, size.h);
+			let loc = Point::new(split.x + gap, split.y);
 
 			Rectangle { loc, size }
 		};

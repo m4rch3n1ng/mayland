@@ -481,7 +481,7 @@ impl Workspace {
 			let output_center = output_size(output).center();
 			output_center - window_center
 		} else {
-			Point::from((0, 0))
+			Point::new(0, 0)
 		}
 	}
 
@@ -577,10 +577,10 @@ impl Workspace {
 			let (min, max) = window.min_max_size();
 			let output_size = self.output.as_ref().map(output_size).unwrap_or_default();
 
-			let size = Size::from((
+			let size = Size::new(
 				(output_size.w * 3 / 4).clamp(min.w, max.w),
 				(output_size.h * 3 / 4).clamp(min.h, max.h),
-			));
+			);
 
 			let center = self.relative_center(size);
 			window.resize(Rectangle::new(center, size));

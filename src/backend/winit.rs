@@ -13,7 +13,7 @@ use smithay::{
 	},
 	output::{Mode, Output, PhysicalProperties, Subpixel},
 	reexports::winit::window::Window,
-	utils::Transform,
+	utils::{Size, Transform},
 	wayland::dmabuf::DmabufFeedbackBuilder,
 };
 use std::borrow::BorrowMut;
@@ -41,7 +41,7 @@ impl Winit {
 		let output = Output::new(
 			"winit".to_owned(),
 			PhysicalProperties {
-				size: (0, 0).into(),
+				size: Size::new(0, 0),
 				subpixel: Subpixel::Unknown,
 				make: "may".to_owned(),
 				model: "winit".to_owned(),

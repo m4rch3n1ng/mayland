@@ -20,8 +20,8 @@ impl FocusRing {
 		thickness: u8,
 	) -> PixelShaderElement {
 		let t = i32::from(thickness);
-		area.loc -= Point::from((t, t));
-		area.size += Size::from((t * 2, t * 2));
+		area.loc -= Point::new(t, t);
+		area.size += Size::new(t * 2, t * 2);
 
 		let shaders = Shaders::get(renderer.borrow());
 		PixelShaderElement::new(

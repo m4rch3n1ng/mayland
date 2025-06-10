@@ -99,10 +99,10 @@ impl MappedWindow {
 		let geometry = self.geometry();
 
 		rect.loc -= geometry.loc;
-		rect.size = Size::from((
+		rect.size = Size::new(
 			rect.size.w.saturating_add(geometry.loc.x).max(0),
 			rect.size.h.saturating_add(geometry.loc.y).max(0),
-		));
+		);
 
 		rect
 	}
@@ -130,7 +130,7 @@ impl MappedWindow {
 				let mut data = states.cached_state.get::<SurfaceCachedState>();
 				let data = data.current();
 
-				let max_size = Size::from((
+				let max_size = Size::new(
 					if data.max_size.w > 0 {
 						data.max_size.w
 					} else {
@@ -141,7 +141,7 @@ impl MappedWindow {
 					} else {
 						i32::MAX
 					},
-				));
+				);
 
 				(data.min_size, max_size)
 			}),

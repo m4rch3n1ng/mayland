@@ -43,17 +43,15 @@ impl ResizeCorner {
 		initial_window_size: Size<i32, Logical>,
 		window_size: Size<i32, Logical>,
 	) -> Option<Point<i32, Logical>> {
-		let delta = match self {
-			ResizeCorner::TopLeft => Some((
+		match self {
+			ResizeCorner::TopLeft => Some(Point::new(
 				initial_window_size.w - window_size.w,
 				initial_window_size.h - window_size.h,
 			)),
-			ResizeCorner::TopRight => Some((0, initial_window_size.h - window_size.h)),
-			ResizeCorner::BottomLeft => Some((initial_window_size.w - window_size.w, 0)),
+			ResizeCorner::TopRight => Some(Point::new(0, initial_window_size.h - window_size.h)),
+			ResizeCorner::BottomLeft => Some(Point::new(initial_window_size.w - window_size.w, 0)),
 			ResizeCorner::BottomRight => None,
-		};
-
-		delta.map(Point::from)
+		}
 	}
 }
 

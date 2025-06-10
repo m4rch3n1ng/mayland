@@ -35,7 +35,7 @@ use smithay::{
 		rustix::fs::{Dev as dev_t, OFlags},
 		wayland_protocols::wp::presentation_time::server::wp_presentation_feedback,
 	},
-	utils::{DeviceFd, Monotonic},
+	utils::{DeviceFd, Monotonic, Size},
 	wayland::{
 		dmabuf::{DmabufFeedbackBuilder, DmabufGlobal},
 		presentation::Refresh,
@@ -527,7 +527,7 @@ impl Udev {
 		let output = Output::new(
 			output_info.connector.clone(),
 			PhysicalProperties {
-				size: (physical_width as i32, physical_height as i32).into(),
+				size: Size::new(physical_width as i32, physical_height as i32),
 				subpixel: Subpixel::Unknown,
 				make: output_info.make.clone(),
 				model: output_info.model.clone(),
