@@ -1,14 +1,15 @@
 use bitflags::bitflags;
+use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, de::Error as _, de::Visitor};
 use smithay::input::keyboard::{
 	Keysym, ModifiersState,
 	keysyms::KEY_NoSymbol,
 	xkb::{KEYSYM_CASE_INSENSITIVE, keysym_from_name},
 };
-use std::{collections::HashMap, fmt::Debug};
+use std::fmt::Debug;
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
-pub struct Binds(HashMap<Mapping, Action>);
+pub struct Binds(IndexMap<Mapping, Action>);
 
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -96,7 +97,7 @@ impl From<mayland_comm::action::CycleDirection> for CycleDirection {
 
 impl Default for Binds {
 	fn default() -> Self {
-		let mut binds = HashMap::new();
+		let mut binds = IndexMap::new();
 
 		// quit the compositor
 		binds.insert(

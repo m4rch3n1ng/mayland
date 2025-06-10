@@ -1131,6 +1131,7 @@ dependencies = [
  "annotate-snippets",
  "bitflags 2.9.0",
  "dirs",
+ "indexmap",
  "mayfig",
  "mayland-comm",
  "owo-colors",

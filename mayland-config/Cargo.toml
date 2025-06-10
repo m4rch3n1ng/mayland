@@ -9,6 +9,7 @@ readme = "readme.md"
 annotate-snippets = "0.11.5"
 bitflags = "2.9.0"
 dirs = { workspace = true }
+indexmap = "2.9.0"
 mayfig = { git = "https://github.com/m4rch3n1ng/mayfig" }
 mayland-comm = { workspace = true }
 owo-colors = "4.2.0"
