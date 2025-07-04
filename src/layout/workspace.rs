@@ -220,11 +220,11 @@ impl WorkspaceManager {
 impl WorkspaceManager {
 	#[must_use = "you have to reset keyboard focus on active output change"]
 	pub fn update_active_output(&mut self, location: Point<f64, Logical>) -> bool {
-		if let Some(output) = self.outputs.output_under(location) {
-			if self.outputs.active.as_ref().is_none_or(|active| active != output) {
-				self.outputs.active = Some(output.clone());
-				return true;
-			}
+		if let Some(output) = self.outputs.output_under(location)
+			&& self.outputs.active.as_ref().is_none_or(|active| active != output)
+		{
+			self.outputs.active = Some(output.clone());
+			return true;
 		}
 
 		false

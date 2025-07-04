@@ -197,11 +197,11 @@ fn watcher(comp: CompMod) -> calloop::channel::Channel<Config> {
 
 			mtime = Some(stat);
 
-			if let Ok(config) = Config::read(&CONFIG_PATH, comp) {
-				if tx.send(config).is_err() {
-					tracing::warn!("file watch channel closed unexpectedly?");
-					break;
-				}
+			if let Ok(config) = Config::read(&CONFIG_PATH, comp)
+				&& tx.send(config).is_err()
+			{
+				tracing::warn!("file watch channel closed unexpectedly?");
+				break;
 			}
 		}
 	});

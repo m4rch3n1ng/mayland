@@ -121,36 +121,35 @@ impl State {
 			.iter()
 			.enumerate()
 			.find(|(_, w)| w == &surface)
+			&& let Some(toplevel) = unmapped.toplevel()
 		{
-			if let Some(toplevel) = unmapped.toplevel() {
-				let is_mapped =
-					with_renderer_surface_state(surface, |state| state.buffer().is_some()).unwrap_or(false);
+			let is_mapped =
+				with_renderer_surface_state(surface, |state| state.buffer().is_some()).unwrap_or(false);
 
-				if is_mapped {
-					let unmapped = self.mayland.unmapped_windows.remove(idx);
+			if is_mapped {
+				let unmapped = self.mayland.unmapped_windows.remove(idx);
 
-					let windowrules = unmapped.compute_windowrules(&self.mayland.config.windowrules);
-					let mapped = MappedWindow::new(unmapped, windowrules);
+				let windowrules = unmapped.compute_windowrules(&self.mayland.config.windowrules);
+				let mapped = MappedWindow::new(unmapped, windowrules);
 
-					mapped.on_commit();
+				mapped.on_commit();
 
-					// add window to workspace
-					let location = self.mayland.pointer.current_location();
-					self.mayland.workspaces.add_window(mapped.clone(), location);
+				// add window to workspace
+				let location = self.mayland.pointer.current_location();
+				self.mayland.workspaces.add_window(mapped.clone(), location);
 
-					// set the window state to be tiled, so that
-					// gtk apps don't round their corners
-					mapped.set_tiled();
+				// set the window state to be tiled, so that
+				// gtk apps don't round their corners
+				mapped.set_tiled();
 
-					// automatically focus new windows
-					self.focus_window(mapped);
+				// automatically focus new windows
+				self.focus_window(mapped);
 
-					return;
-				}
+				return;
+			}
 
-				if !initial_configure_sent(toplevel) {
-					toplevel.send_configure();
-				}
+			if !initial_configure_sent(toplevel) {
+				toplevel.send_configure();
 			}
 		}
 	}
@@ -163,10 +162,10 @@ impl Mayland {
 		if let Some(window) = self.workspaces.window_for_surface(surface) {
 			window.on_commit();
 
-			if let Some(toplevel) = window.toplevel() {
-				if !initial_configure_sent(toplevel) {
-					toplevel.send_configure();
-				}
+			if let Some(toplevel) = window.toplevel()
+				&& !initial_configure_sent(toplevel)
+			{
+				toplevel.send_configure();
 			}
 
 			self.handle_resize(window.clone());
