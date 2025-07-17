@@ -141,3 +141,11 @@ impl From<mayland_comm::action::CycleDirection> for CycleDirection {
 		}
 	}
 }
+
+#[test]
+fn clap() {
+	use clap::CommandFactory;
+
+	let cmd = Cli::command();
+	cmd.debug_assert();
+}

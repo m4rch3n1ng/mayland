@@ -18,6 +18,7 @@ mod utils;
 #[clap(version, about)]
 #[clap(disable_help_flag = true, disable_version_flag = true)]
 #[clap(disable_help_subcommand = true)]
+#[clap(propagate_version = true)]
 pub struct Args {
 	/// a path to a config file
 	#[arg(short, long)]
@@ -61,4 +62,12 @@ fn main() {
 			state.refresh_and_redraw();
 		})
 		.unwrap();
+}
+
+#[test]
+fn clap() {
+	use clap::CommandFactory;
+
+	let cmd = Args::command();
+	cmd.debug_assert();
 }
