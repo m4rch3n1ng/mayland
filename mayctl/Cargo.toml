@@ -5,12 +5,12 @@ edition = { workspace = true }
 license = { workspace = true }
 
 [dependencies]
-anstream = "0.6.19"
-clap = { version = "4.5.40", features = ["derive"] }
-clap_complete = { version = "4.5.54", features = ["unstable-dynamic"] }
+anstream = "0.6.20"
+clap = { version = "4.5.45", features = ["derive"] }
+clap_complete = { version = "4.5.57", features = ["unstable-dynamic"] }
 mayland-comm = { workspace = true }
 mayland-config = { workspace = true }
-owo-colors = "4.2.1"
+owo-colors = "4.2.2"
 serde = { workspace = true }
 serde_json = { workspace = true }
 

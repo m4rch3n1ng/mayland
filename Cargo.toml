@@ -15,7 +15,7 @@ dirs = "6.0.0"
 mayland-config = { path = "mayland-config" }
 mayland-comm = { path = "mayland-comm" }
 serde = "1.0.219"
-serde_json = "1.0.140"
+serde_json = "1.0.142"
 
 [workspace.dependencies.smithay]
 git = "https://github.com/Smithay/smithay"
@@ -41,19 +41,19 @@ edition = { workspace = true }
 readme = "readme.md"
 
 [dependencies]
-anstream = "0.6.19"
+anstream = "0.6.20"
 anstyle = "1.0.11"
-async-channel = "2.3.1"
-calloop = { version = "0.14.2", features = ["executor", "futures-io"] }
-clap = { version = "4.5.40", features = ["derive"] }
-clap_complete = { version = "4.5.54", features = ["unstable-dynamic"] }
+async-channel = "2.5.0"
+calloop = { version = "0.14.3", features = ["executor", "futures-io"] }
+clap = { version = "4.5.45", features = ["derive"] }
+clap_complete = { version = "4.5.57", features = ["unstable-dynamic"] }
 dirs = { workspace = true }
 env_filter = "0.1.3"
 futures-util = { version = "0.3.31", default-features = false, features = ["std", "io"] }
-indexmap = "2.9.0"
+indexmap = "2.10.0"
 input = { version = "0.9.1", default-features = false, features = ["libinput_1_21"] }
-jiff = "0.2.14"
-libc = "0.2.172"
+jiff = "0.2.15"
+libc = "0.2.175"
 log = "0.4.27"
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 mayland-config = { workspace = true }
@@ -61,7 +61,7 @@ mayland-comm = { workspace = true }
 serde_json = { workspace = true }
 systemd-journal-logger = "2.2.2"
 tracing = "0.1.41"
-xcursor = "0.3.8"
+xcursor = "0.3.10"
 
 [dependencies.smithay]
 workspace = true

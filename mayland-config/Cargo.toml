@@ -9,15 +9,15 @@ readme = "readme.md"
 annotate-snippets = "0.11.5"
 bitflags = "2.9.1"
 dirs = { workspace = true }
-indexmap = "2.9.0"
+indexmap = "2.10.0"
 mayfig = { git = "https://github.com/m4rch3n1ng/mayfig" }
 mayland-comm = { workspace = true }
-owo-colors = "4.2.1"
+owo-colors = "4.2.2"
 regex = "1.11.1"
 regex-syntax = "0.8.5"
 serde = { workspace = true, features = ["derive"] }
 smithay = { workspace = true, features = ["backend_libinput"] }
-thiserror = "2.0.12"
+thiserror = "2.0.14"
 tracing = "0.1.41"
 
 [dev-dependencies]

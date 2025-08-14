@@ -45,6 +45,7 @@ impl Winit {
 				subpixel: Subpixel::Unknown,
 				make: "may".to_owned(),
 				model: "winit".to_owned(),
+				serial_number: String::new(),
 			},
 		);
 

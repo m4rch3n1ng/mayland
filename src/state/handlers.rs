@@ -70,8 +70,8 @@ impl SelectionHandler for State {
 }
 
 impl DataDeviceHandler for State {
-	fn data_device_state(&self) -> &DataDeviceState {
-		&self.mayland.data_device_state
+	fn data_device_state(&mut self) -> &mut DataDeviceState {
+		&mut self.mayland.data_device_state
 	}
 }
 
@@ -85,16 +85,16 @@ impl OutputHandler for State {}
 delegate_output!(State);
 
 impl PrimarySelectionHandler for State {
-	fn primary_selection_state(&self) -> &PrimarySelectionState {
-		&self.mayland.primary_selection_state
+	fn primary_selection_state(&mut self) -> &mut PrimarySelectionState {
+		&mut self.mayland.primary_selection_state
 	}
 }
 
 delegate_primary_selection!(State);
 
 impl DataControlHandler for State {
-	fn data_control_state(&self) -> &DataControlState {
-		&self.mayland.data_control_state
+	fn data_control_state(&mut self) -> &mut DataControlState {
+		&mut self.mayland.data_control_state
 	}
 }
 

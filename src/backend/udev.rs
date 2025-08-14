@@ -14,9 +14,9 @@ use smithay::{
 			gbm::{GbmAllocator, GbmBufferFlags, GbmDevice},
 		},
 		drm::{
-			DrmDevice, DrmDeviceFd, DrmEvent, DrmEventMetadata, DrmEventTime,
+			DrmDevice, DrmDeviceFd, DrmEvent, DrmEventMetadata, DrmEventTime, DrmNode,
 			compositor::{DrmCompositor, FrameFlags},
-			exporter::gbm::GbmFramebufferExporter,
+			exporter::gbm::{GbmFramebufferExporter, NodeFilter},
 		},
 		egl::{EGLContext, EGLDevice, EGLDisplay},
 		input::InputEvent,
@@ -65,11 +65,12 @@ const SUPPORTED_COLOR_FORMATS: &[Fourcc] = &[Fourcc::Argb8888, Fourcc::Abgr8888]
 pub struct OutputDevice {
 	id: dev_t,
 	token: RegistrationToken,
+	render_node: DrmNode,
+	drm_scanner: DrmScanner,
 	drm: DrmDevice,
 	gbm: GbmDevice<DrmDeviceFd>,
 	glow: GlowRenderer,
 	formats: FormatSet,
-	drm_scanner: DrmScanner,
 	surfaces: HashMap<crtc::Handle, Surface>,
 }
 
@@ -425,11 +426,12 @@ impl Udev {
 		let output_device = OutputDevice {
 			id: device_id,
 			token,
+			render_node,
+			drm_scanner: DrmScanner::new(),
 			drm,
 			gbm,
 			glow,
 			formats,
-			drm_scanner: DrmScanner::new(),
 			surfaces: HashMap::new(),
 		};
 		self.output_device = Some(output_device);
@@ -531,6 +533,7 @@ impl Udev {
 				subpixel: Subpixel::Unknown,
 				make: output_info.make.clone(),
 				model: output_info.model.clone(),
+				serial_number: output_info.serial.clone().unwrap_or_else(|| "unknown".to_owned()),
 			},
 		);
 
@@ -549,7 +552,7 @@ impl Udev {
 			surface,
 			Some(planes),
 			allocator,
-			GbmFramebufferExporter::new(device.gbm.clone()),
+			GbmFramebufferExporter::new(device.gbm.clone(), NodeFilter::Node(device.render_node)),
 			SUPPORTED_COLOR_FORMATS.iter().copied(),
 			device.formats.clone(),
 			device.drm.cursor_size(),
