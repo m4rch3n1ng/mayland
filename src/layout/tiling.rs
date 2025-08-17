@@ -10,7 +10,15 @@ use smithay::{
 	utils::{Logical, Point, Rectangle, Size},
 };
 
-type WindowLayout = (MappedWindow, Rectangle<i32, Logical>);
+#[derive(Debug)]
+struct WindowLayout(MappedWindow, Rectangle<i32, Logical>);
+
+impl WindowLayout {
+	fn resize(&mut self, size: Rectangle<i32, Logical>) {
+		self.0.resize(size);
+		self.1 = size;
+	}
+}
 
 #[derive(Debug)]
 struct Layout {
@@ -162,20 +170,18 @@ impl Tiling {
 
 				match position {
 					Position::Left => {
-						prev.0.resize(two);
-						prev.1 = two;
+						prev.resize(two);
 
 						window.resize(one);
-						*empty = Some((window, one));
+						*empty = Some(WindowLayout(window, one));
 
 						self.windows.swap(0, 1);
 					}
 					Position::Right => {
-						prev.0.resize(one);
-						prev.1 = one;
+						prev.resize(one);
 
 						window.resize(two);
-						*empty = Some((window, two));
+						*empty = Some(WindowLayout(window, two));
 					}
 				}
 
@@ -186,7 +192,7 @@ impl Tiling {
 
 				window.set_activate(true);
 				window.resize(one);
-				*empty = Some((window, one));
+				*empty = Some(WindowLayout(window, one));
 
 				None
 			}
@@ -197,8 +203,7 @@ impl Tiling {
 		match &mut self.windows {
 			[Some(w1), Some(w2)] if &w1.0 == window => {
 				let one = self.layout.single();
-				w2.0.resize(one);
-				w2.1 = one;
+				w2.resize(one);
 
 				self.windows.swap(0, 1);
 				self.windows[1] = None;
@@ -207,8 +212,7 @@ impl Tiling {
 			}
 			[Some(w1), Some(w2)] if &w2.0 == window => {
 				let one = self.layout.single();
-				w1.0.resize(one);
-				w1.1 = one;
+				w1.resize(one);
 
 				self.windows[1] = None;
 				true
@@ -242,16 +246,12 @@ impl Tiling {
 			[Some(w1), Some(w2)] => {
 				let [one, two] = self.layout.double();
 
-				w1.0.resize(one);
-				w1.1 = one;
-
-				w2.0.resize(two);
-				w2.1 = two;
+				w1.resize(one);
+				w2.resize(two);
 			}
 			[Some(window), None] => {
 				let one = self.layout.single();
-				window.0.resize(one);
-				window.1 = one;
+				window.resize(one);
 			}
 			[None, Some(_)] => unreachable!(),
 			[None, None] => (),
@@ -275,7 +275,7 @@ impl Tiling {
 	pub fn windows_geometry(
 		&self,
 	) -> impl DoubleEndedIterator<Item = (&MappedWindow, Rectangle<i32, Logical>)> {
-		self.windows.iter().flatten().map(|(w, g)| (w, *g))
+		self.windows.iter().flatten().map(|WindowLayout(w, g)| (w, *g))
 	}
 
 	pub fn window_under(
