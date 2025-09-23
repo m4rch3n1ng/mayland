@@ -363,7 +363,9 @@ impl Udev {
 		let mut glow = unsafe { GlowRenderer::new(egl_context) }.unwrap();
 		shaders::init(glow.borrow_mut());
 
-		glow.bind_wl_display(&mayland.display_handle).unwrap();
+		if let Err(err) = glow.bind_wl_display(&mayland.display_handle) {
+			tracing::warn!("failed to bind wl-display ({})", err);
+		}
 
 		let egl_device = EGLDevice::device_for_display(glow.egl_context().display()).unwrap();
 		let render_node = egl_device.try_get_render_node().unwrap().unwrap();
