@@ -7,17 +7,17 @@ readme = "readme.md"
 
 [dependencies]
 annotate-snippets = "0.11.5"
-bitflags = "2.9.1"
+bitflags = "2.9.4"
 dirs = { workspace = true }
-indexmap = "2.10.0"
+indexmap = "2.11.4"
 mayfig = { git = "https://github.com/m4rch3n1ng/mayfig" }
 mayland-comm = { workspace = true }
 owo-colors = "4.2.2"
-regex = "1.11.1"
-regex-syntax = "0.8.5"
+regex = "1.11.2"
+regex-syntax = "0.8.6"
 serde = { workspace = true, features = ["derive"] }
 smithay = { workspace = true, features = ["backend_libinput"] }
-thiserror = "2.0.14"
+thiserror = "2.0.16"
 tracing = "0.1.41"
 
 [dev-dependencies]

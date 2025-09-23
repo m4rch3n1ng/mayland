@@ -6,8 +6,8 @@ license = { workspace = true }
 
 [dependencies]
 anstream = "0.6.20"
-clap = { version = "4.5.45", features = ["derive"] }
-clap_complete = { version = "4.5.57", features = ["unstable-dynamic"] }
+clap = { version = "4.5.48", features = ["derive"] }
+clap_complete = { version = "4.5.58", features = ["unstable-dynamic"] }
 mayland-comm = { workspace = true }
 mayland-config = { workspace = true }
 owo-colors = "4.2.2"
