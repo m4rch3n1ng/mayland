@@ -1,4 +1,4 @@
-use annotate_snippets::{Level, Renderer, Snippet};
+use annotate_snippets::{AnnotationKind, Group, Level, Renderer, Snippet};
 use owo_colors::OwoColorize;
 use std::{fmt::Display, path::PathBuf};
 
@@ -44,18 +44,18 @@ impl Display for MayfigError {
 		let path = self.path.to_string_lossy();
 
 		let message = if let Some(span) = self.error.span() {
-			Level::Error.title(&code).snippet(
+			Level::ERROR.primary_title(&code).element(
 				Snippet::source(&self.file)
-					.origin(&path)
+					.path(&path)
 					.fold(true)
-					.annotation(Level::Error.span(span.range())),
+					.annotation(AnnotationKind::Primary.span(span.range())),
 			)
 		} else {
-			Level::Error.title(&code)
+			Group::with_title(Level::ERROR.primary_title(&code))
 		};
 
 		let renderer = Renderer::styled();
-		write!(f, "{}", renderer.render(message))?;
+		write!(f, "{}", renderer.render(&[message]))?;
 
 		Ok(())
 	}

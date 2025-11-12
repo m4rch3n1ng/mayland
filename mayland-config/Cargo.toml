@@ -6,7 +6,7 @@ license = { workspace = true }
 readme = "readme.md"
 
 [dependencies]
-annotate-snippets = "0.11.5"
+annotate-snippets = "0.12.9"
 bitflags = "2.10.0"
 dirs = { workspace = true }
 indexmap = "2.12.1"
