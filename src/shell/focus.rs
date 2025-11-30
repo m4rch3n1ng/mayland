@@ -5,6 +5,7 @@ use smithay::{
 	desktop::{LayerSurface, PopupKind, WindowSurface},
 	input::{
 		Seat,
+		dnd::DndFocus,
 		keyboard::{KeyboardTarget, KeysymHandle, ModifiersState},
 		pointer::{
 			AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent, GesturePinchBeginEvent,
@@ -14,7 +15,7 @@ use smithay::{
 	},
 	reexports::wayland_server::{Resource, backend::ObjectId, protocol::wl_surface::WlSurface},
 	utils::{IsAlive, Serial},
-	wayland::seat::WaylandFocus,
+	wayland::{seat::WaylandFocus, selection::data_device::WlOfferData},
 };
 use std::borrow::Cow;
 
@@ -264,6 +265,66 @@ impl PointerTarget<State> for PointerFocusTarget {
 		match self {
 			PointerFocusTarget::WlSurface(w) => PointerTarget::leave(w, seat, data, serial, time),
 			PointerFocusTarget::Window(w) => PointerTarget::leave(w, seat, data, serial, time),
+		}
+	}
+}
+
+impl DndFocus<State> for PointerFocusTarget {
+	type OfferData<S>
+		= WlOfferData<S>
+	where
+		S: smithay::input::dnd::Source;
+
+	fn enter<S: smithay::input::dnd::Source>(
+		&self,
+		data: &mut State,
+		dh: &smithay::reexports::wayland_server::DisplayHandle,
+		source: std::sync::Arc<S>,
+		seat: &Seat<State>,
+		location: smithay::utils::Point<f64, smithay::utils::Logical>,
+		serial: &Serial,
+	) -> Option<Self::OfferData<S>> {
+		match self {
+			PointerFocusTarget::WlSurface(w) => DndFocus::enter(w, data, dh, source, seat, location, serial),
+			PointerFocusTarget::Window(w) => DndFocus::enter(w, data, dh, source, seat, location, serial),
+		}
+	}
+
+	fn motion<S: smithay::input::dnd::Source>(
+		&self,
+		data: &mut State,
+		offer: Option<&mut Self::OfferData<S>>,
+		seat: &Seat<State>,
+		location: smithay::utils::Point<f64, smithay::utils::Logical>,
+		time: u32,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => DndFocus::motion(w, data, offer, seat, location, time),
+			PointerFocusTarget::Window(w) => DndFocus::motion(w, data, offer, seat, location, time),
+		}
+	}
+
+	fn leave<S: smithay::input::dnd::Source>(
+		&self,
+		data: &mut State,
+		offer: Option<&mut Self::OfferData<S>>,
+		seat: &Seat<State>,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => DndFocus::leave(w, data, offer, seat),
+			PointerFocusTarget::Window(w) => DndFocus::leave(w, data, offer, seat),
+		}
+	}
+
+	fn drop<S: smithay::input::dnd::Source>(
+		&self,
+		data: &mut State,
+		offer: Option<&mut Self::OfferData<S>>,
+		seat: &Seat<State>,
+	) {
+		match self {
+			PointerFocusTarget::WlSurface(w) => DndFocus::drop(w, data, offer, seat),
+			PointerFocusTarget::Window(w) => DndFocus::drop(w, data, offer, seat),
 		}
 	}
 }

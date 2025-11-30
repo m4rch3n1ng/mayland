@@ -10,6 +10,7 @@ use smithay::{
 	desktop::{Window, WindowSurface, space::SpaceElement},
 	input::{
 		Seat,
+		dnd::{self, DndFocus},
 		pointer::{
 			AxisFrame, ButtonEvent, GestureHoldBeginEvent, GestureHoldEndEvent, GesturePinchBeginEvent,
 			GesturePinchEndEvent, GesturePinchUpdateEvent, GestureSwipeBeginEvent, GestureSwipeEndEvent,
@@ -25,6 +26,7 @@ use smithay::{
 	wayland::{
 		compositor::with_states,
 		seat::WaylandFocus,
+		selection::data_device::WlOfferData,
 		shell::xdg::{SurfaceCachedState, ToplevelSurface, XdgToplevelSurfaceData},
 	},
 };
@@ -431,6 +433,66 @@ impl PointerTarget<State> for MappedWindow {
 	fn leave(&self, seat: &smithay::input::Seat<State>, data: &mut State, serial: Serial, time: u32) {
 		if let Some(w) = self.wl_surface() {
 			PointerTarget::leave(&*w, seat, data, serial, time);
+		}
+	}
+}
+
+impl DndFocus<State> for MappedWindow {
+	type OfferData<S>
+		= WlOfferData<S>
+	where
+		S: dnd::Source;
+
+	fn enter<S: dnd::Source>(
+		&self,
+		data: &mut State,
+		dh: &DisplayHandle,
+		source: Arc<S>,
+		seat: &Seat<State>,
+		location: Point<f64, Logical>,
+		serial: &Serial,
+	) -> Option<Self::OfferData<S>> {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => {
+				DndFocus::enter(xdg.wl_surface(), data, dh, source, seat, location, serial)
+			}
+		}
+	}
+
+	fn motion<S: dnd::Source>(
+		&self,
+		data: &mut State,
+		offer: Option<&mut Self::OfferData<S>>,
+		seat: &Seat<State>,
+		location: Point<f64, Logical>,
+		time: u32,
+	) {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => {
+				DndFocus::motion(xdg.wl_surface(), data, offer, seat, location, time);
+			}
+		}
+	}
+
+	fn leave<S: dnd::Source>(
+		&self,
+		data: &mut State,
+		offer: Option<&mut Self::OfferData<S>>,
+		seat: &Seat<State>,
+	) {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => DndFocus::leave(xdg.wl_surface(), data, offer, seat),
+		}
+	}
+
+	fn drop<S: dnd::Source>(
+		&self,
+		data: &mut State,
+		offer: Option<&mut Self::OfferData<S>>,
+		seat: &Seat<State>,
+	) {
+		match self.underlying_surface() {
+			WindowSurface::Wayland(xdg) => DndFocus::drop(xdg.wl_surface(), data, offer, seat),
 		}
 	}
 }

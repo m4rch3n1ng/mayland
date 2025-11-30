@@ -5,7 +5,11 @@ use smithay::{
 	delegate_cursor_shape, delegate_data_control, delegate_data_device, delegate_dmabuf, delegate_output,
 	delegate_primary_selection, delegate_seat, delegate_tablet_manager, delegate_viewporter,
 	delegate_xdg_decoration,
-	input::{Seat, SeatHandler, SeatState, pointer::CursorImageStatus},
+	input::{
+		Seat, SeatHandler, SeatState,
+		dnd::{self, DnDGrab, DndGrabHandler, GrabType},
+		pointer::{CursorImageStatus, Focus},
+	},
 	reexports::{
 		wayland_protocols::xdg::decoration::zv1::server::zxdg_toplevel_decoration_v1::Mode as DecorationMode,
 		wayland_server::{Resource, protocol::wl_surface::WlSurface},
@@ -16,10 +20,7 @@ use smithay::{
 		seat::WaylandFocus,
 		selection::{
 			SelectionHandler,
-			data_device::{
-				ClientDndGrabHandler, DataDeviceHandler, DataDeviceState, ServerDndGrabHandler,
-				set_data_device_focus,
-			},
+			data_device::{DataDeviceHandler, DataDeviceState, WaylandDndGrabHandler, set_data_device_focus},
 			primary_selection::{PrimarySelectionHandler, PrimarySelectionState, set_primary_focus},
 			wlr_data_control::{DataControlHandler, DataControlState},
 		},
@@ -75,8 +76,29 @@ impl DataDeviceHandler for State {
 	}
 }
 
-impl ClientDndGrabHandler for State {}
-impl ServerDndGrabHandler for State {}
+impl DndGrabHandler for State {}
+impl WaylandDndGrabHandler for State {
+	fn dnd_requested<S: dnd::Source>(
+		&mut self,
+		source: S,
+		_icon: Option<WlSurface>,
+		seat: Seat<Self>,
+		serial: smithay::utils::Serial,
+		r#type: smithay::input::dnd::GrabType,
+	) {
+		match r#type {
+			GrabType::Pointer => {
+				let ptr = seat.get_pointer().unwrap();
+				let start_data = ptr.grab_start_data().unwrap();
+
+				let grab = DnDGrab::new_pointer(&self.mayland.display_handle, start_data, source, seat);
+				ptr.set_grab(self, grab, serial, Focus::Keep);
+			}
+			// TODO: touch handling
+			GrabType::Touch => {}
+		}
+	}
+}
 
 delegate_data_device!(State);
 
