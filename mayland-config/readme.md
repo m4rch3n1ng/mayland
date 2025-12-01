@@ -303,8 +303,8 @@ bind {
     mod+q = "close"
     mod+v = "toggle-floating"
 
-	mod+tab = "cycle" [ "next" ]
-	mod+shift+tab = "cycle" [ "prev" ]
+    mod+tab = "cycle" [ "next" ]
+    mod+shift+tab = "cycle" [ "prev" ]
 
     mod+t = "spawn" [ "kitty" ]
     mod+e = "spawn" [ "nautilus" ]
@@ -345,15 +345,15 @@ you can configure window rules in the `windowrules` category.
 
 ```ini
 windowrules {
-	app-id [ "org.gnome.Nautilus" ] {
-		floating = true
-		opacity = 0.8
-	}
+    app-id [ "org.gnome.Nautilus" ] {
+        floating = true
+        opacity = 0.8
+    }
 
-	match [ "firefox" "/.*Mozilla Firefox.*/v" ] {
-		floating = true
-		opacity = 0.8
-	}
+    match [ "firefox" "/.*Mozilla Firefox.*/v" ] {
+        floating = true
+        opacity = 0.8
+    }
 }
 ```
 
