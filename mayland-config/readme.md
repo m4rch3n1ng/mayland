@@ -257,6 +257,26 @@ decoration {
 
 ### layout
 
+you can configure how mayland layouts your windows in the `layout` category.
+
+### tiling
+
+in the nested `tiling` you can configure the mayland tiling layout.
+
+```ini
+layout {
+    tiling {
+        gaps = 10
+        border = 20
+    }
+}
+```
+
+available tiling layout options are:
+
+- `gaps`, which sets the gap (in px) mayland leaves between two tiled windows. defaults to 10px.
+- `border`, which sets the gap (in px) mayland leaves around the tiling space, between the windows and monitor edges. defaults to 20px.
+
 ### env
 
 you can set environment variables inside mayland inside the `env` category.

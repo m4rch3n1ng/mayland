@@ -9,12 +9,12 @@ pub struct Layout {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub struct Tiling {
-	pub border: u8,
 	pub gaps: u8,
+	pub border: u8,
 }
 
 impl Default for Tiling {
 	fn default() -> Self {
-		Tiling { border: 20, gaps: 10 }
+		Tiling { gaps: 10, border: 20 }
 	}
 }
