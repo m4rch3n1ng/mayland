@@ -98,14 +98,14 @@ impl Layout {
 		let gap = self.gaps / 2;
 
 		let one = {
-			let size = Size::new(rel_split.x - gap, size.h);
+			let size = Size::new(i32::max(rel_split.x - gap, 0), size.h);
 			let loc = self.useable_area.loc;
 
 			Rectangle { loc, size }
 		};
 
 		let two = {
-			let size = Size::new(size.w - one.size.w - self.gaps, size.h);
+			let size = Size::new(i32::max(size.w - one.size.w - self.gaps, 0), size.h);
 			let loc = Point::new(split.x + gap, split.y);
 
 			Rectangle { loc, size }
