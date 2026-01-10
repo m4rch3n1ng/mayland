@@ -36,8 +36,8 @@ pub struct Args {
 }
 
 fn main() {
-	let args = Args::parse();
 	clap_complete::CompleteEnv::with_factory(Args::command).complete();
+	let args = Args::parse();
 	trace::setup(args.debug);
 
 	let mut event_loop = EventLoop::<State>::try_new().unwrap();
