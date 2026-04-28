@@ -103,7 +103,7 @@ impl Udev {
 		let seat_name = session.seat();
 
 		let udev_backend = UdevBackend::new(&seat_name).unwrap();
-		let udev_dispatcher = Dispatcher::new(udev_backend, move |event, (), state: &mut State| {
+		let udev_dispatcher = Dispatcher::new(udev_backend, move |event, _, state: &mut State| {
 			let udev = state.backend.udev();
 			udev.on_udev_data(event, &mut state.mayland);
 		});
@@ -550,7 +550,7 @@ impl Udev {
 		});
 
 		let compositor = DrmCompositor::new(
-			OutputModeSource::Auto(output.clone()),
+			OutputModeSource::Auto(output.downgrade()),
 			surface,
 			Some(planes),
 			allocator,

@@ -9,6 +9,7 @@ pub mod udev;
 pub mod winit;
 
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant, reason = "it's not that bad")]
 pub enum Backend {
 	Udev(Udev),
 	Winit(Winit),

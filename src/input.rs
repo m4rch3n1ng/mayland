@@ -361,7 +361,7 @@ impl State {
 	{
 		let config = if let Some(device) = (&event.device() as &dyn Any).downcast_ref::<libinput::Device>() {
 			let name = device.name();
-			self.mayland.config.input.tablet(name)
+			self.mayland.config.input.tablet(&name)
 		} else {
 			&self.mayland.config.input.tablet
 		};
@@ -672,7 +672,7 @@ enum SurfaceFocus {
 
 pub fn apply_libinput_settings(config: &mayland_config::Input, device: &mut InputDevice) {
 	if device.is_touchpad() {
-		let conf = &config.touchpad(device.handle.name());
+		let conf = &config.touchpad(&device.handle.name());
 		let device = &mut device.handle;
 
 		let _ = device.config_tap_set_enabled(conf.tap);
@@ -718,7 +718,7 @@ pub fn apply_libinput_settings(config: &mayland_config::Input, device: &mut Inpu
 			let _ = device.config_accel_set_profile(default_accel_profile);
 		}
 	} else if device.is_mouse() {
-		let conf = &config.mouse(device.handle.name());
+		let conf = &config.mouse(&device.handle.name());
 		let device = &mut device.handle;
 
 		let _ = device.config_scroll_set_natural_scroll_enabled(conf.natural_scroll);

@@ -4,7 +4,7 @@ use serde::{
 };
 use smithay::{
 	input::keyboard::XkbConfig,
-	reexports::input::{AccelProfile, ClickMethod, ScrollMethod, TapButtonMap},
+	reexports::input::{AccelProfile, ClickMethod, DragLockState, ScrollMethod, TapButtonMap},
 };
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -297,7 +297,8 @@ impl Default for Keyboard {
 pub struct Touchpad {
 	pub tap: bool,
 	pub tap_and_drag: bool,
-	pub tap_drag_lock: bool,
+	#[serde(with = "tap_drag_lock")]
+	pub tap_drag_lock: DragLockState,
 
 	pub dwt: bool,
 	pub dwtp: bool,
@@ -328,7 +329,7 @@ impl Default for Touchpad {
 		Touchpad {
 			tap: true,
 			tap_and_drag: false,
-			tap_drag_lock: false,
+			tap_drag_lock: DragLockState::Disabled,
 
 			dwt: true,
 			dwtp: true,
@@ -418,7 +419,7 @@ fn deserialize_path<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result
 mod per_device {
 	use super::TabletMapping;
 	use serde::Deserialize;
-	use smithay::reexports::input::{AccelProfile, ClickMethod, ScrollMethod, TapButtonMap};
+	use smithay::reexports::input::{AccelProfile, ClickMethod, DragLockState, ScrollMethod, TapButtonMap};
 
 	#[derive(Default, Deserialize)]
 	#[serde(default, rename_all = "kebab-case")]
@@ -452,7 +453,8 @@ mod per_device {
 	pub struct Touchpad {
 		pub tap: Option<bool>,
 		pub tap_and_drag: Option<bool>,
-		pub tap_drag_lock: Option<bool>,
+		#[serde(deserialize_with = "super::tap_drag_lock::option")]
+		pub tap_drag_lock: Option<DragLockState>,
 
 		pub dwt: Option<bool>,
 		pub dwtp: Option<bool>,
@@ -513,6 +515,37 @@ mod per_device {
 				relative: self.relative.unwrap_or(other.relative),
 			}
 		}
+	}
+}
+
+mod tap_drag_lock {
+	use serde::{Deserialize, Deserializer};
+	use smithay::reexports::input as libinput;
+
+	fn drag_lock_from_bool(b: bool) -> libinput::DragLockState {
+		if b {
+			libinput::DragLockState::EnabledTimeout
+		} else {
+			libinput::DragLockState::Disabled
+		}
+	}
+
+	pub fn deserialize<'de, D>(deserializer: D) -> Result<libinput::DragLockState, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let drag_lock = bool::deserialize(deserializer)?;
+		let drag_lock = drag_lock_from_bool(drag_lock);
+		Ok(drag_lock)
+	}
+
+	pub fn option<'de, D>(deserializer: D) -> Result<Option<libinput::DragLockState>, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let option = Option::<bool>::deserialize(deserializer)?;
+		let option = option.map(drag_lock_from_bool);
+		Ok(option)
 	}
 }
 

@@ -9,7 +9,7 @@ use smithay::{
 		glow::{GlowFrame, GlowRenderer},
 		utils::{CommitCounter, DamageSet, OpaqueRegions},
 	},
-	utils::{Physical, Point, Rectangle, Scale, Transform},
+	utils::{Physical, Point, Rectangle, Scale, Transform, user_data::UserDataMap},
 };
 use std::fmt::Debug;
 
@@ -142,14 +142,17 @@ impl RenderElement<GlowRenderer> for OutputRenderElements<GlowRenderer> {
 		dst: Rectangle<i32, Physical>,
 		damage: &[Rectangle<i32, Physical>],
 		opaque_regions: &[Rectangle<i32, Physical>],
+		cache: Option<&UserDataMap>,
 	) -> Result<(), GlesError> {
 		match self {
-			Self::DefaultPointer(x) => x.draw(frame, src, dst, damage, opaque_regions),
-			Self::CropSurface(x) => x.draw(frame, src, dst, damage, opaque_regions),
-			Self::Surface(x) => x.draw(frame, src, dst, damage, opaque_regions),
-			Self::Solid(x) => RenderElement::<GlowRenderer>::draw(x, frame, src, dst, damage, opaque_regions),
+			Self::DefaultPointer(x) => x.draw(frame, src, dst, damage, opaque_regions, cache),
+			Self::CropSurface(x) => x.draw(frame, src, dst, damage, opaque_regions, cache),
+			Self::Surface(x) => x.draw(frame, src, dst, damage, opaque_regions, cache),
+			Self::Solid(x) => {
+				RenderElement::<GlowRenderer>::draw(x, frame, src, dst, damage, opaque_regions, cache)
+			}
 			Self::FocusElement(x) => {
-				RenderElement::<GlowRenderer>::draw(x, frame, src, dst, damage, opaque_regions)
+				RenderElement::<GlowRenderer>::draw(x, frame, src, dst, damage, opaque_regions, cache)
 			}
 		}
 	}

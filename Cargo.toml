@@ -51,7 +51,7 @@ dirs = { workspace = true }
 env_filter = "0.1.4"
 futures-util = { version = "0.3.31", default-features = false, features = ["std", "io"] }
 indexmap = "2.13.0"
-input = { version = "0.9.1", default-features = false, features = ["libinput_1_21"] }
+input = { version = "0.10.0", default-features = false, features = ["libinput_1_21"] }
 jiff = "0.2.18"
 libc = "0.2.180"
 log = "0.4.29"
