@@ -6,15 +6,15 @@ license = { workspace = true }
 readme = "readme.md"
 
 [dependencies]
-annotate-snippets = "0.12.11"
-bitflags = "2.10.0"
+annotate-snippets = "0.12.15"
+bitflags = "2.11.1"
 dirs = { workspace = true }
-indexmap = { version = "2.13.0", features = ["serde"] }
+indexmap = { version = "2.14.0", features = ["serde"] }
 mayfig = { git = "https://github.com/m4rch3n1ng/mayfig" }
 mayland-comm = { workspace = true }
-owo-colors = "4.2.3"
+owo-colors = "4.3.0"
 regex = "1.12.3"
-regex-syntax = "0.8.9"
+regex-syntax = "0.8.10"
 serde = { workspace = true, features = ["derive"] }
 smithay = { workspace = true, features = ["backend_libinput"] }
 thiserror = "2.0.18"

@@ -41,19 +41,19 @@ edition = { workspace = true }
 readme = "readme.md"
 
 [dependencies]
-anstream = "0.6.21"
-anstyle = "1.0.13"
+anstream = "1.0.0"
+anstyle = "1.0.14"
 async-channel = "2.5.0"
-calloop = { version = "0.14.3", features = ["executor", "futures-io"] }
-clap = { version = "4.5.57", features = ["derive"] }
-clap_complete = { version = "4.5.65", features = ["unstable-dynamic"] }
+calloop = { version = "0.14.4", features = ["executor", "futures-io"] }
+clap = { version = "4.6.1", features = ["derive"] }
+clap_complete = { version = "4.6.3", features = ["unstable-dynamic"] }
 dirs = { workspace = true }
-env_filter = "0.1.4"
-futures-util = { version = "0.3.31", default-features = false, features = ["std", "io"] }
-indexmap = "2.13.0"
+env_filter = "1.0.1"
+futures-util = { version = "0.3.32", default-features = false, features = ["std", "io"] }
+indexmap = "2.14.0"
 input = { version = "0.10.0", default-features = false, features = ["libinput_1_21"] }
-jiff = "0.2.18"
-libc = "0.2.180"
+jiff = "0.2.24"
+libc = "0.2.186"
 log = "0.4.29"
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 mayland-config = { workspace = true }
