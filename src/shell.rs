@@ -1,7 +1,6 @@
 use crate::state::{ClientState, State};
 use smithay::{
 	backend::renderer::utils::on_commit_buffer_handler,
-	delegate_compositor, delegate_layer_shell, delegate_shm,
 	desktop::{LayerSurface, layer_map_for_output},
 	output::Output,
 	reexports::wayland_server::{
@@ -118,6 +117,4 @@ impl ShmHandler for State {
 	}
 }
 
-delegate_layer_shell!(State);
-delegate_compositor!(State);
-delegate_shm!(State);
+smithay::delegate_dispatch2!(State);

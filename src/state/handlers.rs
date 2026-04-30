@@ -2,9 +2,6 @@ use super::State;
 use crate::shell::focus::{KeyboardFocusTarget, PointerFocusTarget};
 use smithay::{
 	backend::{allocator::dmabuf::Dmabuf, input::TabletToolDescriptor},
-	delegate_cursor_shape, delegate_data_control, delegate_data_device, delegate_dmabuf, delegate_output,
-	delegate_primary_selection, delegate_seat, delegate_tablet_manager, delegate_viewporter,
-	delegate_xdg_decoration,
 	input::{
 		Seat, SeatHandler, SeatState,
 		dnd::{self, DnDGrab, DndGrabHandler, GrabType},
@@ -53,9 +50,6 @@ impl SeatHandler for State {
 	}
 }
 
-delegate_seat!(State);
-delegate_cursor_shape!(State);
-
 impl TabletSeatHandler for State {
 	fn tablet_tool_image(&mut self, _tool: &TabletToolDescriptor, image: CursorImageStatus) {
 		// todo tablet tools should have their own cursors
@@ -63,8 +57,6 @@ impl TabletSeatHandler for State {
 		self.mayland.queue_redraw_all();
 	}
 }
-
-delegate_tablet_manager!(State);
 
 impl SelectionHandler for State {
 	type SelectionUserData = ();
@@ -100,11 +92,7 @@ impl WaylandDndGrabHandler for State {
 	}
 }
 
-delegate_data_device!(State);
-
 impl OutputHandler for State {}
-
-delegate_output!(State);
 
 impl PrimarySelectionHandler for State {
 	fn primary_selection_state(&mut self) -> &mut PrimarySelectionState {
@@ -112,15 +100,11 @@ impl PrimarySelectionHandler for State {
 	}
 }
 
-delegate_primary_selection!(State);
-
 impl DataControlHandler for State {
 	fn data_control_state(&mut self) -> &mut DataControlState {
 		&mut self.mayland.data_control_state
 	}
 }
-
-delegate_data_control!(State);
 
 impl DmabufHandler for State {
 	fn dmabuf_state(&mut self) -> &mut DmabufState {
@@ -135,8 +119,6 @@ impl DmabufHandler for State {
 		}
 	}
 }
-
-delegate_dmabuf!(State);
 
 impl XdgDecorationHandler for State {
 	fn new_decoration(&mut self, toplevel: ToplevelSurface) {
@@ -158,7 +140,3 @@ impl XdgDecorationHandler for State {
 		toplevel.send_pending_configure();
 	}
 }
-
-delegate_xdg_decoration!(State);
-
-delegate_viewporter!(State);

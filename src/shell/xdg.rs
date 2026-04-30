@@ -2,7 +2,6 @@ use super::window::{MappedWindow, UnmappedSurface};
 use crate::state::{Mayland, State};
 use smithay::{
 	backend::renderer::utils::with_renderer_surface_state,
-	delegate_presentation, delegate_xdg_shell,
 	desktop::PopupKind,
 	reexports::wayland_server::protocol::{wl_seat::WlSeat, wl_surface::WlSurface},
 	utils::Serial,
@@ -96,9 +95,6 @@ impl XdgShellHandler for State {
 		window.recompute_windowrules(&self.mayland.config.windowrules);
 	}
 }
-
-delegate_xdg_shell!(State);
-delegate_presentation!(State);
 
 fn initial_configure_sent(toplevel: &ToplevelSurface) -> bool {
 	with_states(toplevel.wl_surface(), |states| {

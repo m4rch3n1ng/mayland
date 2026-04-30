@@ -1,7 +1,6 @@
 use super::State;
 use crate::{layout::Relocate, shell::focus::KeyboardFocusTarget};
 use smithay::{
-	delegate_pointer_gestures, delegate_relative_pointer,
 	desktop::LayerSurface,
 	input::pointer::MotionEvent,
 	utils::{Logical, Point, SERIAL_COUNTER},
@@ -94,6 +93,3 @@ impl State {
 		pointer.frame(self);
 	}
 }
-
-delegate_relative_pointer!(State);
-delegate_pointer_gestures!(State);
