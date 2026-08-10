@@ -6,6 +6,7 @@ use smithay::{
 		Seat, SeatHandler, SeatState,
 		dnd::{self, DnDGrab, DndGrabHandler, GrabType},
 		pointer::{CursorImageStatus, Focus},
+		tablet::TabletSeatHandler,
 	},
 	reexports::{
 		wayland_protocols::xdg::decoration::zv1::server::zxdg_toplevel_decoration_v1::Mode as DecorationMode,
@@ -14,6 +15,7 @@ use smithay::{
 	wayland::{
 		dmabuf::{DmabufGlobal, DmabufHandler, DmabufState, ImportNotifier},
 		output::OutputHandler,
+		pointer_constraints::PointerConstraintsHandler,
 		seat::WaylandFocus,
 		selection::{
 			SelectionHandler,
@@ -22,7 +24,6 @@ use smithay::{
 			wlr_data_control::{DataControlHandler, DataControlState},
 		},
 		shell::xdg::{ToplevelSurface, decoration::XdgDecorationHandler},
-		tablet_manager::TabletSeatHandler,
 	},
 };
 
@@ -51,12 +52,16 @@ impl SeatHandler for State {
 }
 
 impl TabletSeatHandler for State {
+	type ToolFocus = WlSurface;
+
 	fn tablet_tool_image(&mut self, _tool: &TabletToolDescriptor, image: CursorImageStatus) {
 		// todo tablet tools should have their own cursors
 		self.mayland.cursor.status = image;
 		self.mayland.queue_redraw_all();
 	}
 }
+
+impl PointerConstraintsHandler for State {}
 
 impl SelectionHandler for State {
 	type SelectionUserData = ();

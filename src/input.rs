@@ -22,6 +22,7 @@ use smithay::{
 			keysyms::{KEY_XF86Switch_VT_1, KEY_XF86Switch_VT_12},
 		},
 		pointer::{AxisFrame, ButtonEvent, MotionEvent, RelativeMotionEvent},
+		tablet::{self, TabletDescriptor, TabletSeatTrait},
 	},
 	output::Output,
 	reexports::{
@@ -33,7 +34,6 @@ use smithay::{
 		input_method::InputMethodSeat,
 		seat::WaylandFocus,
 		shell::wlr_layer::{KeyboardInteractivity, Layer as WlrLayer},
-		tablet_manager::{TabletDescriptor, TabletSeatTrait},
 	},
 };
 use std::any::Any;
@@ -89,7 +89,7 @@ impl State {
 			let tablet_seat = self.mayland.seat.tablet_seat();
 
 			let desc = TabletDescriptor::from(&device);
-			tablet_seat.add_tablet::<State>(&self.mayland.display_handle, &desc);
+			tablet_seat.add_tablet(&desc);
 		}
 	}
 
@@ -260,36 +260,40 @@ impl State {
 		};
 
 		let tablet_seat = self.mayland.seat.tablet_seat();
-		let Some(tablet) = tablet_seat.get_tablet(&TabletDescriptor::from(&event.device())) else {
-			return;
-		};
-		let Some(tool) = tablet_seat.get_tool(&event.tool()) else { return };
+		if let Some(tool) = tablet_seat.get_tool(&event.tool()) {
+			let time = event.time_msec();
 
-		if event.pressure_has_changed() {
-			tool.pressure(event.pressure());
-		}
-		if event.distance_has_changed() {
-			tool.distance(event.distance());
-		}
-		if event.tilt_has_changed() {
-			tool.tilt(event.tilt());
-		}
-		if event.slider_has_changed() {
-			tool.slider_position(event.slider_position());
-		}
-		if event.rotation_has_changed() {
-			tool.rotation(event.rotation());
-		}
-		if event.wheel_has_changed() {
-			tool.wheel(event.wheel_delta(), event.wheel_delta_discrete());
+			let frame = tablet::tool::AxisFrame {
+				pressure: event.pressure_has_changed().then(|| event.pressure()),
+				distance: event.distance_has_changed().then(|| event.distance()),
+				tilt: event.tilt_has_changed().then(|| event.tilt()),
+				slider: event.slider_has_changed().then(|| event.slider_position()),
+				rotation: event.rotation_has_changed().then(|| event.rotation()),
+				wheel: event
+					.wheel_has_changed()
+					.then(|| (event.wheel_delta(), event.wheel_delta_discrete())),
+			};
+			tool.axis(self, frame);
+
+			let under = self.wl_surface_under(location);
+			let serial = SERIAL_COUNTER.next_serial();
+
+			self.update_active_output(location, serial);
+			tool.motion(
+				self,
+				under,
+				&tablet::tool::MotionEvent {
+					location,
+					serial,
+					time,
+				},
+			);
+
+			tool.frame(self, time);
+
+			self.mayland.tablet_cursor_location = Some(location);
 		}
 
-		let under = self.wl_surface_under(location);
-		let serial = SERIAL_COUNTER.next_serial();
-		tool.motion(location, under, &tablet, serial, event.time_msec());
-		self.update_active_output(location, serial);
-
-		self.mayland.tablet_cursor_location = Some(location);
 		self.mayland.queue_redraw_all();
 	}
 
@@ -304,26 +308,50 @@ impl State {
 		let display_handle = self.mayland.display_handle.clone();
 		let tablet_seat = self.mayland.seat.tablet_seat();
 
-		let Some(tablet) = tablet_seat.get_tablet(&TabletDescriptor::from(&event.device())) else {
-			return;
-		};
-		let tool = tablet_seat.add_tool(self, &display_handle, &event.tool());
+		let tool = (tablet_seat.get_tool(&event.tool()))
+			.unwrap_or_else(|| tablet_seat.add_wp_tool(self, &display_handle, &event.tool()));
+		if let Some(tablet) = tablet_seat.get_tablet(&TabletDescriptor::from(&event.device())) {
+			let time = event.time_msec();
+			let serial = SERIAL_COUNTER.next_serial();
 
-		match event.state() {
-			ProximityState::In => {
-				if let Some(under) = self.wl_surface_under(location) {
-					let serial = SERIAL_COUNTER.next_serial();
-					tool.proximity_in(location, under, &tablet, serial, event.time_msec());
+			match event.state() {
+				ProximityState::In => {
+					let frame = tablet::tool::AxisFrame {
+						pressure: event.pressure_has_changed().then(|| event.pressure()),
+						distance: event.distance_has_changed().then(|| event.distance()),
+						tilt: event.tilt_has_changed().then(|| event.tilt()),
+						slider: event.slider_has_changed().then(|| event.slider_position()),
+						rotation: event.rotation_has_changed().then(|| event.rotation()),
+						wheel: event
+							.wheel_has_changed()
+							.then(|| (event.wheel_delta(), event.wheel_delta_discrete())),
+					};
+					let under = self.wl_surface_under(location);
+
+					tool.proximity_in(
+						self,
+						under,
+						tablet,
+						&tablet::tool::ProximityInEvent {
+							location,
+							axis: Some(frame),
+							serial,
+							time,
+						},
+					);
+
+					tool.frame(self, time);
+
 					self.update_active_output(location, serial);
+					self.mayland.tablet_cursor_location = Some(location);
 				}
+				ProximityState::Out => {
+					tool.proximity_out(self, &tablet::tool::ProximityOutEvent { serial, time });
+					tool.frame(self, time);
 
-				self.mayland.tablet_cursor_location = Some(location);
-			}
-			ProximityState::Out => {
-				tool.proximity_out(event.time_msec());
-
-				if let Some(location) = self.mayland.tablet_cursor_location.take() {
-					self.move_pointer(location);
+					if let Some(location) = self.mayland.tablet_cursor_location.take() {
+						self.move_pointer(location);
+					}
 				}
 			}
 		}
@@ -335,22 +363,35 @@ impl State {
 		let tablet_seat = self.mayland.seat.tablet_seat();
 		let Some(tool) = tablet_seat.get_tool(&event.tool()) else { return };
 
+		let serial = SERIAL_COUNTER.next_serial();
+		let time = event.time_msec();
+
 		match event.tip_state() {
-			TabletToolTipState::Down => tool.tip_down(SERIAL_COUNTER.next_serial(), event.time_msec()),
-			TabletToolTipState::Up => tool.tip_up(event.time_msec()),
+			TabletToolTipState::Down => tool.down(self, &tablet::tool::DownEvent { serial, time }),
+			TabletToolTipState::Up => tool.up(self, &tablet::tool::UpEvent { serial, time }),
 		}
+
+		tool.frame(self, time);
 	}
 
 	fn on_tablet_tool_button<I: InputBackend>(&mut self, event: I::TabletToolButtonEvent) {
 		let tablet_seat = self.mayland.seat.tablet_seat();
 		let Some(tool) = tablet_seat.get_tool(&event.tool()) else { return };
 
+		let serial = SERIAL_COUNTER.next_serial();
+		let time = event.time_msec();
+
 		tool.button(
-			event.button(),
-			event.button_state(),
-			SERIAL_COUNTER.next_serial(),
-			event.time_msec(),
+			self,
+			&tablet::tool::ButtonEvent {
+				serial,
+				button: event.button(),
+				state: event.button_state(),
+				time,
+			},
 		);
+
+		tool.frame(self, time);
 	}
 
 	fn compute_tablet_location<I, T>(&self, event: &T) -> Option<Point<f64, Logical>>
