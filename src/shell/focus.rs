@@ -1,7 +1,7 @@
 use super::window::MappedWindow;
 use crate::state::State;
 use smithay::{
-	backend::input::KeyState,
+	backend::input::{InputTime, KeyState},
 	desktop::{LayerSurface, PopupKind, WindowSurface},
 	input::{
 		Seat,
@@ -92,7 +92,7 @@ impl KeyboardTarget<State> for KeyboardFocusTarget {
 		key: KeysymHandle<'_>,
 		state: KeyState,
 		serial: Serial,
-		time: u32,
+		time: InputTime,
 	) {
 		match self {
 			KeyboardFocusTarget::Window(w) => match w.underlying_surface() {
@@ -261,7 +261,7 @@ impl PointerTarget<State> for PointerFocusTarget {
 		}
 	}
 
-	fn leave(&self, seat: &Seat<State>, data: &mut State, serial: smithay::utils::Serial, time: u32) {
+	fn leave(&self, seat: &Seat<State>, data: &mut State, serial: smithay::utils::Serial, time: InputTime) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => PointerTarget::leave(w, seat, data, serial, time),
 			PointerFocusTarget::Window(w) => PointerTarget::leave(w, seat, data, serial, time),
@@ -296,7 +296,7 @@ impl DndFocus<State> for PointerFocusTarget {
 		offer: Option<&mut Self::OfferData<S>>,
 		seat: &Seat<State>,
 		location: smithay::utils::Point<f64, smithay::utils::Logical>,
-		time: u32,
+		time: InputTime,
 	) {
 		match self {
 			PointerFocusTarget::WlSurface(w) => DndFocus::motion(w, data, offer, seat, location, time),

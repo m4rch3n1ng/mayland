@@ -1,6 +1,7 @@
 use super::State;
 use crate::{layout::Relocate, shell::focus::KeyboardFocusTarget};
 use smithay::{
+	backend::input::InputTime,
 	desktop::LayerSurface,
 	input::pointer::MotionEvent,
 	utils::{Logical, Point, SERIAL_COUNTER},
@@ -27,7 +28,7 @@ impl State {
 		let under = self.surface_under(location);
 
 		let serial = SERIAL_COUNTER.next_serial();
-		let time = self.mayland.clock.now().as_millis();
+		let time = InputTime::now();
 
 		pointer.motion(
 			self,
@@ -87,7 +88,7 @@ impl State {
 			&MotionEvent {
 				location,
 				serial: SERIAL_COUNTER.next_serial(),
-				time: self.mayland.clock.now().as_millis(),
+				time: InputTime::now(),
 			},
 		);
 		pointer.frame(self);

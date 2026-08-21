@@ -49,7 +49,7 @@ clap = { version = "4.6.6", features = ["derive"] }
 clap_complete = { version = "4.6.9", features = ["unstable-dynamic"] }
 dirs = { workspace = true }
 env_filter = "2.0.0"
-futures-util = { version = "0.3.33", default-features = false, features = ["std", "io"] }
+futures-util = { version = "0.3.34", default-features = false, features = ["std", "io"] }
 indexmap = "2.14.0"
 input = { version = "0.10.0", default-features = false, features = ["libinput_1_21"] }
 jiff = "0.2.35"

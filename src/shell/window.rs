@@ -2,10 +2,13 @@ use super::{focus::KeyboardFocusTarget, grab::ResizeState};
 use crate::{layout::workspace::Workspace, render::MaylandRenderElements, state::State};
 use mayland_config::windowrules::WindowRule;
 use smithay::{
-	backend::renderer::{
-		ImportAll, ImportMem, Renderer,
-		element::{AsRenderElements, surface::WaylandSurfaceRenderElement, utils::CropRenderElement},
-		glow::GlowRenderer,
+	backend::{
+		input::InputTime,
+		renderer::{
+			ImportAll, ImportMem, Renderer,
+			element::{AsRenderElements, surface::WaylandSurfaceRenderElement, utils::CropRenderElement},
+			glow::GlowRenderer,
+		},
 	},
 	desktop::{Window, WindowSurface, space::SpaceElement},
 	input::{
@@ -430,7 +433,7 @@ impl PointerTarget<State> for MappedWindow {
 		}
 	}
 
-	fn leave(&self, seat: &smithay::input::Seat<State>, data: &mut State, serial: Serial, time: u32) {
+	fn leave(&self, seat: &smithay::input::Seat<State>, data: &mut State, serial: Serial, time: InputTime) {
 		if let Some(w) = self.wl_surface() {
 			PointerTarget::leave(&*w, seat, data, serial, time);
 		}
@@ -465,7 +468,7 @@ impl DndFocus<State> for MappedWindow {
 		offer: Option<&mut Self::OfferData<S>>,
 		seat: &Seat<State>,
 		location: Point<f64, Logical>,
-		time: u32,
+		time: InputTime,
 	) {
 		match self.underlying_surface() {
 			WindowSurface::Wayland(xdg) => {

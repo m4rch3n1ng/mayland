@@ -42,7 +42,7 @@ use smithay::{
 			backend::{ClientData, GlobalId},
 		},
 	},
-	utils::{Clock, IsAlive, Logical, Monotonic, Point},
+	utils::{ClockSource, IsAlive, Logical, Monotonic, Point},
 	wayland::{
 		compositor::{CompositorClientState, CompositorState},
 		cursor_shape::CursorShapeManagerState,
@@ -219,7 +219,6 @@ pub struct Mayland {
 	pub seat: Seat<State>,
 	pub popups: PopupManager,
 	pub output_state: HashMap<Output, OutputState>,
-	pub clock: Clock<Monotonic>,
 
 	// workspace
 	pub workspaces: WorkspaceManager,
@@ -353,7 +352,6 @@ impl Mayland {
 		let mut seat_state = SeatState::new();
 		let mut seat = seat_state.new_wl_seat(&display_handle, "winit");
 		let tablet_state = TabletManagerState::new::<State>(&display_handle);
-		let clock = Clock::new();
 
 		let popups = PopupManager::default();
 
@@ -374,7 +372,7 @@ impl Mayland {
 			DataControlState::new::<State, _>(&display_handle, Some(&primary_selection_state), |_| true);
 		let xdg_decoration_state = XdgDecorationState::new::<State>(&display_handle);
 		let xdg_shell_state = XdgShellState::new::<State>(&display_handle);
-		let presentation_state = PresentationState::new::<State>(&display_handle, clock.id() as u32);
+		let presentation_state = PresentationState::new::<State>(&display_handle, Monotonic::ID as u32);
 		let shm_state = ShmState::new::<State>(&display_handle, Vec::new());
 		let cursor_shape_manager_state = CursorShapeManagerState::new::<State>(&display_handle);
 		let relative_pointer_manager_state = RelativePointerManagerState::new::<State>(&display_handle);
@@ -408,7 +406,6 @@ impl Mayland {
 			seat,
 			popups,
 			output_state: HashMap::new(),
-			clock,
 
 			workspaces,
 

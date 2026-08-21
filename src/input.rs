@@ -11,9 +11,9 @@ use mayland_config::{Action, input::TabletMapping};
 use smithay::{
 	backend::input::{
 		AbsolutePositionEvent, Axis, AxisSource, Device, DeviceCapability, Event, InputBackend, InputEvent,
-		KeyState, KeyboardKeyEvent, Keycode, PointerAxisEvent, PointerButtonEvent, PointerMotionEvent,
-		ProximityState, TabletToolButtonEvent, TabletToolEvent, TabletToolProximityEvent, TabletToolTipEvent,
-		TabletToolTipState,
+		InputTime, KeyState, KeyboardKeyEvent, Keycode, PointerAxisEvent, PointerButtonEvent,
+		PointerMotionEvent, ProximityState, TabletToolButtonEvent, TabletToolEvent, TabletToolProximityEvent,
+		TabletToolTipEvent, TabletToolTipState,
 	},
 	desktop::{LayerSurface, WindowSurfaceType, layer_map_for_output},
 	input::{
@@ -112,7 +112,7 @@ impl State {
 		let code = event.key_code();
 		let key_state = event.state();
 		let serial = SERIAL_COUNTER.next_serial();
-		let time = event.time_msec();
+		let time = event.time();
 
 		let Some(Some(action)) =
 			keyboard.input(self, code, key_state, serial, time, |state, mods, keysym| {
@@ -145,7 +145,7 @@ impl State {
 			&MotionEvent {
 				location,
 				serial,
-				time: event.time_msec(),
+				time: event.time(),
 			},
 		);
 
@@ -155,7 +155,7 @@ impl State {
 			&RelativeMotionEvent {
 				delta: event.delta(),
 				delta_unaccel: event.delta_unaccel(),
-				utime: event.time(),
+				time: event.time(),
 			},
 		);
 
@@ -180,7 +180,7 @@ impl State {
 			&MotionEvent {
 				location,
 				serial,
-				time: event.time_msec(),
+				time: event.time(),
 			},
 		);
 		pointer.frame(self);
@@ -204,7 +204,7 @@ impl State {
 				button,
 				state: state.try_into().unwrap(),
 				serial,
-				time: event.time_msec(),
+				time: event.time(),
 			},
 		);
 		pointer.frame(self);
@@ -222,7 +222,7 @@ impl State {
 			.or_else(|| vertical_amount_v120.map(|amt| amt * 15. / 120.))
 			.unwrap_or(0.0);
 
-		let mut frame = AxisFrame::new(event.time_msec()).source(event.source());
+		let mut frame = AxisFrame::new(event.time()).source(event.source());
 		if horizontal_amount != 0.0 {
 			frame = frame.relative_direction(Axis::Horizontal, event.relative_direction(Axis::Horizontal));
 			frame = frame.value(Axis::Horizontal, horizontal_amount);
@@ -261,7 +261,7 @@ impl State {
 
 		let tablet_seat = self.mayland.seat.tablet_seat();
 		if let Some(tool) = tablet_seat.get_tool(&event.tool()) {
-			let time = event.time_msec();
+			let time = event.time();
 
 			let frame = tablet::tool::AxisFrame {
 				pressure: event.pressure_has_changed().then(|| event.pressure()),
@@ -311,7 +311,7 @@ impl State {
 		let tool = (tablet_seat.get_tool(&event.tool()))
 			.unwrap_or_else(|| tablet_seat.add_wp_tool(self, &display_handle, &event.tool()));
 		if let Some(tablet) = tablet_seat.get_tablet(&TabletDescriptor::from(&event.device())) {
-			let time = event.time_msec();
+			let time = event.time();
 			let serial = SERIAL_COUNTER.next_serial();
 
 			match event.state() {
@@ -364,7 +364,7 @@ impl State {
 		let Some(tool) = tablet_seat.get_tool(&event.tool()) else { return };
 
 		let serial = SERIAL_COUNTER.next_serial();
-		let time = event.time_msec();
+		let time = event.time();
 
 		match event.tip_state() {
 			TabletToolTipState::Down => tool.down(self, &tablet::tool::DownEvent { serial, time }),
@@ -379,7 +379,7 @@ impl State {
 		let Some(tool) = tablet_seat.get_tool(&event.tool()) else { return };
 
 		let serial = SERIAL_COUNTER.next_serial();
-		let time = event.time_msec();
+		let time = event.time();
 
 		tool.button(
 			self,
@@ -508,7 +508,7 @@ impl State {
 						&MotionEvent {
 							location: next.pointer_location.to_f64(),
 							serial,
-							time: self.mayland.clock.now().as_millis(),
+							time: InputTime::now(),
 						},
 					);
 					pointer.frame(self);
